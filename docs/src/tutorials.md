@@ -30,8 +30,8 @@ cubage(Newton, h, d, bark)
 
 We utilize the function cubage to calculate cubage for multiple trees. The function expects data in a dataframe format where each row represents a tree, and columns contain attributes such as height and diameter. The cubage function can be applied to each tree group using the specified height and diameter columns.
 
-```@example ex_cub_01
-
+```@example ex_cub_02
+using ForestMensuration # hide
 using DataFrames 
 
 data = DataFrame(
@@ -46,6 +46,6 @@ cubage(Huber, :tree, :h, :d, data)
 
 Additionally, bark thickness values can be provided to calculate bark factors and volumes without bark.
 
-```@example ex_cub_01
+```@example ex_cub_02
 cubage(Huber, :tree, :h, :d, :bark, data)
 ```
