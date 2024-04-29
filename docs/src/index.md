@@ -10,5 +10,5 @@ Documentation for [ForestMensuration](https://github.com/marcosdanieldasilva/For
 ```
 ## Install
 ```julia-repl
-pkg> add https://github.com/marcosdanieldasilva/ForestMensuration.jl
+"pkg> add https://github.com/marcosdanieldasilva/ForestMensuration.jl"
 ```

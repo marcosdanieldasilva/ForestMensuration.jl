@@ -1,5 +1,8 @@
 module ForestMensuration
+  using DataFrames, LinearAlgebra
 
-# Write your package code here.
+  include("cubage.jl")
+
+  export cubage, Smalian, Huber, Newton
 
 end
