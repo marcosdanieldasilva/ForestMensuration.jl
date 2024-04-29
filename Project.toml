@@ -11,6 +11,7 @@ Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 StatsModels = "3eaba693-59b7-5ba5-a881-562e759f1c8d"
 
 [compat]
+DataFrames = "1"
 julia = "1.6.7"
 
 [extras]
