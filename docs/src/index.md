@@ -8,7 +8,7 @@ Documentation for [ForestMensuration](https://github.com/marcosdanieldasilva/For
 
 ```@index
 ```
-
-```@autodocs
-Modules = [ForestMensuration]
+## Install
+```julia-repl
+pkg> add https://github.com/marcosdanieldasilva/ForestMensuration.jl
 ```
