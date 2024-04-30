@@ -58,8 +58,6 @@ total_volume_without_bark = total_volume * bk^2
 """
 @inline bark_factor(d::Vector{<:Real}, e::Vector{<:Real}) :: Float64 = 1 - (sum(e) / sum(d))
 
-abstract type CubingMethod end
-
 """
 Calculate tree bole volume cubic meters using Smalian, Newton, or Huber methods.
 The methods involve dividing the tree trunk into n sections (logs). 
@@ -67,56 +65,9 @@ In each section, diameters and lengths are measured at positions that vary accor
 """
 @inline bole_volume(method::Type{<:CubingMethod}, h::Vector{<:Real}, d::Vector{<:Real}) :: Float64 = bole_volume(method, h, d)
 
-"""
-Smalian Method:
-  The Smalian method measures diameters or circumferences at the ends of each section and calculates the total volume by:
-  - Vt = v0 + Σi=1:n(vi) + vt
-  - v0 = g0 * l0
-  - vi = (gi+gi+1)/2 * li
-  - vt = (1/3) * gn * ln
-  Where:
-  - v0 = volume of the stump;
-  - vi = volume of intermediate sections;
-  - vt = volume of the cone;
-  - g = basal area;
-  - l = length.
-"""
-abstract type Smalian <: CubingMethod end
-
 @inline bole_volume(::Type{<:Smalian}, h::Vector{<:Real}, d::Vector{<:Real}) :: Float64 = map(i -> (π / 40000) * ((d[i]^2 + d[i - 1]^2) / 2) * (h[i] - h[i - 1]), 2:(length(h) - 1)) |> sum
 
-"""
-Huber Method:
-  The Huber method measures the diameter or circumference at the midpoint of the section, and the volume is determined by:
-  - v = v0 + Σi=1:n(vi) + vt
-  - vi = gi * li
-  Where:
-  - v0 = volume of the stump;
-  - vi = volume of intermediate sections;
-  - vt = volume of the cone;
-  - g = basal area;
-  - l = length.
-"""
-abstract type Huber <: CubingMethod end
-
 @inline bole_volume(::Type{<:Huber}, h::Vector{<:Real}, d::Vector{<:Real}) :: Float64 =  cylinder_volume.(map(i -> h[i] - h[i - 2], 3:2:length(h)), map(i -> d[i], 2:2:(length(d) - 1))) |> sum
-
-"""
-Newton Method:
-  The Newton method involves measuring at 3 positions along each section (at the ends and in the middle of the logs). Therefore, it is a more laborious method than the others, but the estimated volume will be more accurate.
-  
-  - v = v0 + Σi=1:n(vi) + vt
-  - vi = (gi + gm + gi+1)/2 * li
-  Where:
-
-  - v0 = volume of the stump;
-  - vi = volume of intermediate sections;
-  - vt = volume of the cone;
-  - g = basal area;
-  - gm = basal area at the midpoint of the section;
-  - l = length.
-"""
-abstract type Newton <: CubingMethod end
 
 @inline bole_volume(::Type{<:Newton}, h::Vector{<:Real}, d::Vector{<:Real}) :: Float64 = map(i -> (π / 240000) * (h[i + 2] - h[i]) * (d[i]^2 + 4 * d[i + 1]^2 + d[i + 2]^2), 1:2:(length(h) - 3)) |> sum
 
