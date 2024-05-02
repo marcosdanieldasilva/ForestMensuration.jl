@@ -24,6 +24,8 @@ module ForestMensuration
   include("regression-parameters.jl")
   include("frequency-tables.jl")
   include("cubage.jl")
+  include("inventory-report.jl")
+  include("simple-casual-sampling.jl")
   include("show.jl")
 
   export
@@ -63,6 +65,8 @@ module ForestMensuration
     residuals,
     stderror,
     syx,
-    syx_in_percentage
+    syx_in_percentage,
+    simple_casual_sampling,
+    stratified_sampling
 
 end
