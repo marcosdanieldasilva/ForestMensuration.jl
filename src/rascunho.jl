@@ -1,6 +1,20 @@
 using ForestMensuration, CSV, DataFrames
 
+
+
 df = CSV.read("C:\\Users\\marco\\OneDrive\\Documents\\Programação\\dados_CSV\\exemplo-hipso.csv", DataFrame)
+
+cub_data = CSV.read(
+  "C:\\Users\\marco\\OneDrive\\Documents\\Programação\\dados_CSV\\exemplo-cubagem-2.csv",
+  DataFrame
+)
+
+cb = cubage(Smalian, :arvore, :h_d, :d_h, :casca, cub_data)
+
+
+gdf = groupby(cub_data, :arvore)
+
+ForestMensuration._diameter_interpolation(gdf[1].h_d[end] * 0.1, gdf[1].h_d*1, gdf[1].d_h*1)
 
 reg = regression(:ht, :dap, df)
 

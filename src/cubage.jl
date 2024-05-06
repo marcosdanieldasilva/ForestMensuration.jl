@@ -94,7 +94,7 @@ Natural Form Factor (nff):
   - Cylinder Vol 0,1 = volume of a cylinder with height equal to the total height of the tree and diameter taken at 1/10 of the total height.
   Interpolate diameter at a given height using linear interpolation.
 """
-@inline natural_form_factor(vt::Real, ht::Real, h::Vector{<:Real}, d::Vector{<:Real}) :: Float64 = vt / cylinder_volume(h[end], _diameter_interpolation(ht * 0.1, d, h))
+@inline natural_form_factor(vt::Real, ht::Real, h::Vector{<:Real}, d::Vector{<:Real}) :: Float64 = vt / cylinder_volume(h[end], _diameter_interpolation(ht * 0.1, h, d))
 
 """
 Form Quotient (qf):
@@ -125,11 +125,12 @@ function cubage(method::Type{<:CubingMethod}, h::Vector{<:Real}, d::Vector{<:Rea
     # diameter at basal height and total height of the tree
     dbh = d[idx]
     ht = h[end]
+    hc = h[end - 1]
     # Calculate volumes
     v0 = cylinder_volume(h[begin], d[begin])
-    vi = bole_volume(method, h, d)
-    vn = cone_volume(ht - h[end - 1], d[end - 1])
-    vt = v0 + vi + vn
+    vc = bole_volume(method, h, d)
+    vn = cone_volume(ht - hc, d[end - 1])
+    vt = v0 + vc + vn
     # Calculate the Form Factors
     aff = artificial_form_factor(vt, ht, dbh)
     nff = natural_form_factor(vt, ht, h, d)
@@ -138,10 +139,11 @@ function cubage(method::Type{<:CubingMethod}, h::Vector{<:Real}, d::Vector{<:Rea
     DataFrame(
         vt = vt,
         v0 = v0,
-        vi = vi,
+        vc = vc,
         vn = vn,
         dbh = dbh,
         ht = ht,
+        hc = hc,
         aff = aff,
         nff = nff,
         qf = qf
@@ -159,7 +161,7 @@ function cubage(method::Type{<:CubingMethod}, h::Vector{<:Real}, d::Vector{<:Rea
   # cone volume without bark
   insertcols!(cubage_table, :vnwb => cubage_table.vn .* cubage_table.k.^2)
   # bole volume without bark
-  insertcols!(cubage_table, :viwb => cubage_table.vi .* cubage_table.k.^2)
+  insertcols!(cubage_table, :vcwb => cubage_table.vc .* cubage_table.k.^2)
   return cubage_table
 end
 
