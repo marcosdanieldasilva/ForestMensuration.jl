@@ -39,6 +39,7 @@ module ForestMensuration
     adjr2,
     aic,
     aicc,
+    bark_factor,
     bic,
     coef,
     coef_table,

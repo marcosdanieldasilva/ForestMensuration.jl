@@ -51,10 +51,10 @@ The bark factor is used to estimate the volume without bark by considering the r
 
 # Example
 # Calculate bark factor
-bk = bark_factor(d, e)
+k = bark_factor(d, e)
 
 # Calculate total volume without bark
-total_volume_without_bark = total_volume * bk^2
+total_volume_without_bark = total_volume * k^2
 """
 @inline bark_factor(d::Vector{<:Real}, e::Vector{<:Real}) :: Float64 = 1 - (sum(e) / sum(d))
 
@@ -151,15 +151,15 @@ end
 function cubage(method::Type{<:CubingMethod}, h::Vector{<:Real}, d::Vector{<:Real}, e::Vector{<:Real}; dbh::Float64=1.3)
   cubage_table = cubage(method, h, d, dbh = dbh)
   # bark factor
-  insertcols!(cubage_table, :bf => bark_factor(d, e))
+  insertcols!(cubage_table, :k => bark_factor(d, e))
   # total volume without bark
-  insertcols!(cubage_table, :vtwb => cubage_table.vt .* cubage_table.bf.^2)
+  insertcols!(cubage_table, :vtwb => cubage_table.vt .* cubage_table.k.^2)
   # cylinder volume without bark
-  insertcols!(cubage_table, :v0wb => cubage_table.v0 .* cubage_table.bf.^2)
+  insertcols!(cubage_table, :v0wb => cubage_table.v0 .* cubage_table.k.^2)
   # cone volume without bark
-  insertcols!(cubage_table, :vnwb => cubage_table.vn .* cubage_table.bf.^2)
+  insertcols!(cubage_table, :vnwb => cubage_table.vn .* cubage_table.k.^2)
   # bole volume without bark
-  insertcols!(cubage_table, :viwb => cubage_table.vi .* cubage_table.bf.^2)
+  insertcols!(cubage_table, :viwb => cubage_table.vi .* cubage_table.k.^2)
   return cubage_table
 end
 
