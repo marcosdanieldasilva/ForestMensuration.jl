@@ -1,23 +1,22 @@
 """
 Description:
 
-ForestMensuration.jl is a Julia package that provides a comprehensive set of functions for performing dendrometric/biometric and forest inventory calculations. The package emphasizes ease of use, making it straightforward to:
+ForestMensuration.jl is a Julia package that provides a comprehensive set of functions for performing dendrometric and forest inventory calculations. The package emphasizes ease of use, making it straightforward to:
 
-Conduct regressions: Linear, nonlinear, and mixed-effects models can be fitted with ease.
-Calculate tree and stand volume: Various methods are supported, including Huber, Smalian, and Newton.
-Perform forest inventories: Implementations of simple random and stratified sampling are available.
-Create frequency tables: Analyze the distribution of dendrometric variables.
-Work with probability distributions: Calculate PDF and CDF for various distributions.
+- Conduct regressions: Linear models can be fitted with ease.
+- Calculate tree and stand volume: Various methods are supported, including Huber, Smalian, and Newton.
+- Perform forest inventories: Implementations of simple random sampling are available.
+- Create frequency tables: Analyze the distribution of dendrometric variables.
 
 Facilitates the analysis of dendrometric and forest data.
 Performs complex calculations with simple commands.
 Offers a user-friendly and intuitive interface.
 """
+
 module ForestMensuration
   using DataFrames, Distributions, LinearAlgebra, HypothesisTests, StatsBase, StatsModels, Tables
   import StatsBase: dof_residual, dof, nobs, aicc, aic, bic, coef
 
-  
   include("structs-consts.jl")
   include("regression-variables.jl")
   include("linear-regression.jl")
@@ -29,13 +28,13 @@ module ForestMensuration
   include("show.jl")
 
   export
-    # regression structures
+    # Regression structures
     FittedLinearModel,
-    # cubage methods
+    # Cubage methods
     Smalian,
     Huber,
     Newton,
-    # funtions
+    # Functions
     adjr2,
     aic,
     aicc,
@@ -67,7 +66,6 @@ module ForestMensuration
     stderror,
     syx,
     syx_in_percentage,
-    simple_casual_sampling,
-    stratified_sampling
+    simple_casual_sampling
 
 end

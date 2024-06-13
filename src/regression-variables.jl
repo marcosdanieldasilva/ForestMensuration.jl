@@ -16,9 +16,18 @@
 @inline square_x_by_y(x::Real, y::Real) :: Float64 = x ^ 2 / y
 @inline square_x_by_y_minus(x::Real, y::Real) :: Float64 = x ^ 2 / (y - 1.3)
 
-function _dependent_variable(y_term::AbstractTerm, x_term::AbstractTerm) :: Vector{AbstractTerm}
+"""
+Generates a list of transformed dependent variable terms.
 
-  y_term_list = [
+# Arguments
+- `y_term::AbstractTerm`: The dependent variable term.
+- `x_term::AbstractTerm`: The independent variable term.
+
+# Returns
+- `Vector{AbstractTerm}`: A list of transformed dependent variable terms.
+"""
+function _dependent_variable(y_term::AbstractTerm, x_term::AbstractTerm) :: Vector{AbstractTerm}
+  return [
     y_term
     FunctionTerm(log, [y_term], :(log($(y_term))))
     FunctionTerm(log_minus, [y_term], :(log($(y_term) - 1.3)))
@@ -39,12 +48,18 @@ function _dependent_variable(y_term::AbstractTerm, x_term::AbstractTerm) :: Vect
     FunctionTerm(square_x_by_y, [x_term, y_term], :($(x_term) ^ 2 / $(y_term)))
     FunctionTerm(square_x_by_y_minus, [x_term, y_term], :($(x_term) ^ 2 / ($(y_term) - 1.3)))
   ]
-
-  return y_term_list
 end
 
-function _indepedent_variable(x_term::AbstractTerm) :: Vector{MixTerm}
+"""
+Generates a list of transformed independent variable terms and their interactions.
 
+# Arguments
+- `x_term::AbstractTerm`: The independent variable term.
+
+# Returns
+- `Vector{MixTerm}`: A list of transformed independent variable terms and their interactions.
+"""
+function _indepedent_variable(x_term::AbstractTerm) :: Vector{MixTerm}
   x_terms = [
     x_term
     FunctionTerm(x -> x ^ 2, [x_term], :($(x_term) ^ 2))

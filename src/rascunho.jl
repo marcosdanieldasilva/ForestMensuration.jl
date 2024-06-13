@@ -1,7 +1,5 @@
 using ForestMensuration, CSV, DataFrames
 
-
-
 df = CSV.read("C:\\Users\\marco\\OneDrive\\Documents\\Programação\\dados_CSV\\exemplo-hipso.csv", DataFrame)
 
 cub_data = CSV.read(
@@ -16,7 +14,13 @@ gdf = groupby(cub_data, :arvore)
 
 ForestMensuration._diameter_interpolation(gdf[1].h_d[end] * 0.1, gdf[1].h_d*1, gdf[1].d_h*1)
 
+
+# julia> @btime regression(:ht, :dap, df)
+# 9.203 ms (14741 allocations: 19.69 MiB)
+# 1-element Vector{FittedLinearModel}:
+#  log(ht - 1.3) = 1.2946 + 0.1516 * dap - 0.002818 * dap ^ 2
 reg = regression(:ht, :dap, df)
+
 
 reg2 = regression(:ht, :dap, df, best=5)
 
@@ -42,3 +46,11 @@ v = DataFrame(V, [:parcela, :m³, :volume_ha])
 
 ass = simple_casual_sampling(v.volume_ha, 1, 550)
 
+
+@btime regression(:ht, :dap, df, :regiao)
+
+regression(:ht, :dap, df, :regiao)
+
+qreg = @btime regression(:ht, :dap, df, :regiao, :talhao);
+
+qreg2 = @btime regression(:ht, :dap, df, :regiao, effect=:interactive);
