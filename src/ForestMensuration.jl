@@ -26,6 +26,7 @@ module ForestMensuration
   include("inventory-report.jl")
   include("simple-casual-sampling.jl")
   include("show.jl")
+  include("graph-analysis.jl")
 
   export
     # Regression structures
@@ -52,6 +53,7 @@ module ForestMensuration
     dof_residual,
     fit_regression,
     frequency_table,
+    graph,
     homoscedasticity,
     loglikelihood,
     modelmatrix,

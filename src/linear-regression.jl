@@ -191,7 +191,8 @@ function regression(y::S, x::S, data::AbstractDataFrame, q::S...; best::Union{Bo
   error("There are not enough data points to perform regression. At least $(k + 2) observations are required.")
   end
 
-  y_observed, x_observed = eachcol(new_data)
+  y_observed = new_data[!, y]
+  x_observed = new_data[!, x]
   y_term = concrete_term(term(y), y_observed, ContinuousTerm)
   x_term = concrete_term(term(x), x_observed, ContinuousTerm)
   q_term = [concrete_term(term(terms), new_data[!, terms], CategoricalTerm) for terms ∈ q]

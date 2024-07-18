@@ -15,7 +15,7 @@ function predict(fitted_model::FittedLinearModel, data::AbstractDataFrame)
   if isa(fitted_model.formula.lhs, FunctionTerm)
     ŷ = _predict(ŷ, x[1], fitted_model.σ², nameof(fitted_model.formula.lhs.f))
   end
-  length(unique(nonmissings)) == 1 ? ŷ : _return_predictions(Tables.materializer(data), ŷ, nonmissings, length(nonmissings))
+  length(unique(nonmissings)) == 1 ? ŷ : StatsModels._return_predictions(Tables.materializer(data), ŷ, nonmissings, length(nonmissings))
 end
 
 """
@@ -30,12 +30,16 @@ Predict a single value using a fitted linear model for a single row of data.
 """
 function predict(fitted_model::FittedLinearModel, data::DataFrameRow)
   x, nonmissings = StatsModels.missing_omit(columntable(DataFrame(data)), fitted_model.formula.rhs)
-  X = modelmatrix(fitted_model.formula.rhs, x)
-  ŷ = X * fitted_model.β
-  if isa(fitted_model.formula.lhs, FunctionTerm)
-    ŷ = _predict(ŷ, x[1], fitted_model.σ², nameof(fitted_model.formula.lhs.f))
+  if isempty(x[1])
+    return missing
+  else
+    X = modelmatrix(fitted_model.formula.rhs, x)
+    ŷ = X * fitted_model.β
+    if isa(fitted_model.formula.lhs, FunctionTerm)
+      ŷ = _predict(ŷ, x[1], fitted_model.σ², nameof(fitted_model.formula.lhs.f))
+    end
+    return ŷ[1]
   end
-  return ŷ[1]
 end
 
 """

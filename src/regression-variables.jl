@@ -66,8 +66,8 @@ function _indepedent_variable(x_term::AbstractTerm) :: Vector{MixTerm}
     FunctionTerm(log, [x_term], :(log($(x_term))))
     FunctionTerm(x -> log(x) ^ 2, [x_term], :(log($(x_term)) ^ 2))
     FunctionTerm(x -> log(1 / x), [x_term], :(log(1 / $(x_term))))
-    FunctionTerm(x -> x ^- 1, [x_term], :($(x_term) ^- 1))
-    FunctionTerm(x -> x ^- 2, [x_term], :($(x_term) ^- 2))
+    FunctionTerm(x -> 1 / x, [x_term], :($(x_term) ^- 1))
+    FunctionTerm(x -> 1 / x ^ 2, [x_term], :($(x_term) ^- 2))
     FunctionTerm(x -> log(x / (1 + x)), [x_term], :(log($(x_term) / (1 + $(x_term)))))
   ]
 
