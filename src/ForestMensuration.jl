@@ -12,9 +12,10 @@ Facilitates the analysis of dendrometric and forest data.
 Performs complex calculations with simple commands.
 Offers a user-friendly and intuitive interface.
 """
-
 module ForestMensuration
-  using DataFrames, Distributions, LinearAlgebra, HypothesisTests, StatsBase, StatsModels, Tables
+  using CategoricalArrays, DataFrames, Distributions, LinearAlgebra, GLM, HypothesisTests,
+        Plots.PlotMeasures, StatsBase, StatsModels, StatsPlots, RecipesBase, RecipesPipeline, Tables
+
   import StatsBase: dof_residual, dof, nobs, aicc, aic, bic, coef
 
   include("structs-consts.jl")
@@ -25,10 +26,14 @@ module ForestMensuration
   include("cubage.jl")
   include("inventory-report.jl")
   include("simple-casual-sampling.jl")
+  include("site-classification.jl")
   include("show.jl")
   include("graph-analysis.jl")
 
   export
+    # StatsModels Terms
+    ContinuousTerm,
+    CategoricalTerm,
     # Regression structures
     FittedLinearModel,
     # Cubage methods
@@ -54,6 +59,7 @@ module ForestMensuration
     fit_regression,
     frequency_table,
     graph,
+    hdom_classification,
     homoscedasticity,
     loglikelihood,
     modelmatrix,
@@ -65,6 +71,8 @@ module ForestMensuration
     r2,
     regression,
     residuals,
+    site_classification,
+    site_table,
     stderror,
     syx,
     syx_in_percentage,

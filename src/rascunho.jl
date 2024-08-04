@@ -1,6 +1,27 @@
 using ForestMensuration, CSV, DataFrames
 
+
+data = CSV.read("C:\\Users\\marco\\OneDrive\\Documents\\Programação\\dados_CSV\\AlturaDominante_vs_Idade.csv", DataFrame)
+
+reg = regression(:Hd, :idade, data)
+
+qreg = regression(:Hd, :idade, data, :parcelas)
+
+s = site_classification(reg, 60)
+
+site_table(reg, 60, 3)
+
+site_table(reg, 60)
+
 df = CSV.read("C:\\Users\\marco\\OneDrive\\Documents\\Programação\\dados_CSV\\exemplo-hipso.csv", DataFrame)
+
+reg = regression(:ht, :dap, df)
+
+p = graph(reg)
+
+qreg = regression(:ht, :dap, df, :regiao)
+
+qp = graph(qreg)
 
 cub_data = CSV.read(
   "C:\\Users\\marco\\OneDrive\\Documents\\Programação\\dados_CSV\\exemplo-cubagem-2.csv",

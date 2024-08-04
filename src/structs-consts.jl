@@ -110,3 +110,9 @@ struct StratifiedReport
   auxiliary_table::AbstractDataFrame
   result_table::AbstractDataFrame
 end
+
+# Define SiteAnalysis struct to store the analysis results
+struct SiteAnalysis
+  site_table::DataFrame
+  site_plot::Plots.Plot
+end

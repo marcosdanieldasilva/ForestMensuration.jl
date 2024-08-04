@@ -173,15 +173,17 @@ Perform regression analysis.
 - `q::S...`: Symbols representing additional terms for the model.
 - `best::Union{Bool, Int}`: Whether to return the best model(s) based on RMSE.
 - `effect::S`: Type of effect to consider (`:additive` or `:interactive`).
+- q_type` : Type of q variable (`CategoricalTerm` or `ContinuousTerm`).
 
 # Returns
 - `Vector{FittedLinearModel}`: Vector of fitted models.
 """
-function regression(y::S, x::S, data::AbstractDataFrame, q::S...; best::Union{Bool, Int}=true, effect::S=:additive) where S <: Symbol
+function regression(y::S, x::S, data::AbstractDataFrame, q::S...; best::Union{Bool, Int}=true, effect::S=:additive, q_type=CategoricalTerm) where S <: Symbol
   if best < 0
-  throw(ArgumentError("best must be a positive integer or false"))
+  throw(ArgumentError("best must be a positive integer or true/false"))
   elseif !isempty(q)
   effect ∈ (:additive, :interactive) || throw(ArgumentError("Invalid effect argument. Expected :additive or :interactive."))
+  q_type ∈ (CategoricalTerm, ContinuousTerm) || throw(ArgumentError("Invalid q_type argument. Expected CategoricalTerm or ContinuousTerm."))
   end
 
   new_data = dropmissing(data[:, [y, x, q...]])
@@ -195,7 +197,7 @@ function regression(y::S, x::S, data::AbstractDataFrame, q::S...; best::Union{Bo
   x_observed = new_data[!, x]
   y_term = concrete_term(term(y), y_observed, ContinuousTerm)
   x_term = concrete_term(term(x), x_observed, ContinuousTerm)
-  q_term = [concrete_term(term(terms), new_data[!, terms], CategoricalTerm) for terms ∈ q]
+  q_term = [concrete_term(term(terms), new_data[!, terms], q_type) for terms ∈ q]
   y_term_list = _dependent_variable(y_term, x_term)
   x_term_list = _indepedent_variable(x_term)
 
