@@ -1,9 +1,24 @@
 using ForestMensuration, CSV, DataFrames
 
-
 data = CSV.read("C:\\Users\\marco\\OneDrive\\Documents\\Programação\\dados_CSV\\AlturaDominante_vs_Idade.csv", DataFrame)
 
 reg = regression(:Hd, :idade, data)
+
+
+vol = CSV.read("C:\\Users\\marco\\OneDrive\\Documents\\Programação\\dados_CSV\\volume_por_idade.csv", DataFrame)
+
+reg2 = regression(:V, :DAP, :IDADE, vol, best=false);
+
+ct =  criteria_table(reg2);
+
+vol = CSV.read("C:\\Users\\marco\\OneDrive\\Documents\\Programação\\dados_CSV\\exemplo-volume-pinus.csv", DataFrame)
+
+
+reg2 = regression(:vcc, :h, :d, vol, best=false)
+
+ct =  criteria_table(reg2)
+
+
 
 qreg = regression(:Hd, :idade, data, :parcelas)
 

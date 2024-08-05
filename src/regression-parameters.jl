@@ -196,10 +196,18 @@ Calculate the null deviance for a vector of values.
 # Returns
 - `Float64`: The null deviance.
 """
+# function StatsBase.nulldeviance(x::Vector{<:Real})
+#   out = similar(x)
+#   @inbounds for i in eachindex(x)
+#     out[i] = abs2(x[i] - mean(x))
+#   end
+#   return sum(out)
+# end
 function StatsBase.nulldeviance(x::Vector{<:Real})
-  out = similar(x)
+  mean_x = mean(x)
+  out = Vector{Float64}(undef, length(x))
   @inbounds for i in eachindex(x)
-    out[i] = abs2(x[i] - mean(x))
+    out[i] = abs2(x[i] - mean_x)
   end
   return sum(out)
 end
@@ -380,8 +388,16 @@ function _criteria_parameters(fitted_model::FittedLinearModel) :: Matrix{Float64
   syx_in_percentage = round(√(deviance / dof_residual) / mean(fitted_model.data[!, 1]) * 100, digits = 2)
   r2 = 1 - deviance / nulldeviance(fitted_model.data[!, 1])
   adjr2 = round(1 - (1 - r2) * (nobs - 1) / (nobs - n_coef), digits = 4)
-  normal = ExactOneSampleKSTest(HypothesisTests.ksstats(residual, fit_mle(Normal, residual))...) |> p_result
-  homosced = WhiteTest([ones(nobs) ŷ], residual) |> p_result
+  normal = try
+      ExactOneSampleKSTest(HypothesisTests.ksstats(residual, fit_mle(Normal, residual))...) |> p_result
+    catch 
+      false
+  end
+  homosced = try
+    WhiteTest([ones(nobs) ŷ], residual) |> p_result
+  catch 
+    false
+  end
   parameters = [round(fitted_model.RMSE, digits = 4) syx_in_percentage adjr2 normal homosced]
   return parameters
 end
@@ -410,13 +426,46 @@ Create a criteria table for multiple fitted linear models.
 # Returns
 - `DataFrame`: The criteria table.
 """
+# function criteria_table(fitted_model::Vector{<:FittedLinearModel}) :: DataFrame
+#   ct = DataFrame(vcat(_criteria_parameters.(fitted_model)...), ["RMSE", "Syx%", "Adj. R²", "Normality", "Homoscedasticity"])
+#   insertcols!(ct, 1, "Adj. Model" => fitted_model)
+#   insertcols!(ct, 2, :Rank => .+(competerank(ct[!, 2]), map(i -> competerank(ct[!, i], rev = true), 4:6)...))
+#   sort!(ct, :Rank)
+#   return ct
+# end
 function criteria_table(fitted_model::Vector{<:FittedLinearModel}) :: DataFrame
-  ct = DataFrame(vcat(_criteria_parameters.(fitted_model)...), ["RMSE", "Syx%", "Adj. R²", "Normality", "Homoscedasticity"])
+  # Generate the criteria parameters for each model
+  criteria_params = _criteria_parameters.(fitted_model)
+  
+  # Create a DataFrame from the criteria parameters
+  ct = DataFrame(vcat(criteria_params...), ["RMSE", "Syx%", "Adj. R²", "Normality", "Homoscedasticity"])
+  
+  # Insert the models and calculate the ranks
   insertcols!(ct, 1, "Adj. Model" => fitted_model)
-  insertcols!(ct, 2, :Rank => .+(competerank(ct[!, 2]), map(i -> competerank(ct[!, i], rev = true), 4:6)...))
+  
+  # Calculate the ranks for each criterion
+  rmse_rank = competerank(ct[!, "RMSE"])
+  syx_rank = competerank(ct[!, "Syx%"])
+  adj_r2_rank = competerank(ct[!, "Adj. R²"], rev = true)
+  normality_rank = competerank(ct[!, "Normality"], rev = true)
+  homoscedasticity_rank = competerank(ct[!, "Homoscedasticity"], rev = true)
+  
+  # Combine ranks with weighted priorities (prioritize normality and homoscedasticity)
+  combined_rank = rmse_rank .+ syx_rank .+ adj_r2_rank .+ 10 * normality_rank .+ 10 * homoscedasticity_rank
+  
+  # Insert the combined rank into the DataFrame
+  insertcols!(ct, 2, :Rank => combined_rank)
+  
+  # Sort the DataFrame by rank
   sort!(ct, :Rank)
+  
   return ct
 end
+
+
+
+
+
 
 """
 Calculate the confidence intervals for a fitted linear model.

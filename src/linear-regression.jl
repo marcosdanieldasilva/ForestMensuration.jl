@@ -107,59 +107,59 @@ function _fit_regression!(fitted_models::Vector{FittedLinearModel}, y_term_list:
   model_matrix = Dict{MatrixTerm, Union{Matrix{<:Real}, Nothing}}()
 
   for y ∈ y_term_list
-  try
-    model_cols[y] = modelcols(y, data)
-  catch
-    model_cols[y] = nothing
-  end
+    try
+      model_cols[y] = modelcols(y, data)
+    catch
+      model_cols[y] = nothing
+    end
   end
 
   for x ∈ matrix_formulas
-  try
-    model_matrix[x] = modelmatrix(x, data)
-  catch
-    model_matrix[x] = nothing
-  end
+    try
+      model_matrix[x] = modelmatrix(x, data)
+    catch
+      model_matrix[x] = nothing
+    end
   end
 
   for (y, x) ∈ Iterators.product(y_term_list, matrix_formulas)
-  Y = model_cols[y]
-  X = model_matrix[x]
+    Y = model_cols[y]
+    X = model_matrix[x]
 
-  if Y === nothing || X === nothing
-    continue
-  end
-
-  try
-    # Calculate the regression coefficients
-    β = X'Y 
-    # Compute the Cholesky decomposition of X'X for optimization
-    chol = cholesky!(X'X) 
-    # Calculate the coefficients of the fitted regression
-    ldiv!(chol, β)
-    # Calculate the predicted values
-    mul!(ŷ, X, β)
-    # Calculate the residuals values
-    residual = Y - ŷ
-    # Number of predictor variables
-    p = size(X, 2)
-    # Degrees of freedom for residuals
-    dof_residuals = n - p
-    # Estimate the variance of residuals
-    σ² = (residual ⋅ residual) / dof_residuals 
-    # Calculate residuals according to the regression FunctionTerm, if applicable
-    if isa(y, FunctionTerm)
-    residual = y_observed - _predict(ŷ, x_observed, σ², nameof(y.f))
+    if Y === nothing || X === nothing
+      continue
     end
-    # Calculate the RMSE (Root Mean Squared Error)
-    RMSE = √((residual ⋅ residual) / n)
-    # fit the FormulaTerm
-    formula = FormulaTerm(y, x)
-    # Pass the fitted model to FittedLinearModel structure
-    push!(fitted_models, FittedLinearModel(formula, data, β, σ², RMSE, chol))
-  catch
-    # Handle exceptions silently
-  end
+
+    try
+      # Calculate the regression coefficients
+      β = X'Y 
+      # Compute the Cholesky decomposition of X'X for optimization
+      chol = cholesky!(X'X) 
+      # Calculate the coefficients of the fitted regression
+      ldiv!(chol, β)
+      # Calculate the predicted values
+      mul!(ŷ, X, β)
+      # Calculate the residuals values
+      residual = Y - ŷ
+      # Number of predictor variables
+      p = size(X, 2)
+      # Degrees of freedom for residuals
+      dof_residuals = n - p
+      # Estimate the variance of residuals
+      σ² = (residual ⋅ residual) / dof_residuals 
+      # Calculate residuals according to the regression FunctionTerm, if applicable
+      if isa(y, FunctionTerm)
+      residual = y_observed - _predict(ŷ, x_observed, σ², nameof(y.f))
+      end
+      # Calculate the RMSE (Root Mean Squared Error)
+      RMSE = √((residual ⋅ residual) / n)
+      # fit the FormulaTerm
+      formula = FormulaTerm(y, x)
+      # Pass the fitted model to FittedLinearModel structure
+      push!(fitted_models, FittedLinearModel(formula, data, β, σ², RMSE, chol))
+    catch
+      # Handle exceptions silently
+    end
   end
 end
 
@@ -180,17 +180,18 @@ Perform regression analysis.
 """
 function regression(y::S, x::S, data::AbstractDataFrame, q::S...; best::Union{Bool, Int}=true, effect::S=:additive, q_type=CategoricalTerm) where S <: Symbol
   if best < 0
-  throw(ArgumentError("best must be a positive integer or true/false"))
+    throw(ArgumentError("best must be a positive integer or true/false"))
   elseif !isempty(q)
-  effect ∈ (:additive, :interactive) || throw(ArgumentError("Invalid effect argument. Expected :additive or :interactive."))
-  q_type ∈ (CategoricalTerm, ContinuousTerm) || throw(ArgumentError("Invalid q_type argument. Expected CategoricalTerm or ContinuousTerm."))
+    effect ∈ (:additive, :interactive) || throw(ArgumentError("Invalid effect argument. Expected :additive or :interactive."))
+    q_type ∈ (CategoricalTerm, ContinuousTerm) || throw(ArgumentError("Invalid q_type argument. Expected CategoricalTerm or ContinuousTerm."))
   end
 
   new_data = dropmissing(data[:, [y, x, q...]])
 
   n, k = size(new_data)
+
   if n < k + 2
-  error("There are not enough data points to perform regression. At least $(k + 2) observations are required.")
+    error("There are not enough data points to perform regression. At least $(k + 2) observations are required.")
   end
 
   y_observed = new_data[!, y]
@@ -199,7 +200,7 @@ function regression(y::S, x::S, data::AbstractDataFrame, q::S...; best::Union{Bo
   x_term = concrete_term(term(x), x_observed, ContinuousTerm)
   q_term = [concrete_term(term(terms), new_data[!, terms], q_type) for terms ∈ q]
   y_term_list = _dependent_variable(y_term, x_term)
-  x_term_list = _indepedent_variable(x_term)
+  x_term_list = _independent_variable(x_term)
 
   matrix_formulas = Vector{MatrixTerm}(undef, length(x_term_list))
   _create_matrix_formulas!(matrix_formulas, x_term_list, q_term..., effect = effect)
@@ -210,8 +211,49 @@ function regression(y::S, x::S, data::AbstractDataFrame, q::S...; best::Union{Bo
   isempty(fitted_models) && error("Failed to fit any models")
 
   if best == 0
-  return fitted_models
+    return fitted_models
   else
-  return reduce(vcat, partialsort!(fitted_models, 1:best, by = x -> x.RMSE))
+    return reduce(vcat, partialsort!(fitted_models, 1:best, by = x -> x.RMSE))
+  end
+end
+
+function regression(y::S, x1::S, x2::S, data::AbstractDataFrame, q::S...; best::Union{Bool, Int}=true, effect::S=:additive, q_type=CategoricalTerm) where S <: Symbol
+  if best < 0
+    throw(ArgumentError("best must be a positive integer or true/false"))
+  elseif !isempty(q)
+    effect ∈ (:additive, :interactive) || throw(ArgumentError("Invalid effect argument. Expected :additive or :interactive."))
+    q_type ∈ (CategoricalTerm, ContinuousTerm) || throw(ArgumentError("Invalid q_type argument. Expected CategoricalTerm or ContinuousTerm."))
+  end
+
+  new_data = dropmissing(data[:, [y, x1, x2, q...]])
+
+  n, k = size(new_data)
+
+  if n < k + 2
+    error("There are not enough data points to perform regression. At least $(k + 2) observations are required.")
+  end
+
+  y_observed = new_data[!, y]
+  x1_observed = new_data[!, x1]
+  x2_observed = new_data[!, x2]
+  y_term = concrete_term(term(y), y_observed, ContinuousTerm)
+  x1_term = concrete_term(term(x1), x1_observed, ContinuousTerm)
+  x2_term = concrete_term(term(x2), x2_observed, ContinuousTerm)
+  q_term = [concrete_term(term(terms), new_data[!, terms], q_type) for terms ∈ q]
+  y_term_list = _dependent_variable(y_term)
+  x_term_list = _independent_variable(x1_term, x2_term)
+
+  matrix_formulas = Vector{MatrixTerm}(undef, length(x_term_list))
+  _create_matrix_formulas!(matrix_formulas, x_term_list, q_term..., effect = effect)
+
+  fitted_models = Vector{FittedLinearModel}()
+  _fit_regression!(fitted_models, y_term_list, matrix_formulas, new_data, y_observed, x1_observed)
+
+  isempty(fitted_models) && error("Failed to fit any models")
+
+  if best == 0
+    return fitted_models
+  else
+    return reduce(vcat, partialsort!(fitted_models, 1:best, by = x1 -> x1.RMSE))
   end
 end
