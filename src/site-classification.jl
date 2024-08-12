@@ -132,7 +132,7 @@ function site_table(fitted_model::FittedLinearModel, index_age::Real, hi::Real)
   new_column_names = [Symbol("S_$(s)") for s in names(site_table)[2:end]]
   rename!(site_table, [age; new_column_names])
   # Create the site plot
-  site_plot = plot(
+  site_plot = Plots.plot(
     repeated_ages, hdom_predict,
     group = categorical(repeated_sites, levels = sort(sites, rev=true)),
     xlabel = age,

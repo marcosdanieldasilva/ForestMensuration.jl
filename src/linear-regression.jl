@@ -241,7 +241,7 @@ function regression(y::S, x1::S, x2::S, data::AbstractDataFrame, q::S...; best::
   x2_term = concrete_term(term(x2), x2_observed, ContinuousTerm)
   q_term = [concrete_term(term(terms), new_data[!, terms], q_type) for terms ∈ q]
   y_term_list = _dependent_variable(y_term)
-  x_term_list = _independent_variable(x1_term, x2_term)
+  x_term_list = generate_combined_terms(x1_term, x2_term)
 
   matrix_formulas = Vector{MatrixTerm}(undef, length(x_term_list))
   _create_matrix_formulas!(matrix_formulas, x_term_list, q_term..., effect = effect)
@@ -256,4 +256,106 @@ function regression(y::S, x1::S, x2::S, data::AbstractDataFrame, q::S...; best::
   else
     return reduce(vcat, partialsort!(fitted_models, 1:best, by = x1 -> x1.RMSE))
   end
+end
+
+
+"""
+Removes non-significant terms from a fitted linear model's formula based on a p-value threshold.
+
+# Arguments
+- `fitted_model::FittedLinearModel`: The fitted linear model from which terms will be removed.
+- `p_threshold::Float64=0.05`: The p-value threshold for significance. Terms with p-values greater than this will be removed.
+
+# Returns
+- `MatrixTerm`: A new formula containing only the significant terms.
+
+# Example usage:
+- new_formula = remove_insignificant_terms(fitted_model)
+"""
+function _remove_insignificant_terms(fitted_model::FittedLinearModel, p_threshold::Float64=0.05)
+  # Get the original terms from the formula's right-hand side (predictor variables)
+  terms = fitted_model.formula.rhs.terms
+  # Check if there are any categorical (qualitative) terms in the model
+  has_qualitative = any(term -> term isa CategoricalTerm, terms)
+  # If there are categorical terms, issue a warning and return the original model
+  if has_qualitative
+    @warn "Model contains categorical variables. Removing insignificant terms based on p-value is not supported."
+    return fitted_model
+  end
+  # Extract the coefficient table from the fitted model
+  coefs = coef_table(fitted_model)
+  # Extract the p-values from the coefficient table
+  p_values = coefs[!, "Pr(>|t|)"]
+  # Initialize an array to store significant terms
+  significant_terms = Vector{ForestMensuration.MixTerm}()
+  # Iterate through the terms and their corresponding p-values
+  for (i, term) in enumerate(terms)
+    # Include the term if its p-value is less than or equal to the threshold
+    if p_values[i] <= p_threshold
+      push!(significant_terms, term)
+    end
+  end
+  # Return a sum of the significant terms, forming a new MatrixTerm
+  return MatrixTerm(sum(significant_terms))
+end
+
+"""
+Performs an optimized regression by removing non-significant terms and fitting a linear model.
+
+This function refines a given linear model by first removing predictor variables that do not meet a specified p-value threshold, and then fitting the model to the data. The function returns a new `FittedLinearModel` object that contains only the significant terms, optimized coefficients, and relevant statistics.
+
+# Arguments
+- `fitted_model::FittedLinearModel`: The initial fitted linear model to be refined.
+- `p_threshold::Float64=0.05`: The p-value threshold for determining the significance of terms. Default is 0.05.
+
+# Returns
+- `FittedLinearModel`: A new linear model fitted with only the significant predictors, including optimized coefficients and statistics.
+
+# Example usage:
+- new_model = refined_regression(fitted_model)
+"""
+function refined_regression(fitted_model::FittedLinearModel, p_threshold::Float64=0.05)
+  # Extract the data from the fitted model
+  data = fitted_model.data
+  # Extract the response variable (dependent variable) from the formula
+  y = fitted_model.formula.lhs
+  # Number of observations in the data
+  n = size(data, 1)
+  # Initialize a vector to store the predicted values
+  ŷ = similar(Vector{Float64}, n)
+  # Extract the observed response values
+  Y = modelcols(y, data)
+  # Remove non-significant terms based on the p-value threshold
+  x = _remove_insignificant_terms(fitted_model, p_threshold)
+  if x isa FittedLinearModel
+    return x
+  end
+  # Generate the model matrix for the significant terms
+  X = modelmatrix(x, data)
+  # Calculate the regression coefficients (β) using least squares
+  β = X'Y
+  # Perform Cholesky decomposition for optimization of X'X
+  chol = cholesky!(X'X)
+  # Solve the linear system to find the regression coefficients
+  ldiv!(chol, β)
+  # Compute the predicted values using the fitted model
+  mul!(ŷ, X, β)
+  # Calculate the residuals (differences between observed and predicted values)
+  residual = Y - ŷ
+  # Number of predictor variables in the model
+  p = size(X, 2)
+  # Degrees of freedom for residuals
+  dof_residuals = n - p
+  # Estimate the variance of residuals
+  σ² = (residual ⋅ residual) / dof_residuals
+  # Adjust the residuals if the response variable involves a transformation function
+  if isa(y, FunctionTerm)
+    residual = Y - _predict(ŷ, data[!, 2], σ², nameof(y.f))
+  end
+  # Calculate the Root Mean Squared Error (RMSE)
+  RMSE = √((residual ⋅ residual) / n)
+  # Construct the new formula with significant terms
+  formula = FormulaTerm(y, x)
+  # Return a new FittedLinearModel structure with the optimized results
+  return FittedLinearModel(formula, data, β, σ², RMSE, chol)
 end

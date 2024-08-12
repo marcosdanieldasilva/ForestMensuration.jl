@@ -69,6 +69,7 @@ module ForestMensuration
     nulldeviance,
     predict,
     r2,
+    refined_regression,
     regression,
     residuals,
     site_classification,

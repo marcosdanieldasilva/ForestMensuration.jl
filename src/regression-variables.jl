@@ -101,33 +101,33 @@ function _independent_variable(x_term::AbstractTerm) :: Vector{MixTerm}
     FunctionTerm(x -> x ^ 2, [x_term], :($(x_term) ^ 2)),
     FunctionTerm(log, [x_term], :(log($(x_term)))),
     FunctionTerm(x -> log(x) ^ 2, [x_term], :(log($(x_term)) ^ 2)),
-    FunctionTerm(x -> log(1 / x), [x_term], :(log(1 / $(x_term)))),
+    # FunctionTerm(x -> log(1 / x), [x_term], :(log(1 / $(x_term)))),
     FunctionTerm(x -> 1 / x, [x_term], :($(x_term) ^ -1)),
     FunctionTerm(x -> 1 / x ^ 2, [x_term], :($(x_term) ^ -2)),
 
     x_term + FunctionTerm(x -> x ^ 2, [x_term], :($(x_term) ^ 2)),
     x_term + FunctionTerm(log, [x_term], :(log($(x_term)))),
     x_term + FunctionTerm(x -> log(x) ^ 2, [x_term], :(log($(x_term)) ^ 2)),
-    x_term + FunctionTerm(x -> log(1 / x), [x_term], :(log(1 / $(x_term)))),
+    # x_term + FunctionTerm(x -> log(1 / x), [x_term], :(log(1 / $(x_term)))),
     x_term + FunctionTerm(x -> 1 / x, [x_term], :($(x_term) ^ -1)),
     x_term + FunctionTerm(x -> 1 / x ^ 2, [x_term], :($(x_term) ^ -2)),
 
     FunctionTerm(x -> x ^ 2, [x_term], :($(x_term) ^ 2)) + FunctionTerm(log, [x_term], :(log($(x_term)))),
     FunctionTerm(x -> x ^ 2, [x_term], :($(x_term) ^ 2)) + FunctionTerm(x -> log(x) ^ 2, [x_term], :(log($(x_term)) ^ 2)),
-    FunctionTerm(x -> x ^ 2, [x_term], :($(x_term) ^ 2)) + FunctionTerm(x -> log(1 / x), [x_term], :(log(1 / $(x_term)))),
+    # FunctionTerm(x -> x ^ 2, [x_term], :($(x_term) ^ 2)) + FunctionTerm(x -> log(1 / x), [x_term], :(log(1 / $(x_term)))),
     FunctionTerm(x -> x ^ 2, [x_term], :($(x_term) ^ 2)) + FunctionTerm(x -> 1 / x, [x_term], :($(x_term) ^ -1)),
 
     FunctionTerm(log, [x_term], :(log($(x_term)))) + FunctionTerm(x -> log(x) ^ 2, [x_term], :(log($(x_term)) ^ 2)),
-    FunctionTerm(log, [x_term], :(log($(x_term)))) + FunctionTerm(x -> log(1 / x), [x_term], :(log(1 / $(x_term)))),
+    # FunctionTerm(log, [x_term], :(log($(x_term)))) + FunctionTerm(x -> log(1 / x), [x_term], :(log(1 / $(x_term)))),
     FunctionTerm(log, [x_term], :(log($(x_term)))) + FunctionTerm(x -> 1 / x, [x_term], :($(x_term) ^ -1)),
     FunctionTerm(log, [x_term], :(log($(x_term)))) + FunctionTerm(x -> 1 / x ^ 2, [x_term], :($(x_term) ^ -2)),
 
-    FunctionTerm(x -> log(x) ^ 2, [x_term], :(log($(x_term)) ^ 2)) + FunctionTerm(x -> log(1 / x), [x_term], :(log(1 / $(x_term)))),
+    # FunctionTerm(x -> log(x) ^ 2, [x_term], :(log($(x_term)) ^ 2)) + FunctionTerm(x -> log(1 / x), [x_term], :(log(1 / $(x_term)))),
     FunctionTerm(x -> log(x) ^ 2, [x_term], :(log($(x_term)) ^ 2)) + FunctionTerm(x -> 1 / x, [x_term], :($(x_term) ^ -1)),
     FunctionTerm(x -> log(x) ^ 2, [x_term], :(log($(x_term)) ^ 2)) + FunctionTerm(x -> 1 / x ^ 2, [x_term], :($(x_term) ^ -2)),
 
-    FunctionTerm(x -> log(1 / x), [x_term], :(log(1 / $(x_term)))) + FunctionTerm(x -> 1 / x, [x_term], :($(x_term) ^ -1)),
-    FunctionTerm(x -> log(1 / x), [x_term], :(log(1 / $(x_term)))) + FunctionTerm(x -> 1 / x ^ 2, [x_term], :($(x_term) ^ -2)),
+    # FunctionTerm(x -> log(1 / x), [x_term], :(log(1 / $(x_term)))) + FunctionTerm(x -> 1 / x, [x_term], :($(x_term) ^ -1)),
+    # FunctionTerm(x -> log(1 / x), [x_term], :(log(1 / $(x_term)))) + FunctionTerm(x -> 1 / x ^ 2, [x_term], :($(x_term) ^ -2)),
 
     FunctionTerm(x -> 1 / x, [x_term], :($(x_term) ^ -1)) + FunctionTerm(x -> 1 / x ^ 2, [x_term], :($(x_term) ^ -2))
   ]
@@ -167,6 +167,30 @@ function _independent_variable(x1_term::AbstractTerm, x2_term::AbstractTerm) :: 
     for j in 1:n2
       combined_terms[k] = x1_terms[i] + x2_terms[j]
       k += 1
+    end
+  end
+
+  return combined_terms
+end
+
+function generate_combined_terms(x1_term::AbstractTerm, x2_term::AbstractTerm) :: Vector{MixTerm}
+
+  x1_terms = _independent_variable(x1_term)
+  x2_terms = _independent_variable(x2_term)
+
+  combined_terms = Vector{MixTerm}()
+
+  for x1 in x1_terms[1:6]
+    for x2 in x2_terms
+      push!(combined_terms, x1 + x2)
+      push!(combined_terms, x1 * x2)
+    end
+  end
+
+  for x2 in x2_terms[1:6]
+    for x1 in x1_terms
+      push!(combined_terms, x1 + x2)
+      push!(combined_terms, x1 * x2)
     end
   end
 
