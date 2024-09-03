@@ -13,70 +13,68 @@ Performs complex calculations with simple commands.
 Offers a user-friendly and intuitive interface.
 """
 module ForestMensuration
-  using CategoricalArrays, DataFrames, Distributions, LinearAlgebra, GLM, HypothesisTests,
-        Plots.PlotMeasures, StatsBase, StatsModels, StatsPlots, RecipesBase, RecipesPipeline, Tables
+  using
+    CategoricalArrays,
+    ColorTypes,
+    DataFrames,
+    Distributions,
+    GLM,
+    HypothesisTests,
+    LinearAlgebra,
+    PlotlyJS,
+    Plots,
+    Plots.PlotMeasures,
+    RecipesPipeline,
+    Reexport,
+    StatsBase,
+    StatsModels,
+    StatsPlots,
+    Tables
 
-  import StatsBase: dof_residual, dof, nobs, aicc, aic, bic, coef
+  import Plots: cgrad
+  import StatsBase: fit, Histogram
+
+  import StatsModels: asgn, missing_omit, Schema, TableRegressionModel
+
+  @reexport using GLM
 
   include("structs-consts.jl")
-  include("regression-variables.jl")
   include("linear-regression.jl")
+  include("prediction.jl")
   include("regression-parameters.jl")
+  include("criteria-functions.jl")
+  include("plot_regression.jl")
   include("frequency-tables.jl")
   include("cubage.jl")
   include("inventory-report.jl")
   include("simple-casual-sampling.jl")
   include("site-classification.jl")
   include("show.jl")
-  include("graph-analysis.jl")
+  # include("graph-analysis.jl")
 
   export
-    # StatsModels Terms
-    ContinuousTerm,
-    CategoricalTerm,
-    # Regression structures
-    FittedLinearModel,
-    # Cubage methods
+    # Regression
+    GroupedLinearModel,
+    TableRegressionModel,
+    regression,
+    prediction,
+    prediction!,
+    criteria_table,
+    criteria_selection,
+    plot_regression,
+    #Cubage
+    cubage,
     Smalian,
     Huber,
     Newton,
-    # Functions
-    adjr2,
-    aic,
-    aicc,
-    bark_factor,
-    bic,
-    coef,
-    coef_table,
-    confidence_interval,
-    criteria_table,
-    cubage,
-    deviance,
+    # Frequency functions
     diametric_table,
-    dispersion,
-    dof,
-    dof_residual,
-    fit_regression,
     frequency_table,
-    graph,
+    # Site classification
     hdom_classification,
-    homoscedasticity,
-    loglikelihood,
-    modelmatrix,
-    n_coef,
-    nobs,
-    normality,
-    nulldeviance,
-    predict,
-    r2,
-    refined_regression,
-    regression,
-    residuals,
     site_classification,
     site_table,
-    stderror,
-    syx,
-    syx_in_percentage,
+    # Forest Inventory
     simple_casual_sampling
 
 end

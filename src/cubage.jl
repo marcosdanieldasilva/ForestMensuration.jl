@@ -190,8 +190,10 @@ function cubage(method::Type{<:CubingMethod}, h::Vector{<:Real}, d::Vector{<:Rea
   
   if idx === nothing
     error("Value of dbh when h = $dbh not found.")
+  else
+    dbh = d[idx]
   end
-  
+
   # total height of the tree
   ht = h[end]
 
@@ -240,7 +242,7 @@ function cubage(method::Type{<:CubingMethod}, h::Vector{<:Real}, d::Vector{<:Rea
     vc = vc,
     vr = vr,
     vn = vn,
-    dbh = d[idx],
+    dbh = dbh,
     ht = ht,
     hc = hc,
     aff = aff,
@@ -248,41 +250,6 @@ function cubage(method::Type{<:CubingMethod}, h::Vector{<:Real}, d::Vector{<:Rea
     qf = qf
   )
 end
-
-# function cubage(method::Type{<:CubingMethod}, h::Vector{<:Real}, d::Vector{<:Real}; dbh::Float64=1.3) :: DataFrame
-#   # Find position where h = 1.3
-#   idx = findfirst(isequal(dbh), h)
-  
-#   if idx === nothing
-#     error("Value of dbh when h = $dbh not found.")
-#   end
-#   # diameter at basal height and total height of the tree
-#   dbh = d[idx]
-#   ht = h[end]
-#   hc = h[end - 1]
-#   # Calculate volumes
-#   v0 = cylinder_volume(h[begin], d[begin])
-#   vc = bole_volume(method, h, d)
-#   vn = cone_volume(ht - hc, d[end - 1])
-#   vt = v0 + vc + vn
-#   # Calculate the Form Factors
-#   aff = artificial_form_factor(vt, ht, dbh)
-#   nff = natural_form_factor(vt, ht, h, d)
-#   qf = quotient_form(ht, dbh, h, d)
-#   # Create DataFrame with results
-#   DataFrame(
-#     vt = vt,
-#     v0 = v0,
-#     vc = vc,
-#     vn = vn,
-#     dbh = dbh,
-#     ht = ht,
-#     hc = hc,
-#     aff = aff,
-#     nff = nff,
-#     qf = qf
-#   )
-# end
 
 """
 Calculate tree cubage including bark factor.

@@ -131,7 +131,7 @@ Performs simple random sampling for forest inventory with total area.
 - `total_area::Real`: Total area.
 - `e::Real=10`: Desired error margin (default is 10%).
 - `α::Real=0.95`: Confidence level (default is 95%).
-- `lg::Symbol=:pt`: Language for the report (default is Portuguese).
+- `lg::Symbol=:pt`: Language for the report (":pt" for Portuguese - default, ":en" for English).
 
 # Returns
 - `DataFrame`: Inventory report.

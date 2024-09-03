@@ -1,4 +1,191 @@
-using ForestMensuration, CSV, DataFrames
+using ForestMensuration
+
+using CSV, DataFrames
+
+df = CSV.read("C:\\Users\\marco\\OneDrive\\Documents\\Programação\\dados_CSV\\exemplo-hipso.csv", DataFrame)
+
+reg = regression(:ht, :dap, df)
+
+ct = criteria_table(reg)
+
+cs = criteria_selection(reg)
+
+plot_regression(cs)
+
+reg2 = regression(:ht, :dap, df, :regiao)
+
+ct2 = criteria_table(reg2)
+
+cs2 = criteria_selection(reg2)
+
+
+greg = regression(:ht, :dap, [:regiao], df)
+
+greg2 = regression(:ht, :dap, [:regiao, :talhao], df)
+
+
+
+greg2 = regression(:ht, :dap, :idade, [:regiao], df)
+
+greg3 = regression(:ht, :dap, :idade, [:regiao], df)
+
+greg4 = regression(:ht, :dap, :idade, [:regiao], df)
+
+greg5 = regression(:ht, :dap, :idade, [:regiao], df, :talhao)
+
+
+ct = criteria_table(reg)
+
+reg2 = regression(:ht, :dap, df, model_type=LinearModel)
+
+ct2 = criteria_table(reg2)
+
+cs = criteria_selection(reg2)
+
+
+function criteria_table(models::GroupedLinearModel, criteria::Symbol...; weight::Int=10)
+
+  allowed_fields = [:adjr2, :syx, :rmse, :mae, :aic, :significance, :normality, :homoscedasticity]
+
+  if isempty(criteria)
+    selected_criteria = allowed_fields
+  else
+    selected_criteria = Any[s for s in criteria]
+  end
+
+  if !issubset(Set(selected_criteria), Set(allowed_fields))
+    not_allowed = join(setdiff(selected_criteria, allowed_fields), ", :")
+    allowed_msg = "\nAllowed fields are: :" * join(allowed_fields, ", :")
+    throw(ArgumentError(":$not_allowed not allowed." * allowed_msg))
+  end
+
+  full_models = vcat(models, collect(models.grouped_models |> values))
+
+  # # Generate the criteria parameters for each model in the input vector
+  criteria_params = vcat(_criteria_parameters.(full_models)...)
+
+  # Create a DataFrame from the full criteria parameters
+  ct = DataFrame(criteria_params, allowed_fields)
+
+  # # Filter the DataFrame columns based on the selected criteria
+  ct = select(ct, selected_criteria)
+
+  # # # Insert the model objects into the DataFrame
+  insertcols!(ct, 1, "model" => full_models)
+  insertcols!(ct, 1, join(models.group_names, " ") => vcat("Full Model", collect(keys(models.grouped_models))...))
+  return ct
+  # # Calculate ranks for each criterion
+  # ranks = Dict()
+  # if :adjr2 in selected_criteria
+  #   ranks[:adjr2] = competerank(ct[!, "adjr2"], rev = true)
+  # end
+  # if :syx in selected_criteria
+  #   ranks[:syx] = competerank(ct[!, "syx"])
+  # end
+  # if :rmse in selected_criteria
+  #   ranks[:rmse] = competerank(ct[!, "rmse"])
+  # end
+  # if :mae in selected_criteria
+  #   ranks[:mae] = competerank(ct[!, "mae"])
+  # end
+  # if :aic in selected_criteria
+  #   ranks[:aic] = competerank(ct[!, "aic"])
+  # end
+  # if :significance in selected_criteria
+  #   ranks[:significance] = competerank(ct[!, "significance"], rev = true) * weight
+  # end
+  # if :normality in selected_criteria
+  #   ranks[:normality] = competerank(ct[!, "normality"], rev = true) * weight
+  # end
+  # if :homoscedasticity in selected_criteria
+  #   ranks[:homoscedasticity] = competerank(ct[!, "homoscedasticity"], rev = true) * weight
+  # end
+
+  # # Combine ranks into a single score
+  # combined_rank = sum([ranks[crit] for crit in selected_criteria])
+
+  # # Insert the combined rank into the DataFrame
+  # insertcols!(ct, 2, :rank => combined_rank)
+
+  # # Sort the DataFrame by the combined rank
+  # sort!(ct, :rank)
+
+  # geral_models = [grouped_model.general_regression, grouped_model.qualy_regression]
+  # geral_table = DataFrame(:name => ["General Model", "Qualy Model"], :model => geral_models)
+  # geral_table = innerjoin(geral_table, criteria_table(geral_models, criteria..., best=false, weight=weight), on=:model)
+
+  # grouped_models = vcat(models.grouped_models |> values |> collect)
+  # group_table = DataFrame(:model => grouped_models)
+  # insertcols!(group_table, 1, join(models.group_names, " ") => collect(keys(models.grouped_models)))
+  # group_table = innerjoin(group_table, criteria_table(grouped_models, criteria..., best=false, weight=weight), on=:model)
+
+  # return group_table
+end                       
+
+ct2 = criteria_table(reg)
+
+cs2 = criteria_selection(reg)
+
+reg2 = regression(:ht, :idade, :dap, df);
+
+ct2 = criteria_table(reg2);
+
+using StatsBase, Optim
+
+using StatsModels, LinearAlgebra
+
+function my_aic(model::StatsModels.TableRegressionModel)
+  # Number of observations in the model
+  n = nobs(model)
+  # Degrees of freedom for residuals
+  dof_resid = dof_residual(model)
+  # The actual observed values (response variable)
+  y = model.mf.data[1]
+  # Predicted values from the model
+  ŷ = prediction(model)
+  # Residuals: the difference between observed and predicted values
+  residual = y - ŷ
+  # Deviance: sum of squared residuals
+  devi = residual ⋅ residual
+  # Log-likelihood of the model
+  loglike = -n / 2 * (log(2π * devi / n) + 1)
+  # Akaike Information Criterion (AIC): a measure of model quality
+  AIC = -2 * loglike + 2 * dof_resid
+  return AIC
+
+end
+
+best = ct[1, 1]
+
+bic_glm(λ) = bic(glm(best.mf.f, df, Normal(), PowerLink(λ)));
+
+optimal_bic = optimize(bic_glm, -1.0, 1.0);
+
+round(optimal_bic.minimizer, digits = 5) # Optimal λ
+
+best_opt = glm(best.mf.f, df, Normal(), PowerLink(optimal_bic.minimizer)) # Best model
+
+round(optimal_bic.minimum, digits=5)
+
+
+aic_glm(λ) = my_aic(glm(best.mf.f, df, Normal(), PowerLink(λ)));
+
+optimal_aic = optimize(aic_glm, -1.0, 1.0);
+
+round(optimal_aic.minimizer, digits = 5) # Optimal λ
+
+best_opt2 = glm(best.mf.f, df, Normal(), PowerLink(optimal_aic.minimizer)) # Best model
+
+round(optimal_aic.minimum, digits=5)
+
+ct3 = criteria_table([best, best_opt, best_opt2])
+
+data = CSV.read("C:\\Users\\marco\\OneDrive\\Documents\\Programação\\dados_CSV\\AlturaDominante_vs_Idade.csv", DataFrame)
+
+reg = regression(:Hd, :idade, data)
+
+ct = criteria_table(reg)
+
 
 using StatsModels
 
@@ -8,17 +195,69 @@ tems = ForestMensuration.generate_combined_terms(d, ht)
 
 data = CSV.read("C:\\Users\\marco\\OneDrive\\Documents\\Programação\\dados_CSV\\AlturaDominante_vs_Idade.csv", DataFrame)
 
+reg = regression(:Hd, :idade, data, model_type=LinearModel)
+
+ct = criteria_table(reg)
+
+best = site_table(reg[1], 60, 2)
+
+
+
+reg2 = regression(:Hd, :idade, data)
+
+ct2 = criteria_table(reg2)
+
+best2 = site_table(reg2[1], 60, 2)
+
+
 reg = regression(:Hd, :idade, data)
 
+ct =  criteria_table(reg);
 
-vol = CSV.read("C:\\Users\\marco\\OneDrive\\Documents\\Programação\\dados_CSV\\volume_por_idade.csv", DataFrame)
-
-reg2 = regression(:V, :DAP, :IDADE, vol, best=false);
+reg2 = regression(:Hd, :idade, data, model_type=LinearModel)
 
 ct2 =  criteria_table(reg2);
 
-reg2 = regression(:IDADE, :DAP, :V, vol);
+best = criteria_table(reg)[end, 1]
 
+vol = CSV.read("C:\\Users\\marco\\OneDrive\\Documents\\Programação\\dados_CSV\\volume_por_idade.csv", DataFrame)
+
+reg = regression(:V, :DAP, vol)
+
+ct =  criteria_table(reg);
+
+
+reg2 = regression(:V, :DAP, vol, model_type=LinearModel)
+
+ct2 =  criteria_table(reg2);
+
+reg2 = regression(:V, :DAP, :IDADE, vol)
+
+ct2 =  criteria_table(reg2);
+
+reg3 = regression(:V, :DAP, :IDADE, vol)
+
+ct3 =  criteria_table(reg3);
+
+
+reg4 = regression(:V, :DAP, :IDADE, vol)
+
+ct4 =  criteria_table(reg4);
+
+
+best = reg2[2]
+
+X = best.mm.m;
+Y =  best.model.rr.y;
+
+
+fitted_model = GLM.fit(GeneralizedLinearModel, X, Y, Normal(), LogLink())
+
+fitted_model2 = GLM.fit(GeneralizedLinearModel, X, Y, Normal(), IdentityLink())
+
+using GLM
+
+reg_glm = glm(best.mf.f, vol, Normal(), LogLink())
 
 reg3 = regression(:V, :DAP, :IDADE, vol, :ARV, best=false);
 
@@ -72,11 +311,38 @@ site_table(reg, 60, 3)
 
 site_table(reg, 60)
 
-df = CSV.read("C:\\Users\\marco\\OneDrive\\Documents\\Programação\\dados_CSV\\exemplo-hipso.csv", DataFrame)
 
-reg = regression(:ht, :dap, df,best=false);
 
-sitio = regression(:hdom, :idade, :dap, df);
+ct2 = criteria_table(reg2)
+
+reg3 = regression(:ht, :dap, df);
+
+ct3 = criteria_table(reg3)
+
+df2 = CSV.read("C:\\Users\\marco\\OneDrive\\Documents\\Programação\\dados_CSV\\exemplo-inventario.csv", DataFrame);
+
+
+reg2 = regression(:ht, :dap, df2);
+
+ct2 = criteria_table(reg2);
+
+cs2 = criteria_selection(reg2)
+
+reg2 = regression(:ht, :dap, df2, model_type=Tables)
+
+ct2 = criteria_table(reg2);
+
+cs2 = criteria_selection(reg2)
+
+prediction!(cs2, df2)
+
+sort!(df2, :dap);
+scatter(df2.dap, df2.ht);
+plot!(df2.dap, df2.ht_predict)
+
+best = ct2[1, 1]
+
+sitio = regression(:hdom, :idade, :dap, d3);
 
 p = graph(reg)
 

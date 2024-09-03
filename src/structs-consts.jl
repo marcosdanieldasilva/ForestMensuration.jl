@@ -1,42 +1,4 @@
 """
-Represents a fitted linear model.
-
-# Fields
-- `formula::F`: The formula used for the model.
-- `data::D`: The data frame containing the data.
-- `β::Array{T, 1}`: The regression coefficients.
-- `σ²::T`: The variance of residuals.
-- `RMSE::T`: The root mean squared error.
-- `chol::C`: The Cholesky decomposition of X'X.
-"""
-struct FittedLinearModel{F <: FormulaTerm, D <: AbstractDataFrame, T <: Float64, C <: Cholesky{Float64, Matrix{Float64}}}
-  formula::F
-  data::D
-  β::Array{T, 1}
-  σ²::T
-  RMSE::T
-  chol::C
-end
-
-"""
-Creates a new `FittedLinearModel` instance.
-
-# Arguments
-- `formula::F`: The formula used for the model.
-- `data::D`: The data frame containing the data.
-- `β::Array{T, 1}`: The regression coefficients.
-- `σ²::T`: The variance of residuals.
-- `RMSE::T`: The root mean squared error.
-- `chol::C`: The Cholesky decomposition of X'X.
-
-# Returns
-- `FittedLinearModel{F, D, T, C}`: A new fitted linear model.
-"""
-function FittedLinearModel(formula::F, data::D, β::Array{T, 1}, σ²::T, RMSE::T, chol::C) where {F, D, T, C}
-  return FittedLinearModel{F, D, T, C}(formula, data, β, σ², RMSE, chol)
-end
-
-"""
 Union type representing a mixed term, which can be a single `AbstractTerm` or a tuple of `AbstractTerm`s.
 """
 const MixTerm = Union{AbstractTerm, Tuple{AbstractTerm, Vararg{AbstractTerm}}}
@@ -115,4 +77,10 @@ end
 struct SiteAnalysis
   site_table::DataFrame
   site_plot::Plots.Plot
+end
+
+struct GroupedLinearModel{T <: TableRegressionModel, St <: String, Sy <: Symbol, D <: AbstractDataFrame} <: RegressionModel
+  grouped_models::Dict{St, T}
+  group_names::Vector{Sy}
+  group_data::D
 end
