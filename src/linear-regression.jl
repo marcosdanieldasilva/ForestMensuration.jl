@@ -53,7 +53,7 @@ function _fit_regression!(fitted_models::Vector{TableRegressionModel},
       # Construct the formula
       formula = FormulaTerm(y, x)
       # Construct the ModelFrame
-      mf = ModelFrame(formula, null_schema, cols, LinearModel)
+      mf = ModelFrame(formula, null_schema, cols, type)
       # Construct the ModelMatrix
       mm = ModelMatrix(X, asgn(formula))
       # Pass the fitted_model to TableRegressionModel structure
