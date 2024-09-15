@@ -78,9 +78,3 @@ struct SiteAnalysis
   site_table::DataFrame
   site_plot::Plots.Plot
 end
-
-struct GroupedLinearModel{T <: TableRegressionModel, St <: String, Sy <: Symbol, D <: AbstractDataFrame} <: RegressionModel
-  grouped_models::Dict{St, T}
-  group_names::Vector{Sy}
-  group_data::D
-end

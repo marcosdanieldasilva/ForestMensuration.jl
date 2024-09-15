@@ -20,12 +20,3 @@ function show(io::IO, analysis::SiteAnalysis)
   show(io, analysis.site_table)
   display(analysis.site_plot)
 end
-
-function show(io::IO, models::GroupedLinearModel)
-  grouped_models = models.grouped_models
-  isempty(grouped_models) && return show(io, grouped_models)
-  summary(io, grouped_models), println(io, ":")
-  for (k, v) in grouped_models
-    println(io, "  $k => $v")
-  end
-end

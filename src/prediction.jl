@@ -39,14 +39,21 @@ function _prediction(model::TableRegressionModel,  x::Vector, ŷ::Vector)
   end
 end
 
+function _prediction(model::TableRegressionModel{<:GeneralizedLinearModel}, ŷ::Vector)
+
+  resid = model.model.rr.wrkresid
+  σ² = (resid ⋅ resid) / dof_residual(model)
+  meyer_factor = exp(σ² / 2)
+
+  return ŷ * meyer_factor
+
+end
+
 """
 The `prediction` function family provides a versatile way to generate predictions from regression models, supporting both individual and grouped models. It handles predictions on the original scale even if the dependent variable (`y`) has been transformed (e.g., `log(y)`), ensuring that any transformations applied during model fitting are correctly reversed, including the application of Meyer correction factors for logarithmic transformations.
 
 # Parameters:
-- `model`: 
-    The regression model(s) to be evaluated and compared. This parameter can accept:
-    - `TableRegressionModel`: A single linear regression model.
-    - `GroupedLinearModel`: A grouped linear model where different regression models are fitted for different subsets of data.
+- `model`: A single linear regression model.
 
 - `data`: 
     The input data for which predictions are needed. This parameter can be:
@@ -68,10 +75,12 @@ The `prediction` function family provides a versatile way to generate prediction
   y_pred = prediction(model, data)
   ```
 """
-@inline prediction(model::TableRegressionModel) = return model.mf.f.lhs isa FunctionTerm ? _prediction(model, model.mf.data[2], predict(model)) : predict(model)
+@inline prediction(model::TableRegressionModel) = return model.model isa GeneralizedLinearModel ? _prediction(model, predict(model)) : model.mf.f.lhs isa FunctionTerm ? _prediction(model, model.mf.data[2], predict(model)) : predict(model)
 
 function prediction(model::TableRegressionModel, data::AbstractDataFrame)
-  if model.mf.f.lhs isa FunctionTerm
+  if model.model isa GeneralizedLinearModel
+    return _prediction(model, predict(model, data))
+  elseif model.mf.f.lhs isa FunctionTerm
     x, nonmissings = missing_omit(columntable(data), model.mf.f.rhs)
     return _prediction(model, x[1], predict(model, data))
   else
@@ -81,37 +90,11 @@ end
 
 @inline prediction(model::TableRegressionModel, data::DataFrameRow) = prediction(model, DataFrame(data))
 
-function prediction(models::GroupedLinearModel, data::AbstractDataFrame)
-  # Initialize a vector to store predictions, allowing for missing values
-  predictions = Vector{Union{Missing, Real}}(missing, nrow(data))
-  grouped_models = models.grouped_models
-
-  for i in 1:nrow(data)
-    # Combine group keys into a single string to use as a dictionary key
-    group_key = join(data[i, models.group_names], " ")
-    if haskey(grouped_models, group_key)
-      # Retrieve the regression model specific to the group
-      group_model = grouped_models[group_key]
-      # If the predictor value is within the group's range, use the group-specific model
-      predictions[i] = prediction(group_model, data[i, :])[1]
-    else
-      predictions[i] = missing
-    end
-  end
-
-  return predictions
-end
-
-@inline prediction(models::GroupedLinearModel) = prediction(models, models.group_data)
-
 """
 The `prediction!` function computes predictions from a regression model and adds these predictions directly to the provided data frame as new columns. It is particularly useful in forest inventory data where not all trees have been measured for a specific variable, allowing the model to estimate these missing values.
 
 # Parameters:
-- `model`: 
-    The regression model(s) to be evaluated and compared. This parameter can accept:
-    - `TableRegressionModel`: A single linear regression model.
-    - `GroupedLinearModel`: A grouped linear model where different regression models are fitted for different subsets of data.
+- `model`: A single linear regression model.
 
 - `data`: 
     The data frame (`AbstractDataFrame`) containing the input data. The function will add new columns to this data frame.
@@ -135,12 +118,5 @@ function prediction!(model::TableRegressionModel, data::AbstractDataFrame)
   y = propertynames(model.mf.data)[1]
   col_names = Symbol(string(y, "_predict")), Symbol(string(y, "_real"))
   insertcols!(data, col_names[1] => prediction(model, data), makeunique = true)
-  insertcols!(data, col_names[2] => coalesce.(replace(data[!, y], 0.0 => missing), data[!, col_names[1]]), makeunique = true)
-end
-
-function prediction!(models::GroupedLinearModel, data::AbstractDataFrame)
-  y = propertynames(models.group_data)[1]
-  col_names = Symbol(string(y, "_predict")), Symbol(string(y, "_real"))
-  insertcols!(data, col_names[1] => prediction(models, data), makeunique = true)
   insertcols!(data, col_names[2] => coalesce.(replace(data[!, y], 0.0 => missing), data[!, col_names[1]]), makeunique = true)
 end

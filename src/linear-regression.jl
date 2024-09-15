@@ -8,10 +8,12 @@ function _create_matrix_formulas!(matrix_formulas::Vector{MatrixTerm}, x_term_li
   end
 end
 
-function _fit_regression!(fitted_models::Vector{TableRegressionModel{<:LinearModel}}, 
+function _fit_regression!(fitted_models::Vector{TableRegressionModel}, 
                           y_term_list::Vector{AbstractTerm}, 
                           matrix_formulas::Vector{MatrixTerm}, 
-                          cols::NamedTuple)
+                          cols::NamedTuple,
+                          type::Union{Type{LinearModel}, Type{GeneralizedLinearModel}}
+                          )
 
   model_cols = Dict{AbstractTerm, Union{Vector{<:Real}, Nothing}}()
   model_matrix = Dict{MatrixTerm, Union{Matrix{<:Real}, Nothing}}()
@@ -43,14 +45,18 @@ function _fit_regression!(fitted_models::Vector{TableRegressionModel{<:LinearMod
 
     try
       # Compute the regression
-      fitted_model = GLM.fit(LinearModel, X, Y)
+      if type == LinearModel
+        fitted_model = GLM.fit(LinearModel, X, Y)
+      else
+        fitted_model = GLM.fit(GeneralizedLinearModel, X, Y, Normal(), LogLink())
+      end
       # Construct the formula
       formula = FormulaTerm(y, x)
       # Construct the ModelFrame
       mf = ModelFrame(formula, null_schema, cols, LinearModel)
       # Construct the ModelMatrix
       mm = ModelMatrix(X, asgn(formula))
-      # Pass the fitted_model to TableRegressionModel{<:LinearModel} structure
+      # Pass the fitted_model to TableRegressionModel structure
       push!(fitted_models, TableRegressionModel(fitted_model, mf, mm))
     catch
       # Handle exceptions silently
@@ -59,7 +65,7 @@ function _fit_regression!(fitted_models::Vector{TableRegressionModel{<:LinearMod
 end
 
 """
-The `regression` function in Julia automatically generates and evaluates multiple simple regression models based on the provided data, including both continuous and categorical variables. This function significantly expands the traditional analysis typically applied in forest biometrics, such as the relationship between tree height and diameter at breast height (DBH), by automatically generating and evaluating 240 unique combinations of dependent and independent variable transformations. The function supports both standard and grouped regression models, allowing for flexible and comprehensive analysis.
+The `regression` function in Julia automatically generates and evaluates multiple simple regression models based on the provided data, including both continuous and categorical variables. This function significantly expands the traditional analysis typically applied in forest biometrics, such as the relationship between tree height and diameter at breast height (DBH), by automatically generating and evaluating 240 unique combinations of dependent and independent variable transformations.
 
 # Parameters:
 - `y::Symbol`: 
@@ -67,9 +73,6 @@ The `regression` function in Julia automatically generates and evaluates multipl
   
 - `x::Symbol`: 
     The independent variable (predictor variable) used to explain variations in the dependent variable. Often represents a measure like diameter at breast height (DBH) in forestry.
-
-- `g::Vector{Symbol}` (optional, for grouped regression):
-    A vector of symbols representing grouping variables. These are used to perform regression models for different subgroups within the data, based on the values of these variables.
 
 - `data::AbstractDataFrame`: 
     The dataset containing the variables for regression. The data frame must include all variables specified in `y`, `x`, and `q`, and it will automatically remove any rows with missing values before performing the regression.
@@ -112,8 +115,6 @@ This comprehensive set of models extends beyond the typical scope of forest biom
 
 - **Standard Regression**:
   The function performs a regression analysis by automatically generating a wide array of possible models. It creates multiple transformations of the dependent and independent variables, combining them into various model forms. The results can be evaluated, and the best models can be selected based on criteria such as adjusted R², RMSE, AIC, and more, using the `criteria_table` function.
-- **Grouped Regression**:
-  If grouping variables (`g`) are provided, the function performs a separate regression for each group defined by the combination of values in the grouping variables. This allows for detailed analysis within subpopulations of the data.
 
 - **Qualitative Variables**:
   The function allows the inclusion of categorical variables (`q`) in the regression model. These variables are automatically treated as factors and can be used to capture variations in the dependent variable that are related to these qualitative factors.
@@ -129,11 +130,9 @@ models = regression(:height, :diameter, data)
 # View the top models based on a specific criteria
 best_models = criteria_table(models, :adjr2, :rmse)
 
-# Perform grouped regression with qualitative variables
-grouped_model = regression(:height, :diameter, [:region], data, :species))
 ```
 """
-function regression(y::S, x::S, data::AbstractDataFrame, q::S...) where S <: Symbol
+function regression(y::S, x::S, data::AbstractDataFrame, q::S...; type::Union{Type{LinearModel}, Type{GeneralizedLinearModel}}=LinearModel) where S <: Symbol
 
   new_data = dropmissing(data[:, [y, x, q...]])
 
@@ -148,40 +147,23 @@ function regression(y::S, x::S, data::AbstractDataFrame, q::S...) where S <: Sym
   y_term = concrete_term(term(y), cols, ContinuousTerm)
   x_term = concrete_term(term(x), cols, ContinuousTerm)
   q_term = [concrete_term(term(terms), cols, CategoricalTerm) for terms ∈ q]
-  y_term_list = _dependent_variable(y_term, x_term)
+
+  if type == LinearModel
+    y_term_list = _dependent_variable(y_term, x_term)
+  else
+    y_term_list = _dependent_variable(y_term)
+  end
+
   x_term_list = _independent_variable(x_term)
 
   matrix_formulas = Vector{MatrixTerm}(undef, length(x_term_list))
   _create_matrix_formulas!(matrix_formulas, x_term_list, q_term...)
 
-  fitted_models = Vector{TableRegressionModel{<:LinearModel}}()
+  fitted_models = Vector{TableRegressionModel}()
 
-  _fit_regression!(fitted_models, y_term_list, matrix_formulas, cols)
+  _fit_regression!(fitted_models, y_term_list, matrix_formulas, cols, type)
 
   isempty(fitted_models) && error("Failed to fit any models")
 
   return fitted_models
-end
-
-function regression(y::S, x::S, g::Vector{S}, data::AbstractDataFrame, q::S...) where S <: Symbol
-  # Extract group attributes and initialize variables
-  groups = RecipesPipeline._extract_group_attributes(tuple(eachcol(data[:, g])...))
-  labels, idxs = getfield(groups, 1), getfield(groups, 2)
-  # Perform group-specific regressions
-  grouped_models = Dict{String, TableRegressionModel{<:LinearModel}}()
-  group_data = dropmissing(data[:, [y, x, g..., q...]])
-
-  for (i, label) in enumerate(labels)
-    if ismissing(q)
-      grouped_models[label] = criteria_selection(regression(y, x, group_data[idxs[i], :]))
-    else
-      try
-        grouped_models[label] = criteria_selection(regression(y, x, group_data[idxs[i], :], q...))
-      catch
-        grouped_models[label] = criteria_selection(regression(y, x, group_data[idxs[i], :]))
-      end
-    end
-  end
-  # Return the fitted model
-  return GroupedLinearModel(grouped_models, g, group_data)
 end

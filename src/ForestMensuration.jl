@@ -40,11 +40,13 @@ module ForestMensuration
 
   include("structs-consts.jl")
   include("linear-regression.jl")
+  include("multiple-linear-regression.jl")
   include("prediction.jl")
   include("regression-parameters.jl")
   include("criteria-functions.jl")
   include("plot_regression.jl")
   include("frequency-tables.jl")
+  include("dendrometric-averages.jl")
   include("cubage.jl")
   include("inventory-report.jl")
   include("simple-casual-sampling.jl")
@@ -54,13 +56,13 @@ module ForestMensuration
 
   export
     # Regression
-    GroupedLinearModel,
     TableRegressionModel,
     regression,
     prediction,
     prediction!,
     criteria_table,
     criteria_selection,
+    dendrometric_averages,
     plot_regression,
     #Cubage
     cubage,
