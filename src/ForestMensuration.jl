@@ -27,8 +27,7 @@ module ForestMensuration
     RecipesPipeline,
     Reexport,
     StatsBase,
-    StatsModels,
-    StatsPlots,
+    StatsModels
     Tables
 
   import Plots: cgrad
