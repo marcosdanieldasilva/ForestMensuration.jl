@@ -1,5 +1,5 @@
 function StatsBase.nulldeviance(x::Vector{<:Real})
-  mean_x = mean(x)
+  mean_x = Distributions.mean(x)
   out = Vector{Float64}(undef, length(x))
   @inbounds @simd for i in eachindex(x)
     out[i] = abs2(x[i] - mean_x)
@@ -10,7 +10,7 @@ end
 @inline p_result(test::HypothesisTests.HypothesisTest) = pvalue(test) > 0.05 ? true : false
 
 # Function to calculate various statistical criteria for evaluating regression models
-function _criteria_parameters(model::TableRegressionModel) :: Matrix{Float64}
+function _criteria_parameters(model::TableRegressionModel)::Matrix{Float64}
   # Number of observations in the model
   n = nobs(model)
   # Degrees of freedom for residuals
@@ -26,9 +26,9 @@ function _criteria_parameters(model::TableRegressionModel) :: Matrix{Float64}
   # Calculate the Root Mean Squared Error (RMSE)
   RMSE = √(devi / n)
   # Calculate the Mean Absolute Error (MAE)
-  MAE = mean(abs.(residual))
+  MAE = Distributions.mean(abs.(residual))
   # Standard error of the estimate (Syx) expressed as a percentage of the mean of y
-  syx_in_percentage = √(devi / dof_resid) / mean(y) * 100
+  syx_in_percentage = √(devi / dof_resid) / Distributions.mean(y) * 100
   # Coefficient of determination (R²)
   r_2 = 1 - devi / nulldeviance(y)
   # Adjusted R²: adjusted for the number of predictors in the model
@@ -44,8 +44,8 @@ function _criteria_parameters(model::TableRegressionModel) :: Matrix{Float64}
     else
       ApproximateOneSampleKSTest(HypothesisTests.ksstats(residual, fit_mle(Normal, residual))...) |> p_result
     end
-    catch
-      false
+  catch
+    false
   end
   # Test for coefficient significance
   cc = coef(model)
@@ -61,13 +61,13 @@ function _criteria_parameters(model::TableRegressionModel) :: Matrix{Float64}
 end
 
 function _calculate_ranks(ct::DataFrame, selected_criteria::Vector{Symbol})
-  
+
   n = size(ct, 1)
   ranks = Dict()
-  
+
   # Calculate ranks for each criterion
   if :adjr2 in selected_criteria
-    ranks[:adjr2] = competerank(ct[!, "adjr2"], rev = true)
+    ranks[:adjr2] = competerank(ct[!, "adjr2"], rev=true)
   end
   if :syx in selected_criteria
     ranks[:syx] = competerank(ct[!, "syx"])
@@ -83,17 +83,17 @@ function _calculate_ranks(ct::DataFrame, selected_criteria::Vector{Symbol})
   end
   if :normality in selected_criteria
     # Penalize non-normal models with a higher rank
-    normality_ranks = competerank(ct[!, "normality"], rev = true)
+    normality_ranks = competerank(ct[!, "normality"], rev=true)
     penalized_non_normal_ranks = [normality_ranks[i] == 1 ? 1 : normality_ranks[i] * n for i in 1:n]
     ranks[:normality] = penalized_non_normal_ranks
   end
   if :significance in selected_criteria
     # Penalize non-significance models with a higher rank
-    significance_ranks = competerank(ct[!, "significance"], rev = true)
+    significance_ranks = competerank(ct[!, "significance"], rev=true)
     penalized_non_significance_ranks = [significance_ranks[i] == 1 ? 1 : significance_ranks[i] * n for i in 1:n]
     ranks[:significance] = penalized_non_significance_ranks
   end
-  
+
   # Combine ranks into a single score
   combined_rank = sum([ranks[crit] for crit in selected_criteria])
 
@@ -140,7 +140,7 @@ The `criteria_table` function evaluates and ranks multiple regression models bas
   `criteria_table([model1, model2], :aic, :mae)`
 
 """
-function criteria_table(model::Vector{<:TableRegressionModel}, criteria::Symbol...; best::Union{Bool, Int}=10) :: DataFrame
+function criteria_table(model::Vector{<:TableRegressionModel}, criteria::Symbol...; best::Union{Bool,Int}=10)::DataFrame
 
   allowed_fields = [:adjr2, :syx, :rmse, :mae, :aic, :normality, :significance]
 
@@ -167,7 +167,7 @@ function criteria_table(model::Vector{<:TableRegressionModel}, criteria::Symbol.
 
   # Insert the model objects into the DataFrame
   insertcols!(ct, 1, "model" => model)
- 
+
   # Combine ranks into a single score
   combined_rank = _calculate_ranks(ct, selected_criteria)
 
@@ -183,14 +183,14 @@ function criteria_table(model::Vector{<:TableRegressionModel}, criteria::Symbol.
   elseif best < length(model)
     # If 'best' is less than the number of models, return the top 'best' models
     top_models = ct[1:best, 1]
-    return criteria_table(top_models, criteria...; best = false) # Re-run with selected models
+    return criteria_table(top_models, criteria...; best=false) # Re-run with selected models
   else
     # Otherwise, return the full DataFrame
     return ct
   end
 end
 
-@inline criteria_table(model::TableRegressionModel, criteria::Symbol...) :: DataFrame = criteria_table([model], criteria...)
+@inline criteria_table(model::TableRegressionModel, criteria::Symbol...)::DataFrame = criteria_table([model], criteria...)
 
 """
 The `criteria_selection` function evaluates and ranks a vector of regression models based on specified criteria, returning the best model according to the combined ranking.
@@ -216,4 +216,4 @@ The `criteria_selection` function evaluates and ranks a vector of regression mod
 - `TableRegressionModel`: 
     The best model based on the combined ranking of the specified criteria.
 """
-@inline criteria_selection(model::Vector{<:TableRegressionModel}, criteria::Symbol...) :: TableRegressionModel = criteria_table(model, criteria..., best = 5)[1, 1]
+@inline criteria_selection(model::Vector{<:TableRegressionModel}, criteria::Symbol...)::TableRegressionModel = criteria_table(model, criteria..., best=5)[1, 1]

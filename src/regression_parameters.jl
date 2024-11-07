@@ -49,7 +49,20 @@ Generates a list of transformed dependent variable term.
 # Returns
 - `Vector{AbstractTerm}`: A list of transformed dependent variable term.
 """
-@inline _dependent_variable(y_term::AbstractTerm) :: Vector{AbstractTerm} = return [y_term]
+function _dependent_variable(y_term::AbstractTerm) :: Vector{AbstractTerm}
+  return [
+    y_term,
+
+    FunctionTerm(log, [y_term], :(log($(y_term)))),
+    FunctionTerm(log_minus, [y_term], :(log_minus($(y_term) - 1.3))),
+    FunctionTerm(log1p, [y_term], :(log1p($(y_term)))),
+
+    FunctionTerm(one_by_y, [y_term], :(1/($(y_term)))),
+    FunctionTerm(one_by_y_minus, [y_term], :(1/($(y_term) - 1.3))),
+    FunctionTerm(one_by_sqrt, [y_term], :(1/√($(y_term)))),
+    FunctionTerm(one_by_sqrt_minus, [y_term], :(1/√($(y_term) - 1.3)))
+  ]
+end
 
 """
 Generates a list of transformed independent variable terms and their interactions.

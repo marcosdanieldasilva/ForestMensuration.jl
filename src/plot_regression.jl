@@ -69,7 +69,7 @@ function plot_regression(model::RegressionModel)
   resid = data[:, end-2]
   col_names = propertynames(data)
   x_qqline = [extrema(data[:, end-1])...]
-  quantx, quanty = quantile(data[:, end-1], [0.25, 0.75]), quantile(data[:, end], [0.25, 0.75])
+  quantx, quanty = Distributions.quantile(data[:, end-1], [0.25, 0.75]), Distributions.quantile(data[:, end], [0.25, 0.75])
   slp = diff(quanty) ./ diff(quantx)
   y_qqline = quanty .+ slp .* (x_qqline .- quantx)
   axis = attr(ticks = "outside", showline = true, linewidth = 2, linecolor = "black")

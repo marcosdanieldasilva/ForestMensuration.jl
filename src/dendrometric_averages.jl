@@ -4,11 +4,11 @@ function dendrometric_averages(d::Vector; area::Real=1.0) :: DataFrame
   d̅, s = mean_and_std(d)
   d₋, d₊ = d̅ - s, d̅ + s
   g = basal_area.(d)
-  dg = √((40000 * mean(g)) / π)
-  dw = quantile(d, 0.6)
-  dz = √((40000 * median(g)) / π)
+  dg = √((40000 * Distributions.mean(g)) / π)
+  dw = Distributions.quantile(d, 0.6)
+  dz = √((40000 * Distributions.median(g)) / π)
   n_tree = round(Int, (100 * area))
-  d₁₀₀ = n_tree < length(d) ? mean(partialsort(d, 1:n_tree, rev = true)) : NaN64
+  d₁₀₀ = n_tree < length(d) ? Distributions.mean(partialsort(d, 1:n_tree, rev = true)) : NaN64
   return DataFrame(d₋ = d₋, d̅ = d̅, dg = dg, dw = dw, dz = dz, d₁₀₀ = d₁₀₀, d₊ = d₊)
 end
 

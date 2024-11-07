@@ -41,9 +41,9 @@ Calculates the required sample size for an infinite population using an iterativ
 function _infinite_population(cv::Real, ni::Real, e::Real, α::Real; max_iterations::Int=1000) :: Int64
   iteration = 0
   while iteration < max_iterations
-    Ttab1 = -quantile(TDist(ni - 1), (1 - α) / 2)
+    Ttab1 = -Distributions.quantile(TDist(ni - 1), (1 - α) / 2)
     iter1 = _infinite_sample(Ttab1, cv, e)
-    Ttab2 = -quantile(TDist(iter1 - 1), (1 - α) / 2)
+    Ttab2 = -Distributions.quantile(TDist(iter1 - 1), (1 - α) / 2)
     iter2 = _infinite_sample(Ttab2, cv, e)
     if round(ni, digits = 3) == round(iter1, digits = 3) || round(ni, digits = 3) == round(iter2, digits = 3)
       return ceil(Integer, ni)
@@ -71,9 +71,9 @@ Calculates the required sample size for a finite population using an iterative a
 function _finite_population(cv::Real, ni::Real, N::Int, e::Real, α::Real; max_iterations::Int=1000) :: Int64
   iteration = 0
   while iteration < max_iterations
-    Ttab1 = -quantile(TDist(ni - 1), (1 - α) / 2)
+    Ttab1 = -Distributions.quantile(TDist(ni - 1), (1 - α) / 2)
     iter1 = _finite_sample(Ttab1, cv, e, N)
-    Ttab2 = -quantile(TDist(iter1 - 1), (1 - α) / 2)
+    Ttab2 = -Distributions.quantile(TDist(iter1 - 1), (1 - α) / 2)
     iter2 = _finite_sample(Ttab2, cv, e, N)
     if round(ni, digits = 3) == round(iter1, digits = 3) || round(ni, digits = 3) == round(iter2, digits = 3)
       return ceil(Integer, ni)
@@ -105,17 +105,17 @@ function simple_casual_sampling(volume::Vector{<:Real}, plot_area::Real, total_a
   N = round(Integer, total_area / plot_area)
   n = length(volume)
   f = 1 - (n / N)
-  x̅ = mean(volume)
+  x̅ = Distributions.mean(volume)
   cv = variation(volume) * 100
-  Ttab = -quantile(TDist(n - 1), (1 - α) / 2)
+  Ttab = -Distributions.quantile(TDist(n - 1), (1 - α) / 2)
   if f >= 0.98 || plot_area == 1.0
     population = lg == :pt ? "infinita" : "infinite"
-    s²x̅ = var(volume) / n
+    s²x̅ = Distributions.var(volume) / n
     sx̅ = √s²x̅
     required_plots = _infinite_population(cv, n, e, α)
   else
     population = lg == :pt ? "finita" : "finite"
-    s²x̅ = (var(volume) / n) * f
+    s²x̅ = (Distributions.var(volume) / n) * f
     sx̅ = √s²x̅
     required_plots = _finite_population(cv, n, N, e, α)
   end
@@ -142,12 +142,12 @@ function simple_casual_sampling(volume::Vector{<:Real}, total_area::Real; e::Rea
   end
   N = total_area
   n = length(volume)
-  x̅ = mean(volume)
+  x̅ = Distributions.mean(volume)
   cv = variation(volume) * 100
-  Ttab = -quantile(TDist(n - 1), (1 - α) / 2)
+  Ttab = -Distributions.quantile(TDist(n - 1), (1 - α) / 2)
   f = NaN64
   population = lg == :pt ? "infinita" : "infinite"
-  s²x̅ = var(volume) / n
+  s²x̅ = Distributions.var(volume) / n
   sx̅ = √s²x̅
   required_plots = _infinite_population(cv, n, e, α)
   missing_plots = n > required_plots ? 0 : required_plots - n

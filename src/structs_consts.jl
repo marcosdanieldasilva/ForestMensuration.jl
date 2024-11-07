@@ -9,6 +9,11 @@ Represents an intercept term for linear models.
 const β0 = InterceptTerm{true}()
 
 """
+Represents a default schema used for modeling operations.
+"""
+const mySchema = Schema()
+
+"""
 Abstract type representing a method for cubing (calculating volume).
 """
 abstract type CubingMethod end
@@ -58,20 +63,6 @@ Newton Method:
   - l = length.
 """
 abstract type Newton <: CubingMethod end
-
-"""
-Represents a report for stratified sampling in forest inventory.
-
-# Fields
-- `anova::AbstractDataFrame`: ANOVA table.
-- `auxiliary_table::AbstractDataFrame`: Auxiliary table with additional statistics.
-- `result_table::AbstractDataFrame`: Result table with final estimates.
-"""
-struct StratifiedReport
-  anova::AbstractDataFrame
-  auxiliary_table::AbstractDataFrame
-  result_table::AbstractDataFrame
-end
 
 # Define SiteAnalysis struct to store the analysis results
 struct SiteAnalysis

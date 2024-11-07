@@ -1,65 +1,63 @@
+function _create_matrix_formulas!(matrix_formulas::Vector{MatrixTerm}, x_term_list::Vector{MixTerm})
+  @inbounds for (k, x) ∈ enumerate(x_term_list)
+    matrix_formulas[k] = MatrixTerm(β0 + x)
+  end
+end
+
 function _create_matrix_formulas!(matrix_formulas::Vector{MatrixTerm}, x_term_list::Vector{MixTerm}, q_term::AbstractTerm...)
-  for (k, x) ∈ enumerate(x_term_list)
-    if isempty(q_term)
-      matrix_formulas[k] = MatrixTerm(β0 + x)
-    else
-      matrix_formulas[k] = MatrixTerm(β0 + x + sum(q_term))
-    end
+  @inbounds for (k, x) ∈ enumerate(x_term_list)
+    matrix_formulas[k] = MatrixTerm(β0 + x + sum(q_term))
   end
 end
 
 function _fit_regression!(fitted_models::Vector{TableRegressionModel}, 
                           y_term_list::Vector{AbstractTerm}, 
                           matrix_formulas::Vector{MatrixTerm}, 
-                          cols::NamedTuple,
-                          type::Union{Type{LinearModel}, Type{GeneralizedLinearModel}}
-                          )
+                          cols::NamedTuple)
 
+  # Dictionary to store model column data for each y term
   model_cols = Dict{AbstractTerm, Union{Vector{<:Real}, Nothing}}()
+  
+  # Dictionary to store model matrix data for each matrix term
   model_matrix = Dict{MatrixTerm, Union{Matrix{<:Real}, Nothing}}()
-  null_schema = Schema()
 
-  for y ∈ y_term_list
-    try
-      model_cols[y] = modelcols(y, cols)
-    catch
-      model_cols[y] = nothing
-    end
+  # Precompute model columns for each y term in y_term_list using modelcols function
+  @inbounds for y ∈ y_term_list
+    model_cols[y] = try modelcols(y, cols) catch nothing end
   end
 
-  for x ∈ matrix_formulas
-    try
-      model_matrix[x] = modelmatrix(x, cols)
-    catch
-      model_matrix[x] = nothing
-    end
+  # Precompute model matrices for each x term (matrix formulas) using modelmatrix function
+  @inbounds for x ∈ matrix_formulas
+    model_matrix[x] = try modelmatrix(x, cols) catch nothing end
   end
 
-  for (y, x) ∈ Iterators.product(y_term_list, matrix_formulas)
-    Y = model_cols[y]
-    X = model_matrix[x]
+  # Loop over all combinations of y terms and matrix terms
+  @inbounds for (y, x) ∈ Iterators.product(y_term_list, matrix_formulas)
+    Y = model_cols[y]  # Extract precomputed columns for y
+    X = model_matrix[x]  # Extract precomputed matrix for x
 
+    # Skip if either Y or X is missing (nothing)
     if Y === nothing || X === nothing
       continue
     end
 
     try
-      # Compute the regression
-      if type == LinearModel
-        fitted_model = GLM.fit(LinearModel, X, Y)
-      else
-        fitted_model = GLM.fit(GeneralizedLinearModel, X, Y, Normal(), LogLink())
-      end
-      # Construct the formula
+      # Perform linear regression using GLM.fit
+      fitted_model = GLM.fit(LinearModel, X, Y)
+      
+      # Create a formula combining y and x terms
       formula = FormulaTerm(y, x)
-      # Construct the ModelFrame
-      mf = ModelFrame(formula, null_schema, cols, type)
-      # Construct the ModelMatrix
+      
+      # Create a ModelFrame object to store schema and columns for the model
+      mf = ModelFrame(formula, mySchema, cols, LinearModel)
+      
+      # Create a ModelMatrix object based on the formula
       mm = ModelMatrix(X, asgn(formula))
-      # Pass the fitted_model to TableRegressionModel structure
+      
+      # Store the fitted model along with its associated data in TableRegressionModel
       push!(fitted_models, TableRegressionModel(fitted_model, mf, mm))
     catch
-      # Handle exceptions silently
+      # Handle any errors silently during model fitting
     end
   end
 end
@@ -132,7 +130,7 @@ best_models = criteria_table(models, :adjr2, :rmse)
 
 ```
 """
-function regression(y::S, x::S, data::AbstractDataFrame, q::S...; type::Union{Type{LinearModel}, Type{GeneralizedLinearModel}}=LinearModel) where S <: Symbol
+function regression(y::S, x::S, data::AbstractDataFrame, q::S...) where S <: Symbol
 
   new_data = dropmissing(data[:, [y, x, q...]])
 
@@ -148,20 +146,17 @@ function regression(y::S, x::S, data::AbstractDataFrame, q::S...; type::Union{Ty
   x_term = concrete_term(term(x), cols, ContinuousTerm)
   q_term = [concrete_term(term(terms), cols, CategoricalTerm) for terms ∈ q]
 
-  if type == LinearModel
-    y_term_list = _dependent_variable(y_term, x_term)
-  else
-    y_term_list = _dependent_variable(y_term)
-  end
-
+  y_term_list = _dependent_variable(y_term, x_term)
+  
   x_term_list = _independent_variable(x_term)
 
   matrix_formulas = Vector{MatrixTerm}(undef, length(x_term_list))
-  _create_matrix_formulas!(matrix_formulas, x_term_list, q_term...)
+
+  isempty(q_term) ? _create_matrix_formulas!(matrix_formulas, x_term_list) : _create_matrix_formulas!(matrix_formulas, x_term_list, q_term...)
 
   fitted_models = Vector{TableRegressionModel}()
 
-  _fit_regression!(fitted_models, y_term_list, matrix_formulas, cols, type)
+  _fit_regression!(fitted_models, y_term_list, matrix_formulas, cols)
 
   isempty(fitted_models) && error("Failed to fit any models")
 
