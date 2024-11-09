@@ -163,8 +163,9 @@ Where:
 @inline function artificial_form_factor(vt::Real, ht::Real, dbh::Real)::Float64
   if vt <= 0
     throw(ArgumentError("Volume must be positive."))
+  else
+    return vt / cylinder_volume(ht, dbh)
   end
-  return vt / cylinder_volume(ht, dbh)
 end
 
 """
@@ -213,7 +214,7 @@ Similar to the form factor, the volume of a tree, with or without bark, can be o
 # Returns
 - `Float64`: The form quotient.
 """
-@inline function quotient_form(ht::Real, dbh::Real, h::Vector{<:Real}, d::Vector{<:Real})::Float64 
+@inline function quotient_form(ht::Real, dbh::Real, h::Vector{<:Real}, d::Vector{<:Real})::Float64
   if dbh <= 0
     throw(ArgumentError("Diameter must be positive."))
   end
