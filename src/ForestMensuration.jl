@@ -60,7 +60,6 @@ export
   prediction!,
   criteria_table,
   criteria_selection,
-  dendrometric_averages,
   plot_regression,
   #Cubage
   artificial_form_factor,
@@ -74,7 +73,9 @@ export
   Smalian,
   Huber,
   Newton,
-  # Frequency functions
+  # Frequency and Statistic functions
+  basal_area,
+  dendrometric_averages,
   diametric_table,
   frequency_table,
   # Site classification

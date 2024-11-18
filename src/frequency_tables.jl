@@ -1,47 +1,34 @@
-"""
-Calculates the number of classes using Sturges' formula.
-
+# Calculates the number of classes using Sturges' formula.
 # Arguments
-- `n::Int`: The number of observations.
-
+# - `n::Int`: The number of observations.
 # Returns
-- `Int`: The number of classes.
-"""
-_sturges(n::Int) = ceil(Integer, log2(n)) + 1
+# - `Int`: The number of classes.
+_sturges(n::Int) = ceil(Int, log2(n)) + 1
 
-"""
-Calculates the class center for a given value and class width.
 
+# Calculates the class center for a given value and class width.
 # Arguments
-- `x::Real`: The value.
-- `hi::Real`: The class width.
-
+# - `x::Real`: The value.
+# - `hi::Real`: The class width.
 # Returns
-- `Real`: The class center.
-"""
+# - `Real`: The class center.
 _class_center(x::Real, hi::Real) = round(x / hi) * hi + (hi / 2)
 
-"""
-Calculates the amplitude (range) of a vector of values.
 
+# Calculates the amplitude (range) of a vector of values.
 # Arguments
-- `x::Vector`: The vector of values.
-
+# - `x::Vector`: The vector of values.
 # Returns
-- `Real`: The amplitude (range).
-"""
+# - `Real`: The amplitude (range).
 _amplitude(x::Vector) = maximum(x) - minimum(x)
 
-"""
-Calculates the class breadth (width) for a given amplitude and number of classes.
 
+# Calculates the class breadth (width) for a given amplitude and number of classes.
 # Arguments
-- `h::Real`: The amplitude.
-- `k::Int`: The number of classes.
-
+# - `h::Real`: The amplitude.
+# - `k::Int`: The number of classes.
 # Returns
-- `Real`: The class breadth (width).
-"""
+# - `Real`: The class breadth (width).
 function _class_breadth(h::Real, k::Int)
   hi = h / k
   log_hi = log10(hi)
@@ -74,18 +61,17 @@ function _class_breadth(h::Real, k::Int)
   end
 end
 
-"""
-Calculates the simple frequency of unique values in a vector.
 
+# Calculates the simple frequency of unique values in a vector.
 # Arguments
-- `x::Vector`: The vector of values.
-
+# - `x::Vector`: The vector of values.
 # Returns
-- `Vector`: The frequency of each unique value.
-"""
+# - `Vector`: The frequency of each unique value.
 _simple_frequency(x::Vector) = map(i -> count(==(i), x), unique(x) |> sort)
 
 """
+  frequency_table(x::Vector{<:Real}, hi::Real)
+
 Creates a frequency table for a vector of values given a class width.
 
 # Arguments
@@ -95,7 +81,7 @@ Creates a frequency table for a vector of values given a class width.
 # Returns
 - `DataFrame`: A DataFrame containing the frequency table.
 """
-function frequency_table(x::Vector{<:Real}, hi::Real) :: DataFrame
+function frequency_table(x::Vector{<:Real}, hi::Real)
   n = length(x)
   cc = _class_center.(x, hi)
   Xi = unique(cc) |> sort
@@ -105,10 +91,12 @@ function frequency_table(x::Vector{<:Real}, hi::Real) :: DataFrame
   Fi = cumsum(fi)
   fri = (fi ./ n) .* 100
   Fri = cumsum(fri)
-  DataFrame(LI = LI, Xi = Xi, LS = LS, fi = fi, Fi = Fi, fri = fri, Fri = Fri)
+  DataFrame(LI=LI, Xi=Xi, LS=LS, fi=fi, Fi=Fi, fri=fri, Fri=Fri)
 end
 
 """
+  frequency_table(x::Vector{<:Real})
+
 Creates a frequency table for a vector of values.
 
 # Arguments
@@ -125,6 +113,8 @@ function frequency_table(x::Vector{<:Real})
 end
 
 """
+  frequency_table(g::Symbol, x::Symbol, data::AbstractDataFrame)
+
 Creates a frequency table for grouped data in a DataFrame.
 
 # Arguments
@@ -135,13 +125,15 @@ Creates a frequency table for grouped data in a DataFrame.
 # Returns
 - `DataFrame`: A DataFrame containing the frequency table for each group.
 """
-function frequency_table(g::S, x::S, data::AbstractDataFrame) where S <: Symbol
+function frequency_table(g::Symbol, x::Symbol, data::AbstractDataFrame)
   combine(groupby(data, g)) do df
     frequency_table(df[:, x])
   end
 end
 
 """
+  frequency_table(g::Symbol, x::Symbol, hi::Real, data::AbstractDataFrame)
+
 Creates a frequency table for grouped data in a DataFrame with a specified class width.
 
 # Arguments
@@ -153,13 +145,15 @@ Creates a frequency table for grouped data in a DataFrame with a specified class
 # Returns
 - `DataFrame`: A DataFrame containing the frequency table for each group.
 """
-function frequency_table(g::S, x::S, hi::Real, data::AbstractDataFrame) where S <: Symbol
+function frequency_table(g::Symbol, x::Symbol, hi::Real, data::AbstractDataFrame)
   combine(groupby(data, g)) do df
     frequency_table(df[:, x], hi)
   end
 end
 
 """
+  diametric_table(x::Vector{<:Real}, hi::Real; plot_area::Real=1.0)
+
 Creates a diametric table for a vector of values given a class width and plot area.
 
 # Arguments
@@ -172,7 +166,7 @@ Creates a diametric table for a vector of values given a class width and plot ar
 """
 function diametric_table(x::Vector{<:Real}, hi::Real; plot_area::Real=1.0)
   ftable = frequency_table(x, hi)
-  ftable.g = (π / 40000) .* ftable.Xi.^2
+  ftable.g = (π / 40000) .* ftable.Xi .^ 2
   ftable.ng = ftable.fi .* ftable.g
   ftable.∑ng = cumsum(ftable.ng)
   if plot_area != 1.0
@@ -185,6 +179,8 @@ function diametric_table(x::Vector{<:Real}, hi::Real; plot_area::Real=1.0)
 end
 
 """
+  diametric_table(x::Vector{<:Real}; plot_area::Real=1.0
+
 Creates a diametric table for a vector of values.
 
 # Arguments
@@ -202,6 +198,8 @@ function diametric_table(x::Vector{<:Real}; plot_area::Real=1.0)
 end
 
 """
+  diametric_table(g::Symbol, x::Symbol, data::AbstractDataFrame; plot_area::Real=1.0)
+
 Creates a diametric table for grouped data in a DataFrame.
 
 # Arguments
@@ -213,13 +211,15 @@ Creates a diametric table for grouped data in a DataFrame.
 # Returns
 - `DataFrame`: A DataFrame containing the diametric table for each group.
 """
-function diametric_table(g::S, x::S, data::AbstractDataFrame; plot_area::Real=1.0) where S <: Symbol
+function diametric_table(g::Symbol, x::Symbol, data::AbstractDataFrame; plot_area::Real=1.0)
   combine(groupby(data, g)) do df
     diametric_table(df[:, x], plot_area=plot_area)
   end
 end
 
 """
+  diametric_table(g::Symbol, x::Symbol, hi::Real, data::AbstractDataFrame; plot_area::Real=1.0)
+  
 Creates a diametric table for grouped data in a DataFrame with a specified class width.
 
 # Arguments
@@ -232,7 +232,7 @@ Creates a diametric table for grouped data in a DataFrame with a specified class
 # Returns
 - `DataFrame`: A DataFrame containing the diametric table for each group.
 """
-function diametric_table(g::S, x::S, hi::Real, data::AbstractDataFrame; plot_area::Real=1.0) where S <: Symbol
+function diametric_table(g::Symbol, x::Symbol, hi::Real, data::AbstractDataFrame; plot_area::Real=1.0)
   combine(groupby(data, g)) do df
     diametric_table(df[:, x], hi, plot_area=plot_area)
   end

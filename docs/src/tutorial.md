@@ -1,4 +1,4 @@
-# Tutorial
+# Getting Started
 
 ## Computing the [`cubage`](@ref)
 
@@ -32,7 +32,7 @@ We utilize the function cubage to calculate cubage for multiple trees. The funct
 
 ```@example ex_cub_02
 using ForestMensuration # hide
-using DataFrames 
+using DataFrames
 
 data = DataFrame(
     tree = [148, 148, 148, 148, 148, 148, 148, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222, 222],
@@ -49,3 +49,48 @@ Additionally, bark thickness values can be provided to calculate bark factors an
 ```@example ex_cub_02
 cubage(Huber, :tree, :h, :d, :bark, data)
 ```
+
+## Fitting the [`regression`](@ref)
+
+### Adjusting a Hypsometric Relationship
+
+The regression function in ForestMensuration.jl is designed to explore multiple transformations and model combinations between two quantitative variables. In forestry, this function can be particularly useful for assessing relationships such as height (h) in function of diameter at breast height (dbh), as it automatically generates 240 unique combinations of transformations for both dependent and independent variables.
+
+By analyzing a wide range of transformations, including logarithmic, inverse, and square root forms, the regression function allows for a comprehensive assessment of potential relationships in your data, aiding in the selection of the best-fit model.
+
+```@example regression_data
+using ForestMensuration
+using DataFrames
+
+# Full dataset with 100 values, 3 plots
+data = DataFrame(
+    h = [35.2, 34.5, 28.8, 28.5, 33.5, 29.5, 28.4, 30.4, 33.0, 31.0,
+         24.8, 36.9, 34.0, 28.2, 28.9, 31.5, 28.0, 29.5, 34.6, 29.6,
+    ],
+    dbh = [42.0, 25.0, 33.5, 21.3, 27.0, 24.0, 23.3, 39.0, 42.0, 42.5,
+           23.0, 46.0, 39.0, 34.0, 26.5, 41.0, 31.3, 30.5, 30.5, 28.5
+    ]
+)
+
+# Performing the regression analysis on the full dataset
+# Here, we analyze the relationship between height (h) and diameter (dbh)
+models = regression(:h, :dbh, data)
+
+```
+
+### Viewing the top models based on specific criteria
+
+```@example regression_data
+best_models = criteria_table(models, :adjr2, :rmse)
+
+# Chossing as especific criteria
+best_models = criteria_table(models, :adjr2, :rmse)
+```
+
+### Regression Selection Criteria [`criteria_table`](@ref)
+
+### Site Class
+
+## Frequency and Diametric Tables
+
+## Inventory Report

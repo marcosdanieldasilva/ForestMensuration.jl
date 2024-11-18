@@ -1,14 +1,5 @@
-```@meta
-CurrentModule = ForestMensuration
-```
-
-# ForestMensuration
-
-Documentation for [ForestMensuration](https://github.com/marcosdanieldasilva/ForestMensuration.jl).
+# Index
 
 ```@index
-```
-## Install
-```julia-repl
-"pkg> add https://github.com/marcosdanieldasilva/ForestMensuration.jl"
+Pages = ["reference.md"]
 ```

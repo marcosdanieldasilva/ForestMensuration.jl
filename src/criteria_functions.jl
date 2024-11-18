@@ -1,5 +1,5 @@
-function StatsBase.nulldeviance(x::Vector{<:Real})
-  mean_x = Distributions.mean(x)
+function _nulldeviance(x::Vector{<:Real})
+  mean_x = mean(x)
   out = Vector{Float64}(undef, length(x))
   @inbounds @simd for i in eachindex(x)
     out[i] = abs2(x[i] - mean_x)
@@ -7,7 +7,7 @@ function StatsBase.nulldeviance(x::Vector{<:Real})
   return sum(out)
 end
 
-@inline p_result(test::HypothesisTests.HypothesisTest) = pvalue(test) > 0.05 ? true : false
+_p_result(test::HypothesisTests.HypothesisTest) = pvalue(test) > 0.05 ? true : false
 
 # Function to calculate various statistical criteria for evaluating regression models
 function _criteria_parameters(model::TableRegressionModel)::Matrix{Float64}
@@ -26,11 +26,11 @@ function _criteria_parameters(model::TableRegressionModel)::Matrix{Float64}
   # Calculate the Root Mean Squared Error (RMSE)
   RMSE = √(devi / n)
   # Calculate the Mean Absolute Error (MAE)
-  MAE = Distributions.mean(abs.(residual))
+  MAE = mean(abs.(residual))
   # Standard error of the estimate (Syx) expressed as a percentage of the mean of y
-  syx_in_percentage = √(devi / dof_resid) / Distributions.mean(y) * 100
+  syx_in_percentage = √(devi / dof_resid) / mean(y) * 100
   # Coefficient of determination (R²)
-  r_2 = 1 - devi / nulldeviance(y)
+  r_2 = 1 - devi / _nulldeviance(y)
   # Adjusted R²: adjusted for the number of predictors in the model
   adj_r² = 1 - (1 - r_2) * (n - 1) / dof_resid
   # Log-likelihood of the model
@@ -40,9 +40,9 @@ function _criteria_parameters(model::TableRegressionModel)::Matrix{Float64}
   # Normality test for residuals using the Kolmogorov-Smirnov test
   normal = try
     if n < 100
-      ExactOneSampleKSTest(HypothesisTests.ksstats(residual, fit_mle(Normal, residual))...) |> p_result
+      ExactOneSampleKSTest(HypothesisTests.ksstats(residual, fit_mle(Normal, residual))...) |> _p_result
     else
-      ApproximateOneSampleKSTest(HypothesisTests.ksstats(residual, fit_mle(Normal, residual))...) |> p_result
+      ApproximateOneSampleKSTest(HypothesisTests.ksstats(residual, fit_mle(Normal, residual))...) |> _p_result
     end
   catch
     false
@@ -101,36 +101,44 @@ function _calculate_ranks(ct::DataFrame, selected_criteria::Vector{Symbol})
 end
 
 """
-The `criteria_table` function evaluates and ranks multiple regression models based on specified criteria. It generates a comprehensive table of performance metrics for each model, calculates ranks for these metrics, and combines them into a final score. The function allows for flexible selection of evaluation criteria and can return either all models or only the top models based on the combined ranking.
+    criteria_table(model::Vector{<:TableRegressionModel}, criteria::Symbol...; best::Union{Bool,Int}=10)
+
+The `criteria_table` function evaluates and ranks multiple regression models based on specified criteria. 
+  It generates a comprehensive table of performance metrics for each model, calculates ranks for these 
+    metrics, and combines them into a final score. The function allows for flexible selection of 
+    evaluation criteria and can return either all models or only the top models based on the combined ranking.
 
 # Parameters:
 - `model`: 
-    The regression model(s) to be evaluated and compared. This parameter can accept:
-    - **Single Linear Regression Model (`TableRegressionModel`)**:
-      Evaluates a single linear regression model.
-    - **Vector of Linear Regression Models (`Vector{<:TableRegressionModel}`)**:
-      Evaluates and compares multiple linear regression models.
+  The regression model(s) to be evaluated and compared. This parameter can accept:
+  - **Single Linear Regression Model (`TableRegressionModel`)**:
+    Evaluates a single linear regression model.
+  - **Vector of Linear Regression Models (`Vector{<:TableRegressionModel}`)**:
+    Evaluates and compares multiple linear regression models.
     
 - `criteria::Symbol...`: 
-    A variable number of symbols representing the evaluation criteria to include. Possible values include:
-    - `:adjr2`: Adjusted R², a measure of the model's explanatory power, adjusted for the number of predictors.
-    - `:syx`: Standard error of the estimate (Syx) expressed as a percentage of the mean of the dependent variable (y), indicating the precision of the model's predictions.
-    - `:rmse`: Root Mean Squared Error, indicating the average magnitude of residuals.
-    - `:mae`: Mean Absolute Error, another accuracy measure based on average absolute residuals.
-    - `:aic`: Akaike Information Criterion, balancing goodness of fit with model complexity.
-    - `:normality`: Assesses the normality of residuals using the Kolmogorov-Smirnov test, ensuring that residuals follow a normal distribution.
-    - `:significance`: Evaluates whether model coefficients are statistically significant.
+  A variable number of symbols representing the evaluation criteria to include. Possible values include:
+  - `:adjr2`: Adjusted R², a measure of the model's explanatory power, adjusted for the number of predictors.
+  - `:syx`: Standard error of the estimate (Syx) expressed as a percentage of the mean of the dependent 
+  variable (y), indicating the precision of the model's predictions.
+  - `:rmse`: Root Mean Squared Error, indicating the average magnitude of residuals.
+  - `:mae`: Mean Absolute Error, another accuracy measure based on average absolute residuals.
+  - `:aic`: Akaike Information Criterion, balancing goodness of fit with model complexity.
+  - `:normality`: Assesses the normality of residuals using the Kolmogorov-Smirnov test, ensuring that 
+  residuals follow a normal distribution.
+  - `:significance`: Evaluates whether model coefficients are statistically significant.
 
-    If no criteria are specified, the function will use all available criteria by default.
+  If no criteria are specified, the function will use all available criteria by default.
 
 - `best::Union{Bool, Int}=10`: 
-    Specifies the number of top models to return based on the combined ranking.
-    - `false`: Returns the full table with all models ranked.
-    - Integer value: If less than the total number of models, returns only the top `best` models.
+  Specifies the number of top models to return based on the combined ranking.
+  - `false`: Returns the full table with all models ranked.
+  - Integer value: If less than the total number of models, returns only the top `best` models.
 
 # Returns:
 - `DataFrame`: 
-    A sorted table with the evaluated models and their respective metrics. Includes a combined rank based on the selected criteria.
+    A sorted table with the evaluated models and their respective metrics. Includes a combined rank 
+    based on the selected criteria.
 
 # Examples:
 - **Single Model**: 
@@ -140,7 +148,10 @@ The `criteria_table` function evaluates and ranks multiple regression models bas
   `criteria_table([model1, model2], :aic, :mae)`
 
 """
-function criteria_table(model::Vector{<:TableRegressionModel}, criteria::Symbol...; best::Union{Bool,Int}=10)::DataFrame
+function criteria_table(
+  model::Vector{<:TableRegressionModel},
+  criteria::Symbol...;
+  best::Union{Bool,Int}=10)
 
   allowed_fields = [:adjr2, :syx, :rmse, :mae, :aic, :normality, :significance]
 
@@ -190,30 +201,34 @@ function criteria_table(model::Vector{<:TableRegressionModel}, criteria::Symbol.
   end
 end
 
-@inline criteria_table(model::TableRegressionModel, criteria::Symbol...)::DataFrame = criteria_table([model], criteria...)
+criteria_table(model::TableRegressionModel, criteria::Symbol...) = criteria_table([model], criteria...)
 
 """
-The `criteria_selection` function evaluates and ranks a vector of regression models based on specified criteria, returning the best model according to the combined ranking.
+  criteria_selection(model::Vector{<:TableRegressionModel}, criteria::Symbol...)
+
+The `criteria_selection` function evaluates and ranks a vector of regression models based on specified 
+  criteria, returning the best model according to the combined ranking.
 
 # Parameters:
 - `model::Vector{<:TableRegressionModel}`: 
-    A vector of linear regression models to be evaluated and compared.
+  A vector of linear regression models to be evaluated and compared.
 
 - `criteria::Symbol...`: 
-    A variable number of symbols representing the evaluation criteria to include. Possible values include:
-    - `:adjr2`: Adjusted R², a measure of the model's explanatory power, adjusted for the number of predictors.
-    - `:syx`: Standard error of the estimate as a percentage of the mean of `y`.
-    - `:rmse`: Root Mean Squared Error, indicating the average magnitude of residuals.
-    - `:mae`: Mean Absolute Error, another accuracy measure based on average absolute residuals.
-    - `:aic`: Akaike Information Criterion, balancing goodness of fit with model complexity.
-    - `:significance`: Evaluates whether model coefficients are statistically significant.
-    - `:normality`: Assesses the normality of residuals, an assumption in linear regression.
-    - `:homoscedasticity`: Checks for constant variance in residuals, another key regression assumption.
-    
-    If no criteria are specified, the function will use all available criteria by default.
+  A variable number of symbols representing the evaluation criteria to include. Possible values include:
+  - `:adjr2`: Adjusted R², a measure of the model's explanatory power, adjusted for the number of predictors.
+  - `:syx`: Standard error of the estimate as a percentage of the mean of `y`.
+  - `:rmse`: Root Mean Squared Error, indicating the average magnitude of residuals.
+  - `:mae`: Mean Absolute Error, another accuracy measure based on average absolute residuals.
+  - `:aic`: Akaike Information Criterion, balancing goodness of fit with model complexity.
+  - `:significance`: Evaluates whether model coefficients are statistically significant.
+  - `:normality`: Assesses the normality of residuals, an assumption in linear regression.
+  - `:homoscedasticity`: Checks for constant variance in residuals, another key regression assumption.
+  
+  If no criteria are specified, the function will use all available criteria by default.
 
 # Returns:
 - `TableRegressionModel`: 
-    The best model based on the combined ranking of the specified criteria.
+  The best model based on the combined ranking of the specified criteria.
 """
-@inline criteria_selection(model::Vector{<:TableRegressionModel}, criteria::Symbol...)::TableRegressionModel = criteria_table(model, criteria..., best=5)[1, 1]
+criteria_selection(model::Vector{<:TableRegressionModel}, criteria::Symbol...) =
+  criteria_table(model, criteria..., best=5)[1, 1]

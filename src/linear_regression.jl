@@ -10,25 +10,32 @@ function _create_matrix_formulas!(matrix_formulas::Vector{MatrixTerm}, x_term_li
   end
 end
 
-function _fit_regression!(fitted_models::Vector{TableRegressionModel}, 
-                          y_term_list::Vector{AbstractTerm}, 
-                          matrix_formulas::Vector{MatrixTerm}, 
-                          cols::NamedTuple)
+function _fit_regression!(fitted_models::Vector{TableRegressionModel},
+  y_term_list::Vector{AbstractTerm},
+  matrix_formulas::Vector{MatrixTerm},
+  cols::NamedTuple
+)
 
   # Dictionary to store model column data for each y term
-  model_cols = Dict{AbstractTerm, Union{Vector{<:Real}, Nothing}}()
-  
+  model_cols = Dict{AbstractTerm,Union{Vector{<:Real},Nothing}}()
+
   # Dictionary to store model matrix data for each matrix term
-  model_matrix = Dict{MatrixTerm, Union{Matrix{<:Real}, Nothing}}()
+  model_matrix = Dict{MatrixTerm,Union{Matrix{<:Real},Nothing}}()
 
   # Precompute model columns for each y term in y_term_list using modelcols function
   @inbounds for y ∈ y_term_list
-    model_cols[y] = try modelcols(y, cols) catch nothing end
+    model_cols[y] = try
+      modelcols(y, cols)
+    catch nothing
+    end
   end
 
   # Precompute model matrices for each x term (matrix formulas) using modelmatrix function
   @inbounds for x ∈ matrix_formulas
-    model_matrix[x] = try modelmatrix(x, cols) catch nothing end
+    model_matrix[x] = try
+      modelmatrix(x, cols)
+    catch nothing
+    end
   end
 
   # Loop over all combinations of y terms and matrix terms
@@ -44,16 +51,16 @@ function _fit_regression!(fitted_models::Vector{TableRegressionModel},
     try
       # Perform linear regression using GLM.fit
       fitted_model = GLM.fit(LinearModel, X, Y)
-      
+
       # Create a formula combining y and x terms
       formula = FormulaTerm(y, x)
-      
+
       # Create a ModelFrame object to store schema and columns for the model
       mf = ModelFrame(formula, mySchema, cols, LinearModel)
-      
+
       # Create a ModelMatrix object based on the formula
       mm = ModelMatrix(X, asgn(formula))
-      
+
       # Store the fitted model along with its associated data in TableRegressionModel
       push!(fitted_models, TableRegressionModel(fitted_model, mf, mm))
     catch
@@ -63,6 +70,8 @@ function _fit_regression!(fitted_models::Vector{TableRegressionModel},
 end
 
 """
+  regression(y::Symbol, x::Symbol, data::AbstractDataFrame, q::Symbol...)
+  
 The `regression` function in Julia automatically generates and evaluates multiple simple regression models based on the provided data, including both continuous and categorical variables. This function significantly expands the traditional analysis typically applied in forest biometrics, such as the relationship between tree height and diameter at breast height (DBH), by automatically generating and evaluating 240 unique combinations of dependent and independent variable transformations.
 
 # Parameters:
@@ -130,7 +139,7 @@ best_models = criteria_table(models, :adjr2, :rmse)
 
 ```
 """
-function regression(y::S, x::S, data::AbstractDataFrame, q::S...) where S <: Symbol
+function regression(y::Symbol, x::Symbol, data::AbstractDataFrame, q::Symbol...)
 
   new_data = dropmissing(data[:, [y, x, q...]])
 
@@ -147,7 +156,7 @@ function regression(y::S, x::S, data::AbstractDataFrame, q::S...) where S <: Sym
   q_term = [concrete_term(term(terms), cols, CategoricalTerm) for terms ∈ q]
 
   y_term_list = _dependent_variable(y_term, x_term)
-  
+
   x_term_list = _independent_variable(x_term)
 
   matrix_formulas = Vector{MatrixTerm}(undef, length(x_term_list))

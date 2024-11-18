@@ -1,16 +1,10 @@
+```@meta
+CurrentModule = ForestMensuration
+```
+
+Documentation for [ForestMensuration](https://github.com/marcosdanieldasilva/ForestMensuration.jl).
+
 # Reference
-
-## Contents
-
-```@contents
-Pages = ["reference.md"]
-```
-
-## Index
-
-```@index
-Pages = ["reference.md"]
-```
 
 ```@autodocs
 Modules = [ForestMensuration]

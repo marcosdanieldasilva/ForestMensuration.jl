@@ -1,15 +1,11 @@
 # Partial function to calculate deltas for age and index age
-"""
-Calculate the delta (difference) between the model matrices for age and index age.
-
+# Calculate the delta (difference) between the model matrices for age and index age.
 # Arguments
-- `model::StatsModels.TableRegressionModel`: The fitted regression model.
-- `data_age::AbstractDataFrame`: The data frame containing the current age data.
-- `index_age::Real`: The index age for which the delta is calculated.
-
+# - `model::StatsModels.TableRegressionModel`: The fitted regression model.
+# - `data_age::AbstractDataFrame`: The data frame containing the current age data.
+# - `index_age::Real`: The index age for which the delta is calculated.
 # Returns
-- `Δ::Vector{Real}`: The delta for each observation.
-"""
+# - `Δ::Vector{Real}`: The delta for each observation.
 function _calculate_delta(model::TableRegressionModel, data_age::AbstractDataFrame, index_age::Real)
   (yname, xname, qname...) = propertynames(model.mf.data)
   data_index_age = deepcopy(data_age[!, [yname, xname, qname...]])
@@ -29,14 +25,9 @@ function _calculate_delta(model::TableRegressionModel, data_age::AbstractDataFra
   return Δ
 end
 
-# julia> ForestMensuration._calculate_delta(reg[1], data, 60)
-# 150-element Vector{Float64}:
-#   6.228000000000076
-#   3.114000000000038
-#   0.0
-#  -3.114000000000038
-
 """
+  site_classification(model::TableRegressionModel, data_age::AbstractDataFrame, index_age::Real)
+  
 Calculate the site classification given the fitted model and index age.
 
 # Arguments
@@ -62,6 +53,8 @@ function site_classification(model::TableRegressionModel, data_age::AbstractData
 end
 
 """
+  site_classification(model::TableRegressionModel, index_age::Real)
+
 Calculate the site classification given the fitted model and index age.
 
 # Arguments
@@ -78,6 +71,8 @@ function site_classification(model::TableRegressionModel, index_age::Real)
 end
 
 """
+  hdom_classification(model::TableRegressionModel, data_age::AbstractDataFrame, index_age::Real, site::Vector{<:Real})
+
 Calculate the dominant height given the site classification, fitted model, and index age.
 
 # Arguments
@@ -99,15 +94,18 @@ function hdom_classification(model::TableRegressionModel, data_age::AbstractData
   y = model.mf.f.lhs
   site = modelcols(y, site_data)
   hdom = @. site - Δ
-  
+
   if isa(y, FunctionTerm)
     hdom = _prediction(model, data_age[!, xname], hdom)
   end
-  
+
   return round.(hdom, digits=1)
 end
 
 """
+  site_table(model::TableRegressionModel, index_age::Real)
+  site_table(model::TableRegressionModel, index_age::Real, hi::Real)
+
 Calculate the site table given a fitted model, index age, and height increment.
 
 # Arguments
@@ -145,22 +143,22 @@ function site_table(model::TableRegressionModel, index_age::Real, hi::Real)
   # Create the site plot
   site_plot = Plots.plot(
     repeated_ages, hdom_predict,
-    group = categorical(repeated_sites, levels = sort(sites, rev=true)),
-    xlabel = age,
-    ylabel = hd,
-    title = "Site Classification Plot",
-    legend = :outertopright,
-    markerstrokewidth = 0,
-    seriesalpha = 0.6,
-    framestyle = :box,
-    margin = 3mm,
-    color_palette = cgrad(:darktest, categorical = true),
-    tick_direction = :out,
-    grid = :none,
-    titlefont = 10,
-    fontfamily = "times",
-    guidefontsize = 9,
-    legendfontsize = 7
+    group=categorical(repeated_sites, levels=sort(sites, rev=true)),
+    xlabel=age,
+    ylabel=hd,
+    title="Site Classification Plot",
+    legend=:outertopright,
+    markerstrokewidth=0,
+    seriesalpha=0.6,
+    framestyle=:box,
+    margin=3mm,
+    color_palette=cgrad(:darktest, categorical=true),
+    tick_direction=:out,
+    grid=:none,
+    titlefont=10,
+    fontfamily="times",
+    guidefontsize=9,
+    legendfontsize=7
   )
 
   return SiteAnalysis(site_table, site_plot)

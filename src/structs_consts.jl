@@ -1,26 +1,42 @@
 """
+  const MixTerm = Union{AbstractTerm,Tuple{AbstractTerm,Vararg{AbstractTerm}}}
+
 Union type representing a mixed term, which can be a single `AbstractTerm` or a tuple of `AbstractTerm`s.
 """
-const MixTerm = Union{AbstractTerm, Tuple{AbstractTerm, Vararg{AbstractTerm}}}
+const MixTerm = Union{AbstractTerm,Tuple{AbstractTerm,Vararg{AbstractTerm}}}
 
 """
+  const β0 = InterceptTerm{true}()
+
 Represents an intercept term for linear models.
 """
 const β0 = InterceptTerm{true}()
 
 """
+  const mySchema = Schema()
+
 Represents a default schema used for modeling operations.
 """
 const mySchema = Schema()
 
 """
+  abstract type CubingMethod
+  
 Abstract type representing a method for cubing (calculating volume).
+  # Subtypes
+  - Smalian
+  - Huber
+  - Newton
+
 """
 abstract type CubingMethod end
 
 """
+  abstract type Smalian <: CubingMethod
+
 Smalian Method:
-  The Smalian method measures diameters or circumferences at the ends of each section and calculates the total volume by:
+  The Smalian method measures diameters or circumferences at the ends of each section and calculates 
+  the total volume by:
   - Vt = v0 + Σi=1:n(vi) + vt
   - v0 = g0 * l0
   - vi = (gi + gi+1)/2 * li
@@ -35,8 +51,11 @@ Smalian Method:
 abstract type Smalian <: CubingMethod end
 
 """
+  abstract type Huber <: CubingMethod
+
 Huber Method:
-  The Huber method measures the diameter or circumference at the midpoint of the section, and the volume is determined by:
+  The Huber method measures the diameter or circumference at the midpoint of the section, and the volume
+   is determined by:
   - v = v0 + Σi=1:n(vi) + vt
   - vi = gi * li
   Where:
@@ -49,8 +68,12 @@ Huber Method:
 abstract type Huber <: CubingMethod end
 
 """
+  abstract type Newton <: CubingMethod
+
 Newton Method:
-  The Newton method involves measuring at 3 positions along each section (at the ends and in the middle of the logs). Therefore, it is a more laborious method than the others, but the estimated volume will be more accurate.
+  The Newton method involves measuring at 3 positions along each section (at the ends and in the middle 
+  of the logs). Therefore, it is a more laborious method than the others, but the estimated volume will 
+  be more accurate.
   
   - v = v0 + Σi=1:n(vi) + vt
   - vi = (gi + gm + gi+1)/2 * li
@@ -64,7 +87,14 @@ Newton Method:
 """
 abstract type Newton <: CubingMethod end
 
-# Define SiteAnalysis struct to store the analysis results
+"""
+  struct SiteAnalysis
+
+Define SiteAnalysis struct to store the analysis results
+  # Fields
+  - site_table::DataFrame
+  - site_plot::Plots.Plot
+"""
 struct SiteAnalysis
   site_table::DataFrame
   site_plot::Plots.Plot
