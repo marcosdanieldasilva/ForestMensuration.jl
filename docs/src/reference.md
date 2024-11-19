@@ -8,4 +8,5 @@ Documentation for [ForestMensuration](https://github.com/marcosdanieldasilva/For
 
 ```@autodocs
 Modules = [ForestMensuration]
+Order = [:module, :function, :type, :constant]
 ```

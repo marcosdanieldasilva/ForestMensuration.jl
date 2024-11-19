@@ -226,9 +226,7 @@ diameter equal to the diameter taken at 1/10 of the total height.
 - f0.1h = Rigorous Vol / Cylinder Vol 0.1
 Where:
 - Rigorous Vol = total volume determined by one of the methods: Smalian, Huber, or Newton;
-- Cylinder Vol 0.1 = volume of a cylinder with height equal to the total height of the tree and 
-diameter taken at 1/10 of the total height.
-Interpolate diameter at a given height using linear interpolation.
+- Cylinder Vol 0.1 = volume of a cylinder with height equal to the total height of the tree and diameter taken at 1/10 of the total height. Interpolate diameter at a given height using linear interpolation.
 
 # Arguments
 - `vt::Real`: The total volume of the tree.

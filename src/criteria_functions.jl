@@ -124,8 +124,7 @@ The `criteria_table` function evaluates and ranks multiple regression models bas
   - `:rmse`: Root Mean Squared Error, indicating the average magnitude of residuals.
   - `:mae`: Mean Absolute Error, another accuracy measure based on average absolute residuals.
   - `:aic`: Akaike Information Criterion, balancing goodness of fit with model complexity.
-  - `:normality`: Assesses the normality of residuals using the Kolmogorov-Smirnov test, ensuring that 
-  residuals follow a normal distribution.
+  - `:normality`: Assesses the normality of residuals using the Kolmogorov-Smirnov test, ensuring that residuals follow a normal distribution.
   - `:significance`: Evaluates whether model coefficients are statistically significant.
 
   If no criteria are specified, the function will use all available criteria by default.
@@ -233,4 +232,4 @@ The `criteria_selection` function evaluates and ranks a vector of regression mod
   The best model based on the combined ranking of the specified criteria.
 """
 criteria_selection(model::Vector{<:TableRegressionModel}, criteria::Symbol...) =
-  criteria_table(model, criteria..., best=5)[1, 1]
+  criteria_table(model, criteria..., best=5)[1, 1].model

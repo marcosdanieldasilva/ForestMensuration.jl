@@ -1,16 +1,16 @@
 """
 Description:
 
-ForestMensuration.jl is a Julia package that provides a comprehensive set of functions for performing dendrometric and forest inventory calculations. The package emphasizes ease of use, making it straightforward to:
+ForestMensuration.jl is a Julia package that provides a comprehensive set of functions for performing dendrometric and forest inventory calculations. Designed with ease of use in mind, the package offers tools that simplify complex forestry calculations, making it straightforward to:
 
-- Conduct regressions: Linear models can be fitted with ease.
-- Calculate tree and stand volume: Various methods are supported, including Huber, Smalian, and Newton.
-- Perform forest inventories: Implementations of simple random sampling are available.
-- Create frequency tables: Analyze the distribution of dendrometric variables.
+- **Conduct regressions**: Easily fit linear models, including transformations and qualitative variables, to find the best relationships in your forestry data.
+- **Calculate tree and stand volume (cubage)**: Support for various methods such as Huber, Smalian, and Newton allows precise calculation of tree and stand volumes.
+- **Classify site productivity**: Implement site classification methods to assess the quality and productivity of forest sites.
+- **Compute dendrometric averages**: Calculate essential dendrometric metrics like mean diameter, quadratic mean diameter, and others to understand stand structure.
+- **Create frequency tables**: Generate frequency and diametric tables to analyze the distribution of dendrometric variables such as diameter and height.
+- **Perform forest inventory**: Implement simple random sampling methods to estimate forest parameters and support forest management decisions.
 
-Facilitates the analysis of dendrometric and forest data.
-Performs complex calculations with simple commands.
-Offers a user-friendly and intuitive interface.
+The package facilitates the analysis of dendrometric and forest data, performs complex calculations with simple commands, and offers a user-friendly and intuitive interface.
 """
 module ForestMensuration
 using

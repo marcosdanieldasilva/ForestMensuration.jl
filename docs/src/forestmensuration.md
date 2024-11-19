@@ -2,16 +2,16 @@
 
 Documentation for [ForestMensuration](https://github.com/marcosdanieldasilva/ForestMensuration.jl).
 
-ForestMensuration.jl is a Julia package that provides a comprehensive set of functions for performing dendrometric and forest inventory calculations. The package emphasizes ease of use, making it straightforward to:
+ForestMensuration.jl is a Julia package that provides a comprehensive set of functions for performing dendrometric and forest inventory calculations. Designed with ease of use in mind, the package offers tools that simplify complex forestry calculations, making it straightforward to:
 
-- Conduct regressions: Linear models can be fitted with ease.
-- Calculate tree and stand volume: Various methods are supported, including Huber, Smalian, and Newton.
-- Perform forest inventories: Implementations of simple random sampling are available.
-- Create frequency tables: Analyze the distribution of dendrometric variables.
+- **Conduct regressions**: Easily fit linear models, including transformations and qualitative variables, to find the best relationships in your forestry data.
+- **Calculate tree and stand volume (cubage)**: Support for various methods such as Huber, Smalian, and Newton allows precise calculation of tree and stand volumes.
+- **Classify site productivity**: Implement site classification methods to assess the quality and productivity of forest sites.
+- **Compute dendrometric averages**: Calculate essential dendrometric metrics like mean diameter, quadratic mean diameter, and others to understand stand structure.
+- **Create frequency tables**: Generate frequency and diametric tables to analyze the distribution of dendrometric variables such as diameter and height.
+- **Perform forest inventory**: Implement simple random sampling methods to estimate forest parameters and support forest management decisions.
 
-Facilitates the analysis of dendrometric and forest data.
-Performs complex calculations with simple commands.
-Offers a user-friendly and intuitive interface.
+The package facilitates the analysis of dendrometric and forest data, performs complex calculations with simple commands, and offers a user-friendly and intuitive interface.
 
 ```@meta
 CurrentModule = ForestMensuration
@@ -25,4 +25,10 @@ The ForestMensuration package is available through the Julia package system and 
 pkg> add https://github.com/marcosdanieldasilva/ForestMensuration.jl
 ```
 
+## About the Author
+
+I am Marcos Daniel da Silva, a Forest Engineer with a strong interest in forest mensuration and data analysis. I developed the ForestMensuration.jl package as part of my final course project in Forest Engineering at the Federal University of Santa Maria campus Frederico Westphalen (UFSM), under the guidance of Prof. Dr. Rafaelo Balbinot (UFSM) and Prof. Dr. Alexandre Behling (UFPR). This package represents my dedication to providing accessible tools for forestry professionals and researchers, aiming to simplify complex dendrometric calculations and forest inventory analyses using the Julia programming language.
+
 For more details, please feel free to connect with me on [LinkedIn](https://www.linkedin.com/in/marcosdanieldasilva/?locale=en_US).
+
+You can also access my thesis through the UFSM repository: [ForestMensuration Thesis](https://repositorio.ufsm.br/handle/1/31917?show=full).

@@ -40,37 +40,18 @@ This function computes several dendrometric averages based on a vector of tree d
     estimation, and growth patterns.
 
 # Arguments
-- `d::Vector{<:Real}`: A vector of diameters at breast height (DBH) of the trees in centimeters. All 
-diameters must be positive values.
+- `d::Vector{<:Real}`: A vector of diameters at breast height (DBH) of the trees in centimeters. All diameters must be positive values.
 - `area::Real=1.0`: The area in hectares over which the diameters were measured. Default is 1.0 hectare.
 
 # Returns
 - `DataFrame`: A DataFrame containing the calculated dendrometric averages:
-  - `d₋`: Lower Hohenadl's diameter, calculated as (d̄ - s), where d̄ is the mean diameter and s is the 
-  standard deviation. Approximately 16% of the trees have diameters below `d₋`. This metric represents 
-  one standard deviation below the mean diameter and is useful for understanding the variability and 
-    distribution of diameters within the stand.
-  - `d̄`: Mean diameter, the arithmetic mean of the diameters. It is a basic measure of central tendency 
-  but can be influenced by thinning practices. The mean diameter is a fundamental measure but can be 
-  significantly affected by the removal of smaller or larger trees during thinning operations.
-  - `dg`: Quadratic mean diameter, calculated using the mean basal area as `dg = sqrt((40000 * mean(g)) / π)`, 
-  where `g` is the basal area of each tree. It closely approximates the diameter of the tree with mean 
-  basal area and is less affected by extreme values or thinning. This metric provides a better estimate 
-  for volume calculations and is less sensitive to variations in the data.
-  - `dw`: Weise's diameter, the diameter at which 60% of the trees have smaller diameters (the 60th 
-  percentile). It approximates the diameter of the tree with mean volume. Weise's diameter is considered 
-  a good approximation of the diameter of the tree with mean volume and is less influenced by thinning 
-  practices.
-  - `dz`: Diameter of the tree with central basal area, calculated from the median basal area as `dz = 
-  sqrt((40000 * median(g)) / π)`. It represents the diameter that divides the stand's total basal area 
-  into two equal parts, effectively splitting the cumulative basal area. This metric is less influenced 
-  by the removal of smaller trees and provides insight into the stand's structure.
-  - `d₁₀₀`: Mean diameter of the 100 largest trees per hectare. If there are fewer than 100 trees per 
-  hectare, it returns `NaN`. This metric provides insight into the size of the largest trees in the stand, 
-  which can be important for management objectives like timber production.
-  - `d₊`: Upper Hohenadl's diameter, calculated as (d̄ + s). Approximately 84% of the trees have diameters
-   below `d₊`. This metric represents one standard deviation above the mean diameter and is useful for 
-   understanding the variability and distribution of diameters within the stand.
+  - `d₋`: Lower Hohenadl's diameter, calculated as (d̄ - s), where d̄ is the mean diameter and s is the standard deviation. Approximately 16% of the trees have diameters below `d₋`. This metric represents one standard deviation below the mean diameter and is useful for understanding the variability and distribution of diameters within the stand.
+  - `d̄`: Mean diameter, the arithmetic mean of the diameters. It is a basic measure of central tendency but can be influenced by thinning practices. The mean diameter is a fundamental measure but can be significantly affected by the removal of smaller or larger trees during thinning operations.
+  - `dg`: Quadratic mean diameter, calculated using the mean basal area as `dg = sqrt((40000 * mean(g)) / π)`, where `g` is the basal area of each tree. It closely approximates the diameter of the tree with mean basal area and is less affected by extreme values or thinning. This metric provides a better estimate for volume calculations and is less sensitive to variations in the data.
+  - `dw`: Weise's diameter, the diameter at which 60% of the trees have smaller diameters (the 60th percentile). It approximates the diameter of the tree with mean volume. Weise's diameter is considered a good approximation of the diameter of the tree with mean volume and is less influenced by thinning practices.
+  - `dz`: Diameter of the tree with central basal area, calculated from the median basal area as `dz = sqrt((40000 * median(g)) / π)`. It represents the diameter that divides the stand's total basal area into two equal parts, effectively splitting the cumulative basal area. This metric is less influenced by the removal of smaller trees and provides insight into the stand's structure.
+  - `d₁₀₀`: Mean diameter of the 100 largest trees per hectare. If there are fewer than 100 trees per hectare, it returns `NaN`. This metric provides insight into the size of the largest trees in the stand, which can be important for management objectives like timber production.
+  - `d₊`: Upper Hohenadl's diameter, calculated as (d̄ + s). Approximately 84% of the trees have diameters below `d₊`. This metric represents one standard deviation above the mean diameter and is useful for understanding the variability and distribution of diameters within the stand.
 
 # Example
 ```julia
@@ -119,10 +100,8 @@ This function computes several dendrometric averages based on a specified diamet
 
 # Arguments
 - `p::Symbol`: The symbol representing the column name in `data` used to group the data.
-- `d::Symbol`: The symbol representing the column name in `data` that contains the diameters at breast 
-height (DBH) of the trees in centimeters. All diameters must be positive values.
-- `data::AbstractDataFrame`: The DataFrame containing the dataset with at least the columns specified by 
-`p` and `d`.
+- `d::Symbol`: The symbol representing the column name in `data` that contains the diameters at breast height (DBH) of the trees in centimeters. All diameters must be positive values.
+- `data::AbstractDataFrame`: The DataFrame containing the dataset with at least the columns specified by `p` and `d`.
 - `area::Real=1.0`: The area in hectares over which the diameters were measured. Default is 1.0 hectare.
 
 # Returns
@@ -167,13 +146,11 @@ This function computes several dendrometric averages based on a regression model
       and growth patterns.
 
 # Arguments
-- `model::TableRegressionModel`: A regression model used to predict heights from diameters. The model 
-should be trained with diameters as predictors and heights as the response variable.
+- `model::TableRegressionModel`: A regression model used to predict heights from diameters. The model should be trained with diameters as predictors and heights as the response variable.
 - `area::Real=1.0`: The area in hectares over which the diameters were measured. Default is 1.0 hectare.
 
 # Returns
-- `DataFrame`: A DataFrame containing the calculated dendrometric averages and the estimated heights. 
-Heights are estimated by applying the regression model to each calculated diameter.
+- `DataFrame`: A DataFrame containing the calculated dendrometric averages and the estimated heights. Heights are estimated by applying the regression model to each calculated diameter.
   - `h₋`: Estimated height corresponding to `d₋`.
   - `h̄`: Estimated height corresponding to `d̄`.
   - `hg`: Estimated height corresponding to `dg`.

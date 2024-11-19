@@ -18,7 +18,8 @@ makedocs(;
     pages=[
         "ForestMensuration Package" => "forestmensuration.md",
         "Tutorial" => "tutorial.md",
-        "Reference" => "reference.md",
+        "API Reference" => "reference.md",
+        "Bibliography" => "bibliography.md",
         "Index" => "index.md"
     ]
 )

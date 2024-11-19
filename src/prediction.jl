@@ -69,18 +69,12 @@ The `prediction` function family provides a versatile way to generate prediction
   - `DataFrameRow`: A single row of data from a data frame.
 
 # Returns:
-- `Vector{<:Real}` or `Vector{Union{Missing, <:Real}}`:
-  The predicted values on the original scale of `y`, adjusted for any transformations and corrected using
-   the Meyer factor for logarithmic transformations.
+- `Vector{<:Real}` or `Vector{Union{Missing, <:Real}}`: The predicted values on the original scale of `y`, adjusted for any transformations and corrected using the Meyer factor for logarithmic transformations.
 
 # Key Features:
-- **Handles Transformed Dependent Variables:** If the dependent variable was transformed (e.g., using log
- transformations), the function correctly inverts the transformation to return predictions on the original
-  scale.
-- **Applies Meyer Correction Factor:** For models using logarithmic transformations, the Meyer correction
- factor is applied to the predictions to correct for the bias introduced by the log transformation.
-- **Supports Grouped Models:** When using grouped models, the function automatically selects and applies
- the correct model for each data point based on its group membership.
+- **Handles Transformed Dependent Variables:** If the dependent variable was transformed (e.g., using log transformations), the function correctly inverts the transformation to return predictions on the original scale.
+- **Applies Meyer Correction Factor:** For models using logarithmic transformations, the Meyer correction factor is applied to the predictions to correct for the bias introduced by the log transformation.
+- **Supports Grouped Models:** When using grouped models, the function automatically selects and applies the correct model for each data point based on its group membership.
 
 # Examples:
 - **Single Model Prediction:**
@@ -114,14 +108,12 @@ The `prediction!` function computes predictions from a regression model and adds
 # Parameters:
 - `model`: A single linear regression model.
 
-- `data`: 
-    The data frame (`AbstractDataFrame`) containing the input data. The function will add new columns 
-    to this data frame.
+- `data`: The data frame (`AbstractDataFrame`) containing the input data. The function will add new columns to this data frame.
 
 # Functionality:
-- **Predicted Values Column (`_predict`)**:
+- **Predicted Values Column (`_prediction`)**:
   The function calculates the predicted values for the dependent variable (`y`) based on the input model
-     and appends these values as a new column in the data frame with the suffix `_predict`.
+     and appends these values as a new column in the data frame with the suffix `_prediction`.
 
 - **Real or Estimated Values Column (`_real`)**:
   The function also creates a `_real` column where the actual measured values of `y` are preserved if 
@@ -139,7 +131,7 @@ prediction!(model, forest_inventory_data)
 """
 function prediction!(model::TableRegressionModel, data::AbstractDataFrame)
   y = propertynames(model.mf.data)[1]
-  col_names = Symbol(string(y, "_predict")), Symbol(string(y, "_real"))
+  col_names = Symbol(string(y, "_prediction")), Symbol(string(y, "_real"))
   insertcols!(data, col_names[1] => prediction(model, data), makeunique=true)
   insertcols!(data, col_names[2] => coalesce.(replace(data[!, y], 0.0 => missing), data[!, col_names[1]]), makeunique=true)
 end

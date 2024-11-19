@@ -70,22 +70,18 @@ function _fit_regression!(fitted_models::Vector{TableRegressionModel},
 end
 
 """
-  regression(y::Symbol, x::Symbol, data::AbstractDataFrame, q::Symbol...)
+    regression(y::Symbol, x::Symbol, data::AbstractDataFrame, q::Symbol...)
   
 The `regression` function in Julia automatically generates and evaluates multiple simple regression models based on the provided data, including both continuous and categorical variables. This function significantly expands the traditional analysis typically applied in forest biometrics, such as the relationship between tree height and diameter at breast height (DBH), by automatically generating and evaluating 240 unique combinations of dependent and independent variable transformations.
 
 # Parameters:
-- `y::Symbol`: 
-    The dependent variable (response variable) for the regression model. Typically represents a continuous measure such as tree height or volume in forestry studies.
+- `y::Symbol`: The dependent variable (response variable) for the regression model. Typically represents a continuous measure such as tree height or volume in forestry studies.
   
-- `x::Symbol`: 
-    The independent variable (predictor variable) used to explain variations in the dependent variable. Often represents a measure like diameter at breast height (DBH) in forestry.
+- `x::Symbol`: The independent variable (predictor variable) used to explain variations in the dependent variable. Often represents a measure like diameter at breast height (DBH) in forestry.
 
-- `data::AbstractDataFrame`: 
-    The dataset containing the variables for regression. The data frame must include all variables specified in `y`, `x`, and `q`, and it will automatically remove any rows with missing values before performing the regression.
+- `data::AbstractDataFrame`: The dataset containing the variables for regression. The data frame must include all variables specified in `y`, `x`, and `q`, and it will automatically remove any rows with missing values before performing the regression.
 
-- `q::Symbol...` (optional): 
-    A variable number of symbols representing additional categorical variables (qualitative factors) to include in the regression model. These are treated as factors and can influence the model differently based on their levels.
+- `q::Symbol...` (optional): A variable number of symbols representing additional categorical variables (qualitative factors) to include in the regression model. These are treated as factors and can influence the model differently based on their levels.
 
 # Functionality:
 - **Dependent Variable Transformations**:
@@ -115,16 +111,14 @@ The `regression` function in Julia automatically generates and evaluates multipl
   - `y ~ x + x²`
   - `y ~ x + log(x)`
   - `log(y) ~ log(x) + 1/x`
-   - `(x / y) ~ x + log(x)²`
+  - `(x / y) ~ x + log(x)²`
   - And many more.
 
 This comprehensive set of models extends beyond the typical scope of forest biometrics, where usually only a few standard models (around five) are tested. By automatically exploring a wide array of potential relationships, this method allows for a more thorough investigation of the possible functional forms that describe the relationship between tree height and DBH or other relevant variables.
 
-- **Standard Regression**:
-  The function performs a regression analysis by automatically generating a wide array of possible models. It creates multiple transformations of the dependent and independent variables, combining them into various model forms. The results can be evaluated, and the best models can be selected based on criteria such as adjusted R², RMSE, AIC, and more, using the `criteria_table` function.
+- **Standard Regression**: The function performs a regression analysis by automatically generating a wide array of possible models. It creates multiple transformations of the dependent and independent variables, combining them into various model forms. The results can be evaluated, and the best models can be selected based on criteria such as adjusted R², RMSE, AIC, and more, using the `criteria_table` function.
 
-- **Qualitative Variables**:
-  The function allows the inclusion of categorical variables (`q`) in the regression model. These variables are automatically treated as factors and can be used to capture variations in the dependent variable that are related to these qualitative factors.
+- **Qualitative Variables**: The function allows the inclusion of categorical variables (`q`) in the regression model. These variables are automatically treated as factors and can be used to capture variations in the dependent variable that are related to these qualitative factors.
 
 # Applications:
 This method is ideal for forestry researchers and practitioners who want to ensure they are not overlooking any potentially significant models by expanding their analysis to include a broader range of possible relationships between the variables.
