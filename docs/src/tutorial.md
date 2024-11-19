@@ -74,17 +74,26 @@ data = DataFrame(
 
 # Performing the regression analysis on the full dataset
 # Here, we analyze the relationship between height (h) and diameter (dbh)
-models = regression(:h, :dbh, data)
+models = regression(:h, :dbh, data);
+# Alternative print of fitted models
+models_eq = ModelEquation.(models)
+```
 
+```@example regression_data
+#number of fitted regressions
+length(models)
 ```
 
 ### Viewing the top models based on specific criteria
 
 ```@example regression_data
-best_models = criteria_table(models, :adjr2, :rmse)
+# Using all criteria and presenting the 10 best models
+best_models = criteria_table(models)
+```
 
-# Chossing as especific criteria
-best_models = criteria_table(models, :adjr2, :rmse)
+```@example regression_data
+# Chossing as especific criteria and best 5, if best = false or 0 show all regressions from 'models'
+best_models_v2 = criteria_table(models, :adjr2, :rmse, best=5)
 ```
 
 ### Regression Selection Criteria [`criteria_table`](@ref)

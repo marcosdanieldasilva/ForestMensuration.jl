@@ -190,6 +190,7 @@ function criteria_table(
 
   # If 'best' is false, return the full DataFrame
   if best === false
+    ct.model = ModelEquation.(ct.model)
     return ct
   elseif best < length(model)
     # If 'best' is less than the number of models, return the top 'best' models
@@ -197,6 +198,7 @@ function criteria_table(
     return criteria_table(top_models, criteria...; best=false) # Re-run with selected models
   else
     # Otherwise, return the full DataFrame
+    ct.model = ModelEquation.(ct.model)
     return ct
   end
 end

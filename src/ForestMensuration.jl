@@ -53,6 +53,7 @@ include("show.jl")
 
 export
   # Regression
+  ModelEquation,
   TableRegressionModel,
   regression,
   prediction,
