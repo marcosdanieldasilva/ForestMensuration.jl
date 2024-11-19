@@ -85,7 +85,7 @@
 
     # Test 2: Edge case with zero height (should throw an error)
     h_zero = 0.0
-    @test_throws ArgumentError cylinder_volume(h_zero, d_standard)
+    @test_throws DomainError cylinder_volume(h_zero, d_standard)
 
     # Test 3: Edge case with zero diameter (should throw an error)
     d_zero = 0.0
