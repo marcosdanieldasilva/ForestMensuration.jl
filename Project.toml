@@ -4,8 +4,6 @@ authors = ["Marcos Daniel da Silva <marcosdasilva@5a.tec.br> and contributors"]
 version = "1.0.0-DEV"
 
 [deps]
-BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
-CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 CategoricalArrays = "324d7699-5711-5eae-9e2f-1d82baa6b597"
 ColorTypes = "3da002f7-5984-5a60-b8a6-cbb66c0b333f"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
@@ -27,8 +25,6 @@ Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-BenchmarkTools = "1.5.0"
-CSV = "0.10.15"
 CategoricalArrays = "0.10.8"
 ColorTypes = "0.11.5"
 DataFrames = "1.7.0"
