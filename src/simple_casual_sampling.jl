@@ -71,9 +71,8 @@ function _finite_population(cv::Real, ni::Real, N::Int, e::Real, α::Real; max_i
 end
 
 """
-  simple_casual_sampling(volume::Vector{<:Real}, plot_area::Real, total_area::Real; 
-    e::Real=10, α::Real=0.95, lg::Symbol=:pt
-  )
+    simple_casual_sampling(volume::Vector{<:Real}, plot_area::Real, total_area::Real; 
+    e::Real=10, α::Real=0.95, lg::Symbol=:pt)
 
 Performs simple random sampling for forest inventory with specified plot area and total area.
 
@@ -116,9 +115,8 @@ function simple_casual_sampling(volume::Vector{<:Real}, plot_area::Real, total_a
 end
 
 """
-  simple_casual_sampling(volume::Vector{<:Real}, total_area::Real;
-    e::Real=10, α::Real=0.95, lg::Symbol=:pt
-  )
+  simple_casual_sampling(volume::Vector{<:Real}, total_area::Real; 
+  e::Real=10, α::Real=0.95, lg::Symbol=:pt)
 
 Performs simple random sampling for forest inventory with total area.
 
@@ -136,7 +134,7 @@ function simple_casual_sampling(volume::Vector{<:Real}, total_area::Real;
   e::Real=10, α::Real=0.95, lg::Symbol=:pt
 )
   if lg ∉ (:pt, :en)
-    error("The language 'lg' must be Portuguese 'pt' ou English 'en'.")
+    error("The language 'lg' must be Portuguese 'pt' or English 'en'.")
   end
   N = total_area
   n = length(volume)

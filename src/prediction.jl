@@ -50,9 +50,9 @@ function _prediction(model::TableRegressionModel{<:GeneralizedLinearModel}, ŷ:
 end
 
 """
-  prediction(model::TableRegressionModel)
-  prediction(model::TableRegressionModel, data::AbstractDataFrame)
-  prediction(model::TableRegressionModel, data::DataFrameRow)
+    prediction(model::TableRegressionModel)
+    prediction(model::TableRegressionModel, data::AbstractDataFrame)
+    prediction(model::TableRegressionModel, data::DataFrameRow)
   
 The `prediction` function family provides a versatile way to generate predictions from regression models, 
   supporting both individual and grouped models. It handles predictions on the original scale even if the
@@ -104,7 +104,7 @@ end
 prediction(model::TableRegressionModel, data::DataFrameRow) = prediction(model, DataFrame(data))
 
 """
-  prediction!(model::TableRegressionModel, data::AbstractDataFrame)
+    prediction!(model::TableRegressionModel, data::AbstractDataFrame)
 
 The `prediction!` function computes predictions from a regression model and adds these predictions 
   directly to the provided data frame as new columns. It is particularly useful in forest inventory 

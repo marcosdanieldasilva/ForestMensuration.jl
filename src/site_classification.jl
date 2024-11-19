@@ -26,7 +26,7 @@ function _calculate_delta(model::TableRegressionModel, data_age::AbstractDataFra
 end
 
 """
-  site_classification(model::TableRegressionModel, data_age::AbstractDataFrame, index_age::Real)
+    site_classification(model::TableRegressionModel, data_age::AbstractDataFrame, index_age::Real)
   
 Calculate the site classification given the fitted model and index age.
 
@@ -53,7 +53,7 @@ function site_classification(model::TableRegressionModel, data_age::AbstractData
 end
 
 """
-  site_classification(model::TableRegressionModel, index_age::Real)
+    site_classification(model::TableRegressionModel, index_age::Real)
 
 Calculate the site classification given the fitted model and index age.
 
@@ -71,7 +71,7 @@ function site_classification(model::TableRegressionModel, index_age::Real)
 end
 
 """
-  hdom_classification(model::TableRegressionModel, data_age::AbstractDataFrame, index_age::Real, site::Vector{<:Real})
+    hdom_classification(model::TableRegressionModel, data_age::AbstractDataFrame, index_age::Real, site::Vector{<:Real})
 
 Calculate the dominant height given the site classification, fitted model, and index age.
 
@@ -103,8 +103,8 @@ function hdom_classification(model::TableRegressionModel, data_age::AbstractData
 end
 
 """
-  site_table(model::TableRegressionModel, index_age::Real)
-  site_table(model::TableRegressionModel, index_age::Real, hi::Real)
+    site_table(model::TableRegressionModel, index_age::Real)
+    site_table(model::TableRegressionModel, index_age::Real, hi::Real)
 
 Calculate the site table given a fitted model, index age, and height increment.
 

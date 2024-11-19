@@ -5,7 +5,6 @@
 # - `Int`: The number of classes.
 _sturges(n::Int) = ceil(Int, log2(n)) + 1
 
-
 # Calculates the class center for a given value and class width.
 # Arguments
 # - `x::Real`: The value.
@@ -14,14 +13,12 @@ _sturges(n::Int) = ceil(Int, log2(n)) + 1
 # - `Real`: The class center.
 _class_center(x::Real, hi::Real) = round(x / hi) * hi + (hi / 2)
 
-
 # Calculates the amplitude (range) of a vector of values.
 # Arguments
 # - `x::Vector`: The vector of values.
 # Returns
 # - `Real`: The amplitude (range).
 _amplitude(x::Vector) = maximum(x) - minimum(x)
-
 
 # Calculates the class breadth (width) for a given amplitude and number of classes.
 # Arguments
@@ -61,7 +58,6 @@ function _class_breadth(h::Real, k::Int)
   end
 end
 
-
 # Calculates the simple frequency of unique values in a vector.
 # Arguments
 # - `x::Vector`: The vector of values.
@@ -70,7 +66,7 @@ end
 _simple_frequency(x::Vector) = map(i -> count(==(i), x), unique(x) |> sort)
 
 """
-  frequency_table(x::Vector{<:Real}, hi::Real)
+    frequency_table(x::Vector{<:Real}, hi::Real)
 
 Creates a frequency table for a vector of values given a class width.
 
@@ -95,7 +91,7 @@ function frequency_table(x::Vector{<:Real}, hi::Real)
 end
 
 """
-  frequency_table(x::Vector{<:Real})
+    frequency_table(x::Vector{<:Real})
 
 Creates a frequency table for a vector of values.
 
@@ -113,7 +109,7 @@ function frequency_table(x::Vector{<:Real})
 end
 
 """
-  frequency_table(g::Symbol, x::Symbol, data::AbstractDataFrame)
+    frequency_table(g::Symbol, x::Symbol, data::AbstractDataFrame)
 
 Creates a frequency table for grouped data in a DataFrame.
 
@@ -132,7 +128,7 @@ function frequency_table(g::Symbol, x::Symbol, data::AbstractDataFrame)
 end
 
 """
-  frequency_table(g::Symbol, x::Symbol, hi::Real, data::AbstractDataFrame)
+    frequency_table(g::Symbol, x::Symbol, hi::Real, data::AbstractDataFrame)
 
 Creates a frequency table for grouped data in a DataFrame with a specified class width.
 
@@ -152,7 +148,7 @@ function frequency_table(g::Symbol, x::Symbol, hi::Real, data::AbstractDataFrame
 end
 
 """
-  diametric_table(x::Vector{<:Real}, hi::Real; plot_area::Real=1.0)
+    diametric_table(x::Vector{<:Real}, hi::Real; plot_area::Real=1.0)
 
 Creates a diametric table for a vector of values given a class width and plot area.
 
@@ -179,7 +175,7 @@ function diametric_table(x::Vector{<:Real}, hi::Real; plot_area::Real=1.0)
 end
 
 """
-  diametric_table(x::Vector{<:Real}; plot_area::Real=1.0
+    diametric_table(x::Vector{<:Real}; plot_area::Real=1.0)
 
 Creates a diametric table for a vector of values.
 
@@ -198,7 +194,7 @@ function diametric_table(x::Vector{<:Real}; plot_area::Real=1.0)
 end
 
 """
-  diametric_table(g::Symbol, x::Symbol, data::AbstractDataFrame; plot_area::Real=1.0)
+    diametric_table(g::Symbol, x::Symbol, data::AbstractDataFrame; plot_area::Real=1.0)
 
 Creates a diametric table for grouped data in a DataFrame.
 
@@ -218,7 +214,7 @@ function diametric_table(g::Symbol, x::Symbol, data::AbstractDataFrame; plot_are
 end
 
 """
-  diametric_table(g::Symbol, x::Symbol, hi::Real, data::AbstractDataFrame; plot_area::Real=1.0)
+    diametric_table(g::Symbol, x::Symbol, hi::Real, data::AbstractDataFrame; plot_area::Real=1.0)
   
 Creates a diametric table for grouped data in a DataFrame with a specified class width.
 

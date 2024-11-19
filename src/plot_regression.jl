@@ -29,7 +29,7 @@ function _graph_table(model::TableRegressionModel)
 end
 
 """
-  plot_regression(model::RegressionModel)
+    plot_regression(model::RegressionModel)
   
 The `plot_regression` function generates four essential diagnostic plots to analyze the performance 
   and validity of a linear regression model in Julia. These plots help in assessing the goodness-of-fit,

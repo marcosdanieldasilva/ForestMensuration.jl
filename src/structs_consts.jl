@@ -1,26 +1,26 @@
 """
-  const MixTerm = Union{AbstractTerm,Tuple{AbstractTerm,Vararg{AbstractTerm}}}
+    const MixTerm = Union{AbstractTerm,Tuple{AbstractTerm,Vararg{AbstractTerm}}}
 
 Union type representing a mixed term, which can be a single `AbstractTerm` or a tuple of `AbstractTerm`s.
 """
 const MixTerm = Union{AbstractTerm,Tuple{AbstractTerm,Vararg{AbstractTerm}}}
 
 """
-  const β0 = InterceptTerm{true}()
+    const β0 = InterceptTerm{true}()
 
 Represents an intercept term for linear models.
 """
 const β0 = InterceptTerm{true}()
 
 """
-  const mySchema = Schema()
+    const emptySchema = Schema()
 
 Represents a default schema used for modeling operations.
 """
-const mySchema = Schema()
+const emptySchema = Schema()
 
 """
-  abstract type CubingMethod
+    abstract type CubingMethod
   
 Abstract type representing a method for cubing (calculating volume).
   # Subtypes
@@ -32,7 +32,7 @@ Abstract type representing a method for cubing (calculating volume).
 abstract type CubingMethod end
 
 """
-  abstract type Smalian <: CubingMethod
+    abstract type Smalian <: CubingMethod
 
 Smalian Method:
   The Smalian method measures diameters or circumferences at the ends of each section and calculates 
@@ -51,7 +51,7 @@ Smalian Method:
 abstract type Smalian <: CubingMethod end
 
 """
-  abstract type Huber <: CubingMethod
+    abstract type Huber <: CubingMethod
 
 Huber Method:
   The Huber method measures the diameter or circumference at the midpoint of the section, and the volume
@@ -68,7 +68,7 @@ Huber Method:
 abstract type Huber <: CubingMethod end
 
 """
-  abstract type Newton <: CubingMethod
+    abstract type Newton <: CubingMethod
 
 Newton Method:
   The Newton method involves measuring at 3 positions along each section (at the ends and in the middle 
@@ -88,7 +88,7 @@ Newton Method:
 abstract type Newton <: CubingMethod end
 
 """
-  struct SiteAnalysis
+    struct SiteAnalysis
 
 Define SiteAnalysis struct to store the analysis results
   # Fields

@@ -1,16 +1,10 @@
 """
-  basal_area(d::Real)
+    basal_area(d::Real)
 
 Calculates the basal area (g) of a tree given its diameter in centimeters.
 
 # Description
 This function computes the basal area of a tree, which is the cross-sectional area of the tree trunk at breast height (usually measured at 1.3 meters above ground). Basal area is a critical parameter in forest mensuration, used for estimating stand density, timber volume, and assessing competition among trees in a forest stand.
-
-The formula used is:
-
-\\[ g = \\frac{\\pi}{40000} \\times d^2 \\]
-
-where \\( d \\) is the diameter in centimeters, and \\( g \\) is the basal area in square meters.
 
 # Arguments
 - `d::Real`: The diameter at breast height (DBH) of the tree in **centimeters**. The diameter must be a positive value.
@@ -34,7 +28,7 @@ julia> basal_area(30.0)
 end
 
 """
-  dendrometric_averages(d::Vector; area::Real=1.0)
+    dendrometric_averages(d::Vector; area::Real=1.0)
 
 Calculates various dendrometric averages of a forest stand, including mean diameter, quadratic mean 
 diameter, Hohenadl's diameters, Weise's diameter, diameter of the tree with central basal area, and 
@@ -113,7 +107,7 @@ function dendrometric_averages(d::Vector; area::Real=1.0)
 end
 
 """
-  dendrometric_averages(p::Symbol, d::Symbol, data::AbstractDataFrame; area::Real=1.0)
+    dendrometric_averages(p::Symbol, d::Symbol, data::AbstractDataFrame; area::Real=1.0)
 
 Calculates various dendrometric averages for each group in a dataset, grouping by a specified column, 
   and using the diameters specified in another column.
@@ -161,7 +155,7 @@ function dendrometric_averages(p::Symbol, d::Symbol, data::AbstractDataFrame; ar
 end
 
 """
-  dendrometric_averages(model::TableRegressionModel; area::Real=1.0)
+    dendrometric_averages(model::TableRegressionModel; area::Real=1.0)
   
 Calculates various dendrometric averages of a forest stand and estimates the corresponding heights for 
   each diameter using a regression model.

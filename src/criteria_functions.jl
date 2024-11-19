@@ -204,7 +204,7 @@ end
 criteria_table(model::TableRegressionModel, criteria::Symbol...) = criteria_table([model], criteria...)
 
 """
-  criteria_selection(model::Vector{<:TableRegressionModel}, criteria::Symbol...)
+    criteria_selection(model::Vector{<:TableRegressionModel}, criteria::Symbol...)
 
 The `criteria_selection` function evaluates and ranks a vector of regression models based on specified 
   criteria, returning the best model according to the combined ranking.

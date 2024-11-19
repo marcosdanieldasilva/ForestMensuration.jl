@@ -37,7 +37,7 @@ function _height_interpolation(d_limit::Real, h::Vector{<:Real}, d::Vector{<:Rea
 end
 
 """
-  cylinder_volume(h::Real, d::Real)
+    cylinder_volume(h::Real, d::Real)
 
 Calculates the volume of a cylinder, used to estimate the volume (v0) of the tree stump remaining 
 after clear-cutting.
@@ -63,7 +63,7 @@ function cylinder_volume(h::Real, d::Real)
 end
 
 """
-  cone_volume(h::Real, d::Real)
+    cone_volume(h::Real, d::Real)
 
 Calculates the volume of a cone, used to estimate the final portion (vn) of the tree, typically 
 considered to have a conical shape.
@@ -89,7 +89,7 @@ function cone_volume(h::Real, d::Real)
 end
 
 """
-  bark_factor(d::Vector{<:Real}, e::Vector{<:Real})
+    bark_factor(d::Vector{<:Real}, e::Vector{<:Real})
 
 Calculates the bark factor, used to estimate the volume without bark.
 
@@ -122,7 +122,7 @@ function bark_factor(d::Vector{<:Real}, e::Vector{<:Real})
 end
 
 """
-  bole_volume(method::Type{<:CubingMethod}, h::Vector{<:Real}, d::Vector{<:Real})
+    bole_volume(method::Type{<:CubingMethod}, h::Vector{<:Real}, d::Vector{<:Real})
 
 Calculate tree bole volume cubic meters using Smalian, Newton, or Huber methods.
 The methods involve dividing the tree trunk into n sections (logs). 
@@ -178,7 +178,7 @@ function _bole_volume(::Type{<:Newton}, h::Vector{<:Real}, d::Vector{<:Real}, st
 end
 
 """
-  artificial_form_factor(vt::Real, ht::Real, dbh::Real)
+    artificial_form_factor(vt::Real, ht::Real, dbh::Real)
 
 Artificial Form Factor (aff):
 For the calculation of the artificial form factor, the volume of the reference cylinder will have a diameter equal to the tree's DBH.
@@ -217,7 +217,7 @@ function artificial_form_factor(vt::Real, ht::Real, dbh::Real)
 end
 
 """
-  natural_form_factor(vt::Real, ht::Real, h::Vector{<:Real}, d::Vector{<:Real})
+    natural_form_factor(vt::Real, ht::Real, h::Vector{<:Real}, d::Vector{<:Real})
   
 Natural Form Factor (nff):
 For the calculation of the natural form factor, the volume of the reference cylinder will have a 
@@ -262,7 +262,7 @@ function natural_form_factor(vt::Real, ht::Real, h::Vector{<:Real}, d::Vector{<:
 end
 
 """
-  quotient_form(ht::Real, dbh::Real, h::Vector{<:Real}, d::Vector{<:Real})
+    quotient_form(ht::Real, dbh::Real, h::Vector{<:Real}, d::Vector{<:Real})
 
 Form Quotient (qf):
 The natural decrease in diameter along the trunk defines the so-called form quotient, which is a ratio 
@@ -309,9 +309,8 @@ function quotient_form(ht::Real, dbh::Real, h::Vector{<:Real}, d::Vector{<:Real}
 end
 
 """
-  cubage(method::Type{<:CubingMethod}, h::Vector{<:Real}, d::Vector{<:Real}, 
-    d_limit::Union{Real,Nothing}=nothing; dbh::Real=1.3
-  )
+    cubage(method::Type{<:CubingMethod}, h::Vector{<:Real}, d::Vector{<:Real}, 
+    d_limit::Union{Real,Nothing}=nothing; dbh::Real=1.3)
 
 Calculate tree cubage using Smalian, Newton, or Huber methods.
 The methods involve dividing the tree trunk into n sections (logs). 
@@ -414,7 +413,7 @@ function cubage(method::Type{<:CubingMethod}, h::Vector{<:Real}, d::Vector{<:Rea
 end
 
 """
-  cubage(method::Type{<:CubingMethod}, h::Vector{<:Real}, d::Vector{<:Real}, e::Vector{<:Real}, 
+    cubage(method::Type{<:CubingMethod}, h::Vector{<:Real}, d::Vector{<:Real}, e::Vector{<:Real}, 
     d_limit::Union{Real,Nothing}=nothing; dbh::Float64=1.3)
 
 Calculate tree cubage including bark factor.
@@ -438,8 +437,7 @@ In each section, diameters and lengths are measured at positions that vary accor
 ```
 """
 function cubage(method::Type{<:CubingMethod}, h::Vector{<:Real}, d::Vector{<:Real}, e::Vector{<:Real},
-  d_limit::Union{Real,Nothing}=nothing; dbh::Float64=1.3,
-)
+  d_limit::Union{Real,Nothing}=nothing; dbh::Float64=1.3)
 
   cubage_table = cubage(method, h, d, d_limit, dbh=dbh)
   # bark factor
@@ -458,7 +456,7 @@ function cubage(method::Type{<:CubingMethod}, h::Vector{<:Real}, d::Vector{<:Rea
 end
 
 """
-  cubage(method::Type{<:CubingMethod}, tree::Symbol, h::Symbol, d::Symbol, 
+    cubage(method::Type{<:CubingMethod}, tree::Symbol, h::Symbol, d::Symbol, 
     data::AbstractDataFrame, d_limit::Union{Real,Nothing}=nothing; dbh::Float64=1.3)
 
 Calculate tree cubage using grouped data from a DataFrame.
@@ -483,17 +481,15 @@ In each section, diameters and lengths are measured at positions that vary accor
 ```
 """
 function cubage(method::Type{<:CubingMethod}, tree::Symbol, h::Symbol, d::Symbol, data::AbstractDataFrame,
-  d_limit::Union{Real,Nothing}=nothing; dbh::Float64=1.3
-)
+  d_limit::Union{Real,Nothing}=nothing; dbh::Float64=1.3)
   combine(groupby(data, tree)) do df
     cubage(method, df[:, h], df[:, d], d_limit, dbh=dbh)
   end
 end
 
 """
-  cubage(method::Type{<:CubingMethod}, tree::Symbol, h::Symbol, d::Symbol, e::Symbol,
-    data::AbstractDataFrame, d_limit::Union{Real,Nothing}=nothing; dbh::Float64=1.3
-  )
+    cubage(method::Type{<:CubingMethod}, tree::Symbol, h::Symbol, d::Symbol, e::Symbol, 
+    data::AbstractDataFrame, d_limit::Union{Real,Nothing}=nothing; dbh::Float64=1.3)
 
 Calculate tree cubage including bark factor using grouped data from a DataFrame.
 The methods involve dividing the tree trunk into n sections (logs). 
@@ -518,8 +514,7 @@ In each section, diameters and lengths are measured at positions that vary accor
 ```
 """
 function cubage(method::Type{<:CubingMethod}, tree::Symbol, h::Symbol, d::Symbol, e::Symbol,
-  data::AbstractDataFrame, d_limit::Union{Real,Nothing}=nothing; dbh::Float64=1.3
-)
+  data::AbstractDataFrame, d_limit::Union{Real,Nothing}=nothing; dbh::Float64=1.3)
   combine(groupby(data, tree)) do df
     cubage(method, df[:, h], df[:, d], df[:, e], d_limit, dbh=dbh)
   end

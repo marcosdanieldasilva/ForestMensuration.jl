@@ -56,7 +56,7 @@ function _fit_regression!(fitted_models::Vector{TableRegressionModel},
       formula = FormulaTerm(y, x)
 
       # Create a ModelFrame object to store schema and columns for the model
-      mf = ModelFrame(formula, mySchema, cols, LinearModel)
+      mf = ModelFrame(formula, emptySchema, cols, LinearModel)
 
       # Create a ModelMatrix object based on the formula
       mm = ModelMatrix(X, asgn(formula))
