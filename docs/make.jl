@@ -13,11 +13,15 @@ makedocs(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://marcosdanieldasilva.github.io/ForestMensuration.jl",
         edit_link="main",
-        assets=String[],
+        assets=[
+            joinpath("assets", "favicon.ico"),
+            joinpath("assets", "style.css")
+        ]
     ),
+    checkdocs=:exports,
     pages=[
         "ForestMensuration Package" => "forestmensuration.md",
-        "Tutorial" => "tutorial.md",
+        "Getting Started" => "tutorial.md",
         "API Reference" => "reference.md",
         "Bibliography" => "bibliography.md",
         "Index" => "index.md"

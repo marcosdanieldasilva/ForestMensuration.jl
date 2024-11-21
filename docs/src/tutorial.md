@@ -1,8 +1,8 @@
 # Getting Started
 
-## Computing the [`cubage`](@ref)
+## Computing the Cubage
 
-The cubage function calculates the volume of a tree (cubage) using different cubing methods. It can handle both single trees and multiple trees in a dataset. The available cubing methods are [`Smalian`](@ref), [`Newton`](@ref) and [`Huber`](@ref).
+The [`cubage`](@ref) function calculates the volume of a tree (cubage) using different cubing methods. It can handle both single trees and multiple trees in a dataset. The available cubing methods are [`Smalian`](@ref), [`Newton`](@ref) and [`Huber`](@ref).
 
 ### Cubing a Simple Tree
 
@@ -21,6 +21,8 @@ h =  [0.3, 1.3, 3.3, 5.3, 7.3, 9.3, 10.8]
 cubage(Smalian, h, d)
 ```
 
+\
+
 - vt: Total volume
 - v0: Volume of the stump
 - vc: Commercial bole volume
@@ -33,6 +35,8 @@ cubage(Smalian, h, d)
 - nff: Natural form factor
 - qf: Form quotient
 
+\
+
 #### Including Bark Thickness
 
 With the bark thickness value, it is possible to calculate the bark factor and total and commercial volumes without bark. Note: the provided thickness should be the 'single thickness' in centimeters. The function will convert it into 'double thickness'.
@@ -41,9 +45,14 @@ With the bark thickness value, it is possible to calculate the bark factor and t
 # Bark thickness at corresponding heights (cm)
 bark = [0.9, 0.5, 0.3, 0.2, 0.2, 0.1, 0.0]
 
-# Calculate cubage using the Newton method, including bark thickness
-cubage(Newton, h, d, bark)
+# Define a commercial diameter limit
+diameter_limit = 4.0
+
+# Calculate cubage using the Newton method, including bark thickness and diameter limit
+cubage(Newton, h, d, bark, diameter_limit)
 ```
+
+\
 
 Additional columns include:
 
@@ -66,9 +75,14 @@ data = DataFrame(
     bark = [0.9, 0.5, 0.3, 0.2, 0.2, 0.1, 0.0, 1.2, 0.5, 0.3, 0.3, 0.2, 0.2, 0.3, 0.0, 0.0, 0.0, 0.0]
 )
 
+# Define a commercial diameter limit
+diameter_limit = 2.5
+
 # Calculate cubage for each tree using the Huber method
-cubage(Huber, :tree, :h, :d, data)
+cubage(Huber, :tree, :h, :d, data, diameter_limit)
 ```
+
+\
 
 #### Including Bark Thickness for Multiple Trees
 
@@ -76,10 +90,10 @@ Additionally, bark thickness values can be provided to calculate bark factors an
 
 ```@example ex_cub_02
 # Calculate cubage including bark thickness
-cubage(Huber, :tree, :h, :d, :bark, data)
+cubage(Huber, :tree, :h, :d, :bark, data, diameter_limit)
 ```
 
-## Fitting Hypsometric Relationship (Regressions)
+## Fitting Linear Regressions
 
 The [`regression`](@ref) function automatically generates and evaluates multiple regression models based on the provided data. It explores various transformations of the dependent and independent variables, creating a comprehensive set of models for analysis.
 
@@ -134,6 +148,8 @@ best_models = criteria_table(models)
 best_5_models = criteria_table(models, :adjr2, :syx, best=5)
 ```
 
+\
+
 #### Selecting the Best Model
 
 To select the best model based on the combined ranking you can simply use the [`criteria_selection`](@ref) function:
@@ -155,6 +171,28 @@ You can visualize the regression model using the [`plot_regression`](@ref) funct
 plot_regression(top_model)
 ```
 
+\
+
+#### Prediction
+
+The [`prediction`](@ref) function. allows you to generate predicted values from a regression model on the original scale of the dependent variable. This is particularly useful when the model involves transformations of the dependent variable (e.g., logarithmic transformations). The function automatically applies the appropriate inverse transformations and corrections, such as the Meyer correction factor for logarithmic models.
+
+```@example regression_data
+# Returns the predicted values from the model on the original scale
+h_pred = prediction(top_model)
+```
+
+The [`prediction!`](@ref) function extends this by adding the predicted values directly to your DataFrame. It creates new columns for the predicted and actual values, combining observed measurements with model predictions where data may be missing. This is especially useful in forest inventory datasets where certain tree attributes might not be measured for every tree, and predictions need to be filled in for these gaps.
+
+```@example regression_data
+# Automatically adds predicted and actual height columns to the provided DataFrame.
+# This combines observed heights and predicted heights for trees with missing or unmeasured heights.
+prediction!(top_model, data)
+
+# Firsts values of dataset
+println(data[1:10, :])
+```
+
 ### Adjusting a Qualitative (Dummy) Hypsometric Relationship
 
 If your data includes categorical variables (e.g., different plots or species), you can include them in the regression analysis.
@@ -169,6 +207,8 @@ top_qual_model = criteria_selection(qualitative_models, :adjr2, :syx, :aic)
 # View the model equation
 ModelEquation(top_qual_model)
 ```
+
+\
 
 #### Plotting the Qualitative Regression
 
@@ -190,6 +230,8 @@ The [`frequency_table`](@ref) function creates frequency distributions for a vec
 frequency_table(data.dbh)
 ```
 
+\
+
 - LI: Lower class limit
 - Xi: Class center
 - LS: Upper class limit
@@ -197,6 +239,8 @@ frequency_table(data.dbh)
 - Fi: Cumulative frequency
 - fri: Relative frequency (%)
 - Fri: Cumulative relative frequency (%)
+
+\
 
 #### Specifying Class Width
 
@@ -216,6 +260,8 @@ he [`dendrometric_averages`](@ref) function computes various dendrometric averag
 dendrometric_averages(data.dbh, area=0.05)
 ```
 
+\
+
 - d₋: Lower Hohenadl's diameter
 - d̄: Mean diameter
 - dg: Quadratic mean diameter
@@ -223,6 +269,8 @@ dendrometric_averages(data.dbh, area=0.05)
 - dz: Diameter of the tree with central basal area
 - d₁₀₀: Mean diameter of the 100 largest trees per hectare (returns NaN if fewer than 100 trees)
 - d₊: Upper Hohenadl's diameter
+
+\
 
 #### Estimating Heights Using a Regression Model
 
@@ -232,5 +280,7 @@ If you have a regression model (e.g., top_model from earlier), you can estimate 
 # Estimate heights for dendrometric averages using the regression model
 dendrometric_averages(top_model, area=0.05)
 ```
+
+\
 
 ## Forest Inventory
