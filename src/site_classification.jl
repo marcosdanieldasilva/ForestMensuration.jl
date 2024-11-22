@@ -39,6 +39,9 @@ Calculate the site classification given the fitted model and index age.
 - `site::Vector{Real}`: The site classification for each observation.
 """
 function site_classification(model::TableRegressionModel, data_age::AbstractDataFrame, index_age::Real)
+  if index_age <= 0
+    throw(DomainError("Index Age must be positive."))
+  end
   Δ = _calculate_delta(model, data_age, index_age)
   # Calculate the site classification
   y = model.mf.f.lhs
@@ -85,6 +88,11 @@ Calculate the dominant height given the site classification, fitted model, and i
 - `hdom::Vector{Real}`: The dominant height for each observation.
 """
 function hdom_classification(model::TableRegressionModel, data_age::AbstractDataFrame, index_age::Real, site::Vector{<:Real})
+  if index_age <= 0
+    throw(DomainError("Index Age must be positive."))
+  elseif any(x -> x < 0, site)
+    throw(DomainError("Site values must be positive"))
+  end
   Δ = _calculate_delta(model, data_age, index_age)
   (yname, xname, qname...) = propertynames(model.mf.data)
   site_data = deepcopy(data_age[!, [yname, xname, qname...]])
