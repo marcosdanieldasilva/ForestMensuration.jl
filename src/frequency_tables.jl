@@ -278,7 +278,9 @@ julia> diametric_table(diameters, 2, plot_area=0.05)
 function diametric_table(d::Vector{<:Real}, hi::Real; plot_area::Real=1.0)
   if hi <= 0
     throw(DomainError("The class width must be positive."))
-  elseif any(x -> x < 0, d)
+  elseif plot_area <= 0
+    throw(DomainError("The plot area must be positive."))
+  elseif any(x -> x <= 0, d)
     throw(DomainError("Diameters must be positive"))
   else
     ftable = frequency_table(d, hi)
