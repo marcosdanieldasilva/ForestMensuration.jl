@@ -143,19 +143,16 @@ function regression(y::Symbol, x::Symbol, data::AbstractDataFrame, q::Symbol...)
     error("There are not enough data points to perform regression. At least $(k + 2) observations are required.")
   end
 
-  cols = columntable(new_data)
-
-  # Ensure that y and x are numeric
-  for var in [y, x]
-    if !all(ismissing, cols[var]) && !all(x -> x isa Number, cols[var])
-      # Attempt to convert to numeric
-      try
-        cols[var] = parse.(Float64, cols[var])
-      catch
-        error("Column '$(var)' must be numeric or convertible to numeric. Cannot convert values to numbers.")
-      end
-    end
+  #Attempt to coerce the y and x columns to the Continuous scitype (e.g., Float64)
+  try
+    coerce!(new_data, y => ScientificTypes.Continuous, x => ScientificTypes.Continuous)
+  catch
+    # If coercion fails, an error will be thrown
+    error("Unable to coerce variables '$(y)' and '$(x)' to Continuous. Please ensure they contain numeric values.")
   end
+
+  # Convert the DataFrame to a column table (named tuple of vectors)
+  cols = columntable(new_data)
 
   y_term = concrete_term(term(y), cols, ContinuousTerm)
   x_term = concrete_term(term(x), cols, ContinuousTerm)

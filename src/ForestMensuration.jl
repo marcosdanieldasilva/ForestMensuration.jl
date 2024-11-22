@@ -26,13 +26,13 @@ using
   Plots.PlotMeasures,
   RecipesPipeline,
   Reexport,
+  ScientificTypes,
   StatsBase,
   StatsModels,
   Tables
 
 import Plots: cgrad
 import StatsBase: fit, Histogram
-
 import StatsModels: asgn, missing_omit, Schema, TableRegressionModel
 
 @reexport using GLM
