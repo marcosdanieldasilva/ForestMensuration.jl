@@ -49,7 +49,6 @@ By predicting the dominant height at the index age using a fitted growth model, 
 # Returns
 - `site::Vector{Real}`: A vector containing the site classification (site index) for each observation. Each element represents the expected dominant height at the index age, providing a measure of site productivity.
 
-
 # Exemple
 ```
 julia> using DataFrames
@@ -67,8 +66,8 @@ julia> data = DataFrame(
           13.2, 17.8, 21.3, 21.3, 22.5]
 );
 
-# Perform regression to model the relationship between height (`h`) and age (`age`)
-# `criteria_selection` selects the best regression model based on predefined criteria
+# Perform regression to model the relationship between height (h) and age (age)
+# criteria_selection selects the best regression model based on predefined criteria
 julia> reg = regression(:h, :age, data) |> criteria_selection;
 
 # Define the data set to predict the site classification
@@ -153,8 +152,8 @@ julia> data = DataFrame(
           13.2, 17.8, 21.3, 21.3, 22.5]
 );
 
-# Perform regression to model the relationship between height (`h`) and age (`age`)
-# `criteria_selection` selects the best regression model based on predefined criteria
+# Perform regression to model the relationship between height (h) and age (age)
+# criteria_selection selects the best regression model based on predefined criteria
 julia> reg = regression(:h, :age, data) |> criteria_selection;
 
 # Use the selected regression model to classify site quality for each plot
@@ -242,8 +241,8 @@ julia> data = DataFrame(
           13.2, 17.8, 21.3, 21.3, 22.5]
 );
 
-# Perform regression to model the relationship between height (`h`) and age (`age`)
-# `criteria_selection` selects the best regression model based on predefined criteria
+# Perform regression to model the relationship between height (h) and age (age)
+# criteria_selection selects the best regression model based on predefined criteria
 julia> reg = regression(:h, :age, data) |> criteria_selection;
 
 # Define the data set to predict the site classification
@@ -337,8 +336,8 @@ julia> data = DataFrame(
           13.2, 17.8, 21.3, 21.3, 22.5]
 );
 
-# Perform regression to model the relationship between height (`h`) and age (`age`)
-# `criteria_selection` selects the best regression model based on predefined criteria
+# Perform regression to model the relationship between height (h) and age (age)
+# criteria_selection selects the best regression model based on predefined criteria
 julia> reg = regression(:h, :age, data) |> criteria_selection;
 
 # Use the selected regression model to generate the site table and site plot
