@@ -145,6 +145,18 @@ function regression(y::Symbol, x::Symbol, data::AbstractDataFrame, q::Symbol...)
 
   cols = columntable(new_data)
 
+  # Ensure that y and x are numeric
+  for var in [y, x]
+    if !all(ismissing, cols[var]) && !all(x -> x isa Number, cols[var])
+      # Attempt to convert to numeric
+      try
+        cols[var] = parse.(Float64, cols[var])
+      catch
+        error("Column '$(var)' must be numeric or convertible to numeric. Cannot convert values to numbers.")
+      end
+    end
+  end
+
   y_term = concrete_term(term(y), cols, ContinuousTerm)
   x_term = concrete_term(term(x), cols, ContinuousTerm)
   q_term = [concrete_term(term(terms), cols, CategoricalTerm) for terms ∈ q]
