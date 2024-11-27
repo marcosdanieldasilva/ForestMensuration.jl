@@ -17,7 +17,7 @@
 # Returns
 # - `DataFrame`: The inventory report.
 function _inventory_report(x̅::Float64, cv::Float64, Ttab::Float64, s²x̅::Float64, sx̅::Float64,
-  plot_area::Union{Int,Float64,Symbol}, f::Float64, population::String, n::Union{Int,Tuple},
+  plot_area::Union{Int,Float64,String}, f::Float64, population::String, n::Union{Int,Tuple},
   required_plots::Union{Int,Tuple}, missing_plots::Union{Int,Tuple}, N::Int, lg::Symbol
 )
 
