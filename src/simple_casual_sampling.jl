@@ -148,7 +148,7 @@ function simple_casual_sampling(volume::Vector{<:Real}, plot_area::Real, total_a
 
   # Validate the language parameter
   if lg ∉ (:pt, :en)
-    error("The language 'lg' must be Portuguese ':pt' or English ':en'.")
+    throw(ArgumentError("The language 'lg' must be Portuguese ':pt' or English ':en'."))
   end
   # Calculate the total number of possible plots (N)
   N = round(Int, total_area / plot_area)  # N = Total area divided by plot area

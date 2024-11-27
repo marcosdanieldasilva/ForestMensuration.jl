@@ -1,4 +1,4 @@
-@testset "dendrometry.jl" begin
+@testset "dendrometry_and_inventory.jl" begin
   @testset "Basal Area Tests" begin
     # Test 1: Standard case
     d_standard = 30.0
@@ -168,6 +168,89 @@
 
     # Test 8: Check if cumulative ng_ha equals sum of ng_ha
     @test result_df.∑ng_ha[end] ≈ sum(result_df.ng_ha) atol = 1e-5
+  end
+
+  @testset "simple_casual_sampling Test" begin
+    v = [381.7, 458.9, 468.2, 531.7, 474.1, 401.9, 469.1, 437.4, 435.3, 403.2, 397.1]
+    plot_area = 0.05  # hectares
+    total_area = 10  # hectares
+
+    @testset "Invalid Language Code" begin
+      try
+        simple_casual_sampling(v, plot_area, total_area; lg=:es)
+        @test false  # Should not reach here
+      catch e
+        @test isa(e, ArgumentError)
+        @test occursin("The language 'lg' must be Portuguese ':pt' or English ':en'.", e.msg)
+      end
+    end
+
+    report = simple_casual_sampling(v, plot_area, total_area; e=5, lg=:en)
+
+    expected_parameters = [
+      "plot volume",
+      "coefficient of variation",
+      "mean variance",
+      "standard error",
+      "absolute error",
+      "relative error",
+      "hectare volume",
+      "Total Volume",
+      "confidence interval lower",
+      "confidence interval upper",
+      "population",
+      "measured plots",
+      "required plots",
+      "missing plots",
+      "possible plots"
+    ]
+
+    expected_units = [
+      "m³/0.05ha",
+      "%",
+      "(m³/0.05ha)²",
+      "m³/0.05ha",
+      "m³/0.05ha",
+      "%",
+      "m³ha⁻¹",
+      "m³",
+      "m³",
+      "m³",
+      "finite",
+      "n",
+      "n",
+      "n",
+      "N"
+    ]
+
+    expected_values = [
+      441.691,   # plot volume
+      10.03,     # coefficient of variation
+      168.498,   # mean variance
+      12.9807,   # standard error
+      28.9227,   # absolute error
+      6.55,      # relative error
+      8833.82,   # hectare volume
+      88338.2,   # Total Volume
+      82553.6,   # confidence interval lower
+      94122.7,   # confidence interval upper
+      0.945,     # population correction factor
+      11.0,      # measured plots
+      17.0,      # required plots
+      6.0,       # missing plots
+      200.0      # possible plots
+    ]
+
+    # Check that the Parameters match
+    @test report.Parameters == expected_parameters
+
+    # Check that the Units match
+    @test report.Units == expected_units
+
+    # Now compare each value with the expected value
+    for i in eachindex(expected_values)
+      @test isapprox(report.Values[i], expected_values[i]; atol=1e-2, rtol=1e-4)
+    end
   end
 
 end
