@@ -33,4 +33,4 @@ For more details, please feel free to connect with me on [LinkedIn](https://www.
 
 This package is supported and encouraged by [5A Inteligência e Engenharia](https://5a.tec.br/).
 
-You can also access my final course work through the UFSM repository: [ForestMensuration Thesis](https://repositorio.ufsm.br/handle/1/31917?show=full).
+You can also access my final course work through the UFSM repository: [Forestmensuration.jl: Uma Introdução à Aplicações em Julia](https://repositorio.ufsm.br/handle/1/31917?show=full).
