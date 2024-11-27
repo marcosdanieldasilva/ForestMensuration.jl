@@ -2,6 +2,8 @@
 
 The following list of references includes the sources consulted and cited during the development of the ForestMensuration.jl package. These works provide theoretical foundations and methodological approaches that support the functions and analyses implemented in the package. Users interested in further exploring topics in forest mensuration, statistical modeling, and programming may find these resources valuable.
 
+Arce, J. E., & Dobner Jr., M. (2024) Manejo e Plajenamento de Florestas Plantadas: com ênfase nos gêneros Pinus e Eucalyptus. Curitiba: Paraná: Ed. dos Autores.
+
 Aguilar, L. J. (2011). Fundamentos de programação: algoritmos, estruturas de dados e objetos (3ª ed.). Porto Alegre: AMGH.
 
 André, C. M. G., & Regazzi, A. J. (2008). Critérios para seleção de modelos baseados na razão de verossimilhança. UFV, MG. Disponível em: http://arquivo.ufv.br/dbg/resumos2008b/Resumo%20Claudomiro.htm.
