@@ -1,4 +1,119 @@
-function _prediction(model::TableRegressionModel, x::Vector, ŷ::Vector)
+function predict(model::FittedLinearModel)
+  Y, X = modelcols(model.formula, model.data)
+  # Number of observations and predictor variables
+  (n, p) = size(X)
+  # Degrees of freedom for residuals
+  dof_residuals = n - p
+  ŷ = similar(Vector{Float64}, n)
+  # Calculate the original predicted values
+  mul!(ŷ, X, model.β)
+
+  if isa(model.formula.lhs, FunctionTerm)
+    function_name = nameof(model.formula.lhs.f)
+    #The Meyer factor is a metric derived from the sum of squared residuals and the degrees of freedom 
+    #of the model, which assesses the adjusted variance of the residuals.
+    if function_name in [:log, :log_minus, :log1p]
+      # Calculate the residuals values
+      residual = Y - ŷ
+      # Variance of residuals: σ² = Σ(residual^2) / degrees of freedom for residuals
+      σ² = (residual ⋅ residual) / dof_residuals
+      meyer_factor = exp(σ² / 2)
+      ŷ = _predict(function_name, model.data[2], ŷ, meyer_factor=meyer_factor)
+    else
+      ŷ = _predict(function_name, model.data[2], ŷ)
+    end
+  end
+
+  return ŷ
+end
+
+function _predict(function_name::Symbol, x::Vector{<:Real}, ŷ::Vector{<:Real}; meyer_factor::Real=1.0)
+  return @. begin
+    if function_name == :log
+      exp(ŷ) * meyer_factor
+    elseif function_name == :log_minus
+      exp(ŷ) * meyer_factor + 1.3
+    elseif function_name == :log1p
+      expm1(ŷ) * meyer_factor
+    elseif function_name == :one_by_y
+      1 / ŷ
+    elseif function_name == :one_by_y_minus
+      1 / ŷ + 1.3
+    elseif function_name == :one_by_sqrt
+      1 / ŷ^2
+    elseif function_name == :one_by_sqrt_minus
+      1 / ŷ^2 + 1.3
+    elseif function_name == :x_by_sqrt_y
+      (x / ŷ)^2
+    elseif function_name == :x_by_sqrt_y_minus
+      (x / ŷ)^2 + 1.3
+    elseif function_name == :square_x_by_y
+      x^2 / ŷ
+    elseif function_name == :square_x_by_y_minus
+      x^2 / ŷ + 1.3
+    else
+      ŷ
+    end
+  end
+end
+
+
+"""
+Computes the Meyer factor for a fitted linear model.
+
+The Meyer factor is a metric derived from the sum of squared residuals and the degrees of freedom 
+of the model, which assesses the adjusted variance of the residuals. It can be useful for model evaluation.
+
+# Arguments:
+- `model::FittedLinearModel`: A fitted linear model.
+
+# Returns:
+- `meyer_factor::Float64`: The computed Meyer factor.
+
+"""
+function meyer_factor(model::FittedLinearModel)
+  Y, X = modelcols(f, model.data)
+  # Number of observations and predictor variables
+  (n, p) = size(X)
+  # Degrees of freedom for residuals
+  dof_residuals = n - p
+  ŷ = similar(Vector{Float64}, n)
+  # Calculate the original predicted values
+  mul!(ŷ, X, model.β)
+  # Calculate the residuals values
+  residual = Y - ŷ
+  σ² = (residual ⋅ residual) / dof_residuals
+  meyer_factor = exp(σ² / 2)
+
+  return meyer_factor
+end
+
+function predict(model::FittedLinearModel, data)
+  if !Tables.istable(data)
+    error()
+  end
+  if data isa AbstractDataFrame
+    data = columntable(data)
+  end
+  x, nonmissings = StatsModels.missing_omit(data, model.formula.rhs)
+  X = modelmatrix(model.formula.rhs, x)
+  ŷ = X * model.β
+
+  if isa(model.formula.lhs, FunctionTerm)
+    function_name = nameof(model.formula.lhs.f)
+    if function_name in [:log, :log_minus, :log1p]
+      ŷ = _predict(function_name, model.data[2], ŷ, meyer_factor=meyer_factor(model))
+    else
+      ŷ = _predict(function_name, model.data[2], ŷ)
+    end
+  end
+
+  length(unique(nonmissings)) == 1 ? ŷ : StatsModels._return_predictions(Tables.materializer(data), ŷ, nonmissings, length(nonmissings))
+end
+
+
+
+function _prediction(model::FittedLinearModel, x::Vector, ŷ::Vector)
 
   f = formula(model)
   function_name = nameof(f.lhs.f)

@@ -10,7 +10,7 @@ function _create_matrix_formulas!(matrix_formulas::Vector{MatrixTerm}, x_term_li
   end
 end
 
-function _fit_regression!(fitted_models::Vector{TableRegressionModel},
+function _fit_regression!(fitted_models::Vector{FittedLinearModel},
   y_term_list::Vector{AbstractTerm},
   matrix_formulas::Vector{MatrixTerm},
   cols::NamedTuple
@@ -56,23 +56,12 @@ function _fit_regression!(fitted_models::Vector{TableRegressionModel},
       # Calculate the coefficients of the fitted regression
       ldiv!(chol, β)
       # Calculate the predicted values
+      ŷ = similar(Y)
       mul!(ŷ, X, β)
-      # Calculate the residuals values
-      residual = Y - ŷ
-      # Number of predictor variables
-      p = size(X, 2)
-      # Degrees of freedom for residuals
-      dof_residuals = n - p
-      # Calculate residuals according to the regression FunctionTerm, if applicable
-      if isa(y, FunctionTerm)
-        # Estimate the variance of residuals
-        σ² = (residual ⋅ residual) / dof_residuals
-        residual = y_observed - _predict(ŷ, x_observed, σ², nameof(y.f))
-      end
       # fit the FormulaTerm
-      formula = FormulaTerm(y, x)
+      ft = FormulaTerm(y, x)
       # Pass the fitted model to FittedLinearModel structure
-      push!(fitted_models, FittedLinearModel(formula, data, β))
+      push!(fitted_models, FittedLinearModel(ft, cols, β))
     catch
       # Handle any errors silently during model fitting
     end
@@ -176,7 +165,7 @@ function regression(y::Symbol, x::Symbol, data::AbstractDataFrame, q::Symbol...)
 
   isempty(q_term) ? _create_matrix_formulas!(matrix_formulas, x_term_list) : _create_matrix_formulas!(matrix_formulas, x_term_list, q_term...)
 
-  fitted_models = Vector{TableRegressionModel}()
+  fitted_models = Vector{FittedLinearModel}()
 
   _fit_regression!(fitted_models, y_term_list, matrix_formulas, cols)
 
