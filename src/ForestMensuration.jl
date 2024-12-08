@@ -34,8 +34,6 @@ import Plots: cgrad
 import StatsBase: fit, Histogram
 import StatsModels: asgn, missing_omit, Schema, TableRegressionModel
 
-@reexport using GLM
-
 include("structs_consts.jl")
 include("linear_regression.jl")
 include("prediction.jl")
