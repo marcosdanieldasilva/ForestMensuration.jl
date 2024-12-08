@@ -134,7 +134,7 @@ function dendrometric_averages(p::Symbol, d::Symbol, data::AbstractDataFrame; ar
 end
 
 """
-    dendrometric_averages(model::TableRegressionModel; area::Real=1.0)
+    dendrometric_averages(model::FittedLinearModel; area::Real=1.0)
   
 Calculates various dendrometric averages of a forest stand and estimates the corresponding heights for 
   each diameter using a regression model.
@@ -146,7 +146,7 @@ This function computes several dendrometric averages based on a regression model
       and growth patterns.
 
 # Arguments
-- `model::TableRegressionModel`: A regression model used to predict heights from diameters. The model should be trained with diameters as predictors and heights as the response variable.
+- `model::FittedLinearModel`: A regression model used to predict heights from diameters. The model should be trained with diameters as predictors and heights as the response variable.
 - `area::Real=1.0`: The area in hectares over which the diameters were measured. Default is 1.0 hectare.
 
 # Returns
@@ -182,12 +182,12 @@ julia> dendrometric_averages(best_model; area=0.05)
    1 │ 12.7085    17.25  17.7799     18.6  17.2663     21.0  21.7915  10.2085    14.75  15.2799     16.1  14.7663     18.5  19.2915
 ```
 """
-function dendrometric_averages(model::TableRegressionModel; area::Real=1.0)
-  data = model.mf.data
+function dendrometric_averages(model::FittedLinearModel; area::Real=1.0)
+  data = model.data
   var_names = propertynames(data) |> collect
   if length(data) == 2
     result_table = dendrometric_averages(data[2], area=area)
-    average_heights = map(i -> prediction(model, DataFrame(var_names[2] => result_table[:, i]))[1], 1:7)
+    average_heights = map(i -> predict(model, DataFrame(var_names[2] => result_table[:, i]))[1], 1:7)
     return hcat(
       result_table,
       DataFrame(
@@ -202,7 +202,7 @@ function dendrometric_averages(model::TableRegressionModel; area::Real=1.0)
     end
     s = size(result_table, 2)
     average_heights = hcat(
-      map(i -> prediction(model, hcat(result_table[:, 1:s-7], DataFrame(var_names[2] => result_table[:, s-i]))), 6:-1:0)...
+      map(i -> predict(model, hcat(result_table[:, 1:s-7], DataFrame(var_names[2] => result_table[:, s-i]))), 6:-1:0)...
     )
     return hcat(result_table, DataFrame(average_heights, [:h₋, :h̅, :hg, :hw, :hz, :h₁₀₀, :h₊]))
   end
