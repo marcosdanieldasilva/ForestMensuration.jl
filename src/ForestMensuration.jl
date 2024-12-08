@@ -32,7 +32,7 @@ using
 
 import Plots: cgrad
 import StatsBase: fit, Histogram
-import StatsModels: asgn, missing_omit, Schema, TableRegressionModel
+import StatsModels: asgn, missing_omit, Schema
 
 include("structs_consts.jl")
 include("linear_regression.jl")
@@ -50,8 +50,7 @@ include("show.jl")
 
 export
   # Regression
-  ModelEquation,
-  TableRegressionModel,
+  FittedLinearModel,
   regression,
   predict,
   predict!,

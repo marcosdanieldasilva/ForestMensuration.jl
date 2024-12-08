@@ -1,4 +1,7 @@
-function _predict(function_name::Symbol, x::Vector{<:Real}, ŷ::Vector{<:Real}, meyer_factor::Real)
+function _predict(model::FittedLinearModel, x::Vector{<:Real}, ŷ::Vector{<:Real})
+  function_name = nameof(model.formula.lhs.f)
+  # The Meyer factor is derived from the model's residual variance (σ²) and is used for adjustment
+  meyer_factor = exp(model.σ² / 2)
   return @. begin
     if function_name == :log
       exp(ŷ) * meyer_factor
@@ -65,11 +68,8 @@ function predict(model::FittedLinearModel)
   mul!(ŷ, X, model.β)  # In-place multiplication for efficiency
   # Handle special cases where the left-hand side (lhs) is a function term
   if isa(model.formula.lhs, FunctionTerm)
-    function_name = nameof(model.formula.lhs.f)  # Extract the function's name
-    # Meyer factor: Adjusts for residual variance (σ²) in the model
-    meyer_factor = exp(model.σ² / 2)
     # Apply the function-specific prediction logic
-    ŷ = _predict(function_name, model.data[2], ŷ, meyer_factor)
+    ŷ = _predict(model, model.data[2], ŷ)
   end
   # Return the vector of predicted values
   return ŷ
@@ -113,10 +113,7 @@ function predict(model::FittedLinearModel, data)
   ŷ = X * model.β
   # Handle special cases when the formula's left-hand side (lhs) is a function term
   if isa(model.formula.lhs, FunctionTerm)
-    function_name = nameof(model.formula.lhs.f)
-    # The Meyer factor is derived from the model's residual variance (σ²) and is used for adjustment
-    meyer_factor = exp(model.σ² / 2)
-    ŷ = _predict(function_name, model.data[2], ŷ, meyer_factor)
+    ŷ = _predict(model, model.data[2], ŷ)
   end
   # Return predictions, handling missing values if necessary
   return length(unique(nonmissings)) == 1 ? ŷ : StatsModels._return_predictions(
