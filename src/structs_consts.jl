@@ -13,13 +13,6 @@ Represents an intercept term for linear models.
 const β0 = InterceptTerm{true}()
 
 """
-    const emptySchema = Schema()
-
-Represents a default schema used for modeling operations.
-"""
-const emptySchema = Schema()
-
-"""
     abstract type CubingMethod
   
 Abstract type representing a method for cubing (calculating volume).
@@ -123,35 +116,6 @@ Creates a new `FittedLinearModel` instance.
 """
 function FittedLinearModel(formula::F, data::N, β::Array{T,1}, σ²::T, chol::C) where {F,N,T,C}
   return FittedLinearModel{F,N,T,C}(formula, data, β, σ², chol)
-end
-
-"""
-    struct ModelEquation
-
-Define ModelEquation struct to store the regression results
-  # Fields
-  - output::String
-  - model::TableRegressionModel
-"""
-struct ModelEquation
-  output::String
-  model::TableRegressionModel
-  # Inner constructor to initialize `output` based on `model`
-  function ModelEquation(model::TableRegressionModel)
-    # Get coefficients and terms from the model
-    β = coef(model)
-    n = length(β)
-    output = string(StatsModels.coefnames(model.mf.f.lhs)) * " = $(round(β[1], digits = 6))"
-
-    for i in 2:n
-      term = coefnames(model)[i]
-      product = string(round(abs(β[i]), sigdigits=6)) * " * " * term
-      output *= signbit(β[i]) ? " - $(product)" : " + $(product)"
-    end
-
-    # Return the constructed RegressionEquation object
-    new(output, model)
-  end
 end
 
 """
