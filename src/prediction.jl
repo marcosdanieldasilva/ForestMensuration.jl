@@ -1,22 +1,3 @@
-function predict(model::FittedLinearModel)
-  Y, X = modelcols(model.formula, model.data)
-  # Number of observations and predictor variables
-  n = length(Y)
-  # Calculate the original predicted values
-  ŷ = similar(Vector{Float64}, n)
-  mul!(ŷ, X, model.β)
-  if isa(model.formula.lhs, FunctionTerm)
-    function_name = nameof(model.formula.lhs.f)
-    #The Meyer factor is a metric derived from the sum of squared residuals and the degrees of freedom 
-    #of the model, which assesses the adjusted variance of the residuals.
-    # Number of observations and predictor variables
-    meyer_factor = exp(model.σ² / 2)
-    ŷ = _predict(function_name, model.data[2], ŷ, meyer_factor)
-  end
-
-  return ŷ
-end
-
 function _predict(function_name::Symbol, x::Vector{<:Real}, ŷ::Vector{<:Real}, meyer_factor::Real)
   return @. begin
     if function_name == :log
@@ -47,118 +28,10 @@ function _predict(function_name::Symbol, x::Vector{<:Real}, ŷ::Vector{<:Real},
   end
 end
 
-
 """
-Computes the Meyer factor for a fitted linear model.
-
-The Meyer factor is a metric derived from the sum of squared residuals and the degrees of freedom 
-of the model, which assesses the adjusted variance of the residuals. It can be useful for model evaluation.
-
-# Arguments:
-- `model::FittedLinearModel`: A fitted linear model.
-
-# Returns:
-- `meyer_factor::Float64`: The computed Meyer factor.
-
-"""
-function meyer_factor(model::FittedLinearModel)
-  Y, X = modelcols(f, model.data)
-  # Number of observations and predictor variables
-  (n, p) = size(X)
-  # Degrees of freedom for residuals
-  dof_residuals = n - p
-  ŷ = similar(Vector{Float64}, n)
-  # Calculate the original predicted values
-  mul!(ŷ, X, model.β)
-  # Calculate the residuals values
-  residual = Y - ŷ
-  σ² = (residual ⋅ residual) / dof_residuals
-  meyer_factor = exp(σ² / 2)
-
-  return meyer_factor
-end
-
-function predict(model::FittedLinearModel, data)
-  if !Tables.istable(data)
-    error()
-  end
-  if data isa AbstractDataFrame
-    data = columntable(data)
-  end
-  x, nonmissings = StatsModels.missing_omit(data, model.formula.rhs)
-  X = modelmatrix(model.formula.rhs, x)
-  ŷ = X * model.β
-
-  if isa(model.formula.lhs, FunctionTerm)
-    function_name = nameof(model.formula.lhs.f)
-    #The Meyer factor is a metric derived from the sum of squared residuals and the degrees of freedom 
-    #of the model, which assesses the adjusted variance of the residuals.
-    meyer_factor = exp(model.σ² / 2)
-    ŷ = _predict(function_name, model.data[2], ŷ, meyer_factor)
-  end
-
-  length(unique(nonmissings)) == 1 ? ŷ : StatsModels._return_predictions(Tables.materializer(data), ŷ, nonmissings, length(nonmissings))
-end
-
-
-
-function _prediction(model::FittedLinearModel, x::Vector, ŷ::Vector)
-
-  f = formula(model)
-  function_name = nameof(f.lhs.f)
-
-  if function_name in [:log, :log_minus, :log1p]
-    y = model.model.rr.y
-    resid = y - predict(model)
-    σ² = (resid ⋅ resid) / dof_residual(model)
-    meyer_factor = exp(σ² / 2)
-  end
-
-  return @. begin
-    if function_name == :log
-      exp(ŷ) * meyer_factor
-    elseif function_name == :log_minus
-      exp(ŷ) * meyer_factor + 1.3
-    elseif function_name == :log1p
-      expm1(ŷ) * meyer_factor
-    elseif function_name == :one_by_y
-      1 / ŷ
-    elseif function_name == :one_by_y_minus
-      1 / ŷ + 1.3
-    elseif function_name == :one_by_sqrt
-      1 / ŷ^2
-    elseif function_name == :one_by_sqrt_minus
-      1 / ŷ^2 + 1.3
-    elseif function_name == :x_by_sqrt_y
-      (x / ŷ)^2
-    elseif function_name == :x_by_sqrt_y_minus
-      (x / ŷ)^2 + 1.3
-    elseif function_name == :square_x_by_y
-      x^2 / ŷ
-    elseif function_name == :square_x_by_y_minus
-      x^2 / ŷ + 1.3
-    else
-      ŷ
-    end
-  end
-end
-
-function _prediction(model::TableRegressionModel{<:GeneralizedLinearModel}, ŷ::Vector)
-
-  resid = model.model.rr.wrkresid
-  σ² = (resid ⋅ resid) / dof_residual(model)
-  meyer_factor = exp(σ² / 2)
-
-  return ŷ * meyer_factor
-
-end
-
-"""
-    prediction(model::TableRegressionModel)
-    prediction(model::TableRegressionModel, data::AbstractDataFrame)
-    prediction(model::TableRegressionModel, data::DataFrameRow)
+    predict(model::FittedLinearModel)
   
-The `prediction` function family provides a versatile way to generate predictions from regression models, 
+The `predict` function family provides a versatile way to generate predictions from regression models, 
   supporting both individual and grouped models. It handles predictions on the original scale even if the
    dependent variable (`y`) has been transformed (e.g., `log(y)`), ensuring that any transformations 
    applied during model fitting are correctly reversed, including the application of Meyer correction 
@@ -166,11 +39,6 @@ The `prediction` function family provides a versatile way to generate prediction
 
 # Parameters:
 - `model`: A single linear regression model.
-
-- `data`: 
-  The input data for which predictions are needed. This parameter can be:
-  - `AbstractDataFrame`: A data frame containing the input data.
-  - `DataFrameRow`: A single row of data from a data frame.
 
 # Returns:
 - `Vector{<:Real}` or `Vector{Union{Missing, <:Real}}`: The predicted values on the original scale of `y`, adjusted for any transformations and corrected using the Meyer factor for logarithmic transformations.
@@ -183,28 +51,87 @@ The `prediction` function family provides a versatile way to generate prediction
 # Examples:
 - **Single Model Prediction:**
   ```julia
-  y_pred = prediction(model, data)
+  y_pred = predict(model)
   ```
 """
-prediction(model::TableRegressionModel) = return model.model isa GeneralizedLinearModel ? _prediction(model, predict(model)) : model.mf.f.lhs isa FunctionTerm ? _prediction(model, model.mf.data[2], predict(model)) : predict(model)
-
-function prediction(model::TableRegressionModel, data::AbstractDataFrame)
-  if model.model isa GeneralizedLinearModel
-    return _prediction(model, predict(model, data))
-  elseif model.mf.f.lhs isa FunctionTerm
-    x, nonmissings = missing_omit(columntable(data), model.mf.f.rhs)
-    return _prediction(model, x[1], predict(model, data))
-  else
-    return predict(model, data)
+function predict(model::FittedLinearModel)
+  # Extract response vector (Y) and predictor matrix (X) from the model
+  Y, X = modelcols(model.formula, model.data)
+  # Number of observations
+  n = length(Y)
+  # Allocate memory for predicted values
+  ŷ = similar(Vector{Float64}, n)
+  # Compute predicted values: ŷ = X * β
+  mul!(ŷ, X, model.β)  # In-place multiplication for efficiency
+  # Handle special cases where the left-hand side (lhs) is a function term
+  if isa(model.formula.lhs, FunctionTerm)
+    function_name = nameof(model.formula.lhs.f)  # Extract the function's name
+    # Meyer factor: Adjusts for residual variance (σ²) in the model
+    meyer_factor = exp(model.σ² / 2)
+    # Apply the function-specific prediction logic
+    ŷ = _predict(function_name, model.data[2], ŷ, meyer_factor)
   end
+  # Return the vector of predicted values
+  return ŷ
 end
 
-prediction(model::TableRegressionModel, data::DataFrameRow) = prediction(model, DataFrame(data))
+"""
+    predict(model::FittedLinearModel, data)
+Predicts the response variable for a given dataset based on the provided regression model.
+
+# Arguments:
+- `model::FittedLinearModel`: A fitted linear regression model containing coefficients, formula, and other attributes.
+- `data`: A dataset compatible with the Tables.jl interface. Must include the predictors required by the model.
+
+# Returns:
+- Predicted values as a vector. If there are missing values in the predictors, a predict array is returned with missing values handled.
+
+# Examples:
+- **Single Model Prediction:**
+  ```julia
+  y_pred = predict(model, data)
+  ```
+"""
+function predict(model::FittedLinearModel, data)
+  # Ensure the provided data is a valid table or DataFrameRow
+  if !(Tables.istable(data) || data isa DataFrameRow)
+    throw(ArgumentError("The provided data must be a valid table. Ensure it is a supported type (e.g., DataFrame, NamedTuple, or any Tables.jl compatible structure)."))
+  end
+  # Convert AbstractDataFrame to a column table for compatibility with StatsModels
+  if data isa AbstractDataFrame
+    data = columntable(data)
+  end
+  # Convert DataFrameRow to a NamedTuple for compatibility
+  if data isa DataFrameRow
+    data = columntable(DataFrame(data))
+  end
+  # Remove missing values and prepare the input data for the model
+  x, nonmissings = StatsModels.missing_omit(data, model.formula.rhs)
+  # Generate the model matrix (design matrix) from the input data
+  X = modelmatrix(model.formula.rhs, x)
+  # Compute the predicted values: ŷ = X * β
+  ŷ = X * model.β
+  # Handle special cases when the formula's left-hand side (lhs) is a function term
+  if isa(model.formula.lhs, FunctionTerm)
+    function_name = nameof(model.formula.lhs.f)
+    # The Meyer factor is derived from the model's residual variance (σ²) and is used for adjustment
+    meyer_factor = exp(model.σ² / 2)
+    ŷ = _predict(function_name, model.data[2], ŷ, meyer_factor)
+  end
+  # Return predictions, handling missing values if necessary
+  return length(unique(nonmissings)) == 1 ? ŷ : StatsModels._return_predictions(
+    Tables.materializer(data),
+    ŷ,
+    nonmissings,
+    length(nonmissings)
+  )
+end
+
 
 """
-    prediction!(model::TableRegressionModel, data::AbstractDataFrame)
+    predict!(model::FittedLinearModel, data::AbstractDataFrame)
 
-The `prediction!` function computes predictions from a regression model and adds these predictions 
+The `predict!` function computes predictions from a regression model and adds these predictions 
   directly to the provided data frame as new columns. It is particularly useful in forest inventory 
   data where not all trees have been measured for a specific variable, allowing the model to estimate 
     these missing values.
@@ -215,9 +142,9 @@ The `prediction!` function computes predictions from a regression model and adds
 - `data`: The data frame (`AbstractDataFrame`) containing the input data. The function will add new columns to this data frame.
 
 # Functionality:
-- **Predicted Values Column (`_prediction`)**:
+- **Predicted Values Column (`_predict`)**:
   The function calculates the predicted values for the dependent variable (`y`) based on the input model
-     and appends these values as a new column in the data frame with the suffix `_prediction`.
+     and appends these values as a new column in the data frame with the suffix `_predict`.
 
 - **Real or Estimated Values Column (`_real`)**:
   The function also creates a `_real` column where the actual measured values of `y` are preserved if 
@@ -230,12 +157,12 @@ The `prediction!` function computes predictions from a regression model and adds
 # Examples:
 ```julia
 # Apply predictions to a data frame
-prediction!(model, forest_inventory_data)
+predict!(model, forest_inventory_data)
 ```
 """
-function prediction!(model::TableRegressionModel, data::AbstractDataFrame)
-  y = propertynames(model.mf.data)[1]
-  col_names = Symbol(string(y, "_prediction")), Symbol(string(y, "_real"))
-  insertcols!(data, col_names[1] => prediction(model, data), makeunique=true)
+function predict!(model::FittedLinearModel, data::AbstractDataFrame)
+  y = propertynames(model.data)[1]
+  col_names = Symbol(string(y, "_predict")), Symbol(string(y, "_real"))
+  insertcols!(data, col_names[1] => predict(model, data), makeunique=true)
   insertcols!(data, col_names[2] => coalesce.(replace(data[!, y], 0.0 => missing), data[!, col_names[1]]), makeunique=true)
 end
