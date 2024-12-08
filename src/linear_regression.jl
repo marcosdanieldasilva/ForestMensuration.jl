@@ -58,10 +58,17 @@ function _fit_regression!(fitted_models::Vector{FittedLinearModel},
       # Calculate the predicted values
       ŷ = similar(Y)
       mul!(ŷ, X, β)
+      # Number of observations and predictor variables
+      (n, p) = size(X)
+      # Degrees of freedom for residuals
+      dof_residuals = n - p
+      residual = Y - ŷ
+      # Deviance (Sum of Squared Residuals, SSR)
+      σ² = (residual ⋅ residual) / dof_residuals
       # fit the FormulaTerm
       ft = FormulaTerm(y, x)
       # Pass the fitted model to FittedLinearModel structure
-      push!(fitted_models, FittedLinearModel(ft, cols, β))
+      push!(fitted_models, FittedLinearModel(ft, cols, β, σ², chol))
     catch
       # Handle any errors silently during model fitting
     end

@@ -1,33 +1,23 @@
 function predict(model::FittedLinearModel)
   Y, X = modelcols(model.formula, model.data)
   # Number of observations and predictor variables
-  (n, p) = size(X)
-  # Degrees of freedom for residuals
-  dof_residuals = n - p
-  ŷ = similar(Vector{Float64}, n)
+  n = length(Y)
   # Calculate the original predicted values
+  ŷ = similar(Vector{Float64}, n)
   mul!(ŷ, X, model.β)
-
   if isa(model.formula.lhs, FunctionTerm)
     function_name = nameof(model.formula.lhs.f)
     #The Meyer factor is a metric derived from the sum of squared residuals and the degrees of freedom 
     #of the model, which assesses the adjusted variance of the residuals.
-    if function_name in [:log, :log_minus, :log1p]
-      # Calculate the residuals values
-      residual = Y - ŷ
-      # Variance of residuals: σ² = Σ(residual^2) / degrees of freedom for residuals
-      σ² = (residual ⋅ residual) / dof_residuals
-      meyer_factor = exp(σ² / 2)
-      ŷ = _predict(function_name, model.data[2], ŷ, meyer_factor=meyer_factor)
-    else
-      ŷ = _predict(function_name, model.data[2], ŷ)
-    end
+    # Number of observations and predictor variables
+    meyer_factor = exp(model.σ² / 2)
+    ŷ = _predict(function_name, model.data[2], ŷ, meyer_factor)
   end
 
   return ŷ
 end
 
-function _predict(function_name::Symbol, x::Vector{<:Real}, ŷ::Vector{<:Real}; meyer_factor::Real=1.0)
+function _predict(function_name::Symbol, x::Vector{<:Real}, ŷ::Vector{<:Real}, meyer_factor::Real)
   return @. begin
     if function_name == :log
       exp(ŷ) * meyer_factor
@@ -101,11 +91,10 @@ function predict(model::FittedLinearModel, data)
 
   if isa(model.formula.lhs, FunctionTerm)
     function_name = nameof(model.formula.lhs.f)
-    if function_name in [:log, :log_minus, :log1p]
-      ŷ = _predict(function_name, model.data[2], ŷ, meyer_factor=meyer_factor(model))
-    else
-      ŷ = _predict(function_name, model.data[2], ŷ)
-    end
+    #The Meyer factor is a metric derived from the sum of squared residuals and the degrees of freedom 
+    #of the model, which assesses the adjusted variance of the residuals.
+    meyer_factor = exp(model.σ² / 2)
+    ŷ = _predict(function_name, model.data[2], ŷ, meyer_factor)
   end
 
   length(unique(nonmissings)) == 1 ? ŷ : StatsModels._return_predictions(Tables.materializer(data), ŷ, nonmissings, length(nonmissings))
