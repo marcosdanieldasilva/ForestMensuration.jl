@@ -9,17 +9,17 @@ function _calculate_qq(x::Vector{<:Real})
   return DataFrame(qx=qq.qx, qy=qq.qy)
 end
 
-function _graph_table(model::TableRegressionModel)
-  y = model.mf.data[1]
+function _graph_table(model::FittedLinearModel)
+  y = model.data[1]
   # Predicted values from the model
-  ŷ = prediction(model)
+  ŷ = predict(model)
   # Residuals: the difference between observed and predicted values
   resid = y - ŷ
   # Fit the residuals to a normal distribution and build the Q-Q plot data
   dist = fit_mle(Normal, resid)
   qq = qqbuild(dist, resid)
   # Create a DataFrame combining the original data with the residuals and predicted values
-  data = hcat(DataFrame(model.mf.data), DataFrame(pred=ŷ, resid=resid), makeunique=true)
+  data = hcat(DataFrame(model.data), DataFrame(pred=ŷ, resid=resid), makeunique=true)
   # sort the data by rediduals values
   sort!(data, size(data, 2))
   # Insert the Q-Q plot values as new columns, ensuring unique column names
@@ -29,7 +29,7 @@ function _graph_table(model::TableRegressionModel)
 end
 
 """
-    plot_regression(model::RegressionModel)
+    plot_regression(model::FittedLinearModel)
   
 The `plot_regression` function generates four essential diagnostic plots to analyze the performance 
   and validity of a linear regression model in Julia. These plots help in assessing the goodness-of-fit,
@@ -38,7 +38,7 @@ The `plot_regression` function generates four essential diagnostic plots to anal
     assumptions required for reliable inference and prediction.
 
 # Parameters:
-- `model::TableRegressionModel`: 
+- `model::FittedLinearModel`: 
   The fitted linear regression model. This model is analyzed to generate the diagnostic plots.
 
 # Functionality:
@@ -69,8 +69,8 @@ The function automatically applies color schemes and adjusts plot aesthetics to 
 plots = plot_regression(model)
 ```
 """
-function plot_regression(model::RegressionModel)
-  data = DataFrame(model.mf.data)
+function plot_regression(model::FittedLinearModel)
+  data = DataFrame(model.data)
   n = size(data, 2)
   if n > 2
     ngroups = groupby(data, 3:n).ngroups
