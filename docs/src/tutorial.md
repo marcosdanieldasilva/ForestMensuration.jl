@@ -122,9 +122,7 @@ data = DataFrame(
 )
 
 # Perform regression analysis between height and diameter
-models = regression(:h, :dbh, data);
-# Alternative print of fitted models
-models_eq = ModelEquation.(models)
+models = regression(:h, :dbh, data)
 ```
 
 This generates 240 different models combining various transformations of h and dbh.
@@ -139,7 +137,7 @@ length(models)
 After fitting the models, you can evaluate and rank them based on specific criteria using the [`criteria_table`](@ref) function.
 
 ```@example regression_data
-# Evaluate models based on all criteria
+# Evaluate models
 best_models = criteria_table(models)
 ```
 
@@ -157,9 +155,6 @@ To select the best model based on the combined ranking you can simply use the [`
 ```@example regression_data
 # Select the top model
 top_model = criteria_selection(models)
-
-# View the model equation
-ModelEquation(top_model)
 ```
 
 #### Plotting the Regression
@@ -173,21 +168,21 @@ plot_regression(top_model)
 
 \
 
-#### Prediction
+#### Predict
 
-The [`prediction`](@ref) function. allows you to generate predicted values from a regression model on the original scale of the dependent variable. This is particularly useful when the model involves transformations of the dependent variable (e.g., logarithmic transformations). The function automatically applies the appropriate inverse transformations and corrections, such as the Meyer correction factor for logarithmic models.
+The [`predict`](@ref) function. allows you to generate predicted values from a regression model on the original scale of the dependent variable. This is particularly useful when the model involves transformations of the dependent variable (e.g., logarithmic transformations). The function automatically applies the appropriate inverse transformations and corrections, such as the Meyer correction factor for logarithmic models.
 
 ```@example regression_data
 # Returns the predicted values from the model on the original scale
-h_pred = prediction(top_model)
+h_pred = predict(top_model)
 ```
 
-The [`prediction!`](@ref) function extends this by adding the predicted values directly to your DataFrame. It creates new columns for the predicted and actual values, combining observed measurements with model predictions where data may be missing. This is especially useful in forest inventory datasets where certain tree attributes might not be measured for every tree, and predictions need to be filled in for these gaps.
+The [`predict!`](@ref) function extends this by adding the predicted values directly to your DataFrame. It creates new columns for the predicted and actual values, combining observed measurements with model predictions where data may be missing. This is especially useful in forest inventory datasets where certain tree attributes might not be measured for every tree, and predictions need to be filled in for these gaps.
 
 ```@example regression_data
 # Automatically adds predicted and actual height columns to the provided DataFrame.
 # This combines observed heights and predicted heights for trees with missing or unmeasured heights.
-prediction!(top_model, data)
+predict!(top_model, data)
 
 # Firsts values of dataset
 println(data[1:10, :])
