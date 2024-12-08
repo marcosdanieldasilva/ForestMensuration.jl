@@ -87,6 +87,26 @@ Newton Method:
 """
 abstract type Newton <: CubingMethod end
 
+"""
+Represents a fitted linear model.
+
+# Fields
+- `formula::F`: The formula used for the model.
+- `data::D`: The data frame containing the data.
+- `β::Array{T, 1}`: The regression coefficients.
+- `σ²::T`: The variance of residuals.
+- `RMSE::T`: The root mean squared error.
+- `chol::C`: The Cholesky decomposition of X'X.
+"""
+struct FittedLinearModel{F<:FormulaTerm,D<:AbstractDataFrame,T<:Float64,C<:Cholesky{Float64,Matrix{Float64}}}
+  formula::F
+  data::D
+  β::Array{T,1}
+  σ²::T
+  RMSE::T
+  chol::C
+end
+
 
 """
     struct ModelEquation

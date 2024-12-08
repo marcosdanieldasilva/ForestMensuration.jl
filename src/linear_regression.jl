@@ -49,20 +49,30 @@ function _fit_regression!(fitted_models::Vector{TableRegressionModel},
     end
 
     try
-      # Perform linear regression using GLM.fit
-      fitted_model = GLM.fit(LinearModel, X, Y)
-
-      # Create a formula combining y and x terms
+      # Calculate the regression coefficients
+      β = X'Y
+      # Compute the Cholesky decomposition of X'X for optimization
+      chol = cholesky!(X'X)
+      # Calculate the coefficients of the fitted regression
+      ldiv!(chol, β)
+      # Calculate the predicted values
+      mul!(ŷ, X, β)
+      # Calculate the residuals values
+      residual = Y - ŷ
+      # Number of predictor variables
+      p = size(X, 2)
+      # Degrees of freedom for residuals
+      dof_residuals = n - p
+      # Calculate residuals according to the regression FunctionTerm, if applicable
+      if isa(y, FunctionTerm)
+        # Estimate the variance of residuals
+        σ² = (residual ⋅ residual) / dof_residuals
+        residual = y_observed - _predict(ŷ, x_observed, σ², nameof(y.f))
+      end
+      # fit the FormulaTerm
       formula = FormulaTerm(y, x)
-
-      # Create a ModelFrame object to store schema and columns for the model
-      mf = ModelFrame(formula, emptySchema, cols, LinearModel)
-
-      # Create a ModelMatrix object based on the formula
-      mm = ModelMatrix(X, asgn(formula))
-
-      # Store the fitted model along with its associated data in TableRegressionModel
-      push!(fitted_models, TableRegressionModel(fitted_model, mf, mm))
+      # Pass the fitted model to FittedLinearModel structure
+      push!(fitted_models, FittedLinearModel(formula, data, β))
     catch
       # Handle any errors silently during model fitting
     end
