@@ -1,24 +1,41 @@
 function _nulldeviance(x::Vector{<:Real})
   mean_x = mean(x)
   out = Vector{Float64}(undef, length(x))
-  @inbounds @simd for i in eachindex(x)
+  @simd for i in eachindex(x)
     out[i] = abs2(x[i] - mean_x)
   end
   return sum(out)
 end
 
+function _stderror(model::FittedLinearModel)
+  Y, X = modelcols(model.formula, model.data)
+  # Number of observations and predictor variables
+  (n, p) = size(X)
+  # Degrees of freedom for residuals
+  dof_residuals = n - p
+  ŷ = similar(Vector{Float64}, n)
+  # Calculate the original predicted values
+  mul!(ŷ, X, model.β)
+  # Calculate the residuals values
+  residual = Y - ŷ
+  σ² = (residual ⋅ residual) / dof_residuals
+  dispersion = rmul!(inv(cholesky!(X'X)), σ²)
+  return sqrt.(diag(dispersion))
+end
+
 _p_result(test::HypothesisTests.HypothesisTest) = pvalue(test) > 0.05 ? true : false
 
 # Function to calculate various statistical criteria for evaluating regression models
-function _criteria_parameters(model::TableRegressionModel)::Matrix{Float64}
+function _criteria_parameters(model::FittedLinearModel)::Matrix{Float64}
   # Number of observations in the model
-  n = nobs(model)
+  n = model.data[1] |> length
+  cc = model.β
   # Degrees of freedom for residuals
-  dof_resid = dof_residual(model)
+  dof_resid = n - length(cc)
   # The actual observed values (response variable)
-  y = model.mf.data[1]
+  y = model.data[1]
   # Predicted values from the model
-  ŷ = prediction(model)
+  ŷ = predict(model)
   # Residuals: the difference between observed and predicted values
   residual = y - ŷ
   # Deviance: sum of squared residuals
@@ -48,8 +65,7 @@ function _criteria_parameters(model::TableRegressionModel)::Matrix{Float64}
     false
   end
   # Test for coefficient significance
-  cc = coef(model)
-  se = stderror(model)
+  se = _stderror(model)
   tt = cc ./ se
   p_values = ccdf.(Ref(FDist(1, dof_resid)), abs2.(tt))
   # Check if all coefficients are significant at the 0.05 level
@@ -101,7 +117,7 @@ function _calculate_ranks(ct::DataFrame, selected_criteria::Vector{Symbol})
 end
 
 """
-    criteria_table(model::Vector{<:TableRegressionModel}, criteria::Symbol...; best::Union{Bool,Int}=10)
+    criteria_table(model::Vector{<:FittedLinearModel}, criteria::Symbol...; best::Union{Bool,Int}=10)
 
 The `criteria_table` function evaluates and ranks multiple regression models based on specified criteria. 
   It generates a comprehensive table of performance metrics for each model, calculates ranks for these 
@@ -111,9 +127,9 @@ The `criteria_table` function evaluates and ranks multiple regression models bas
 # Parameters:
 - `model`: 
   The regression model(s) to be evaluated and compared. This parameter can accept:
-  - **Single Linear Regression Model (`TableRegressionModel`)**:
+  - **Single Linear Regression Model (`FittedLinearModel`)**:
     Evaluates a single linear regression model.
-  - **Vector of Linear Regression Models (`Vector{<:TableRegressionModel}`)**:
+  - **Vector of Linear Regression Models (`Vector{<:FittedLinearModel}`)**:
     Evaluates and compares multiple linear regression models.
     
 - `criteria::Symbol...`: 
@@ -148,7 +164,7 @@ The `criteria_table` function evaluates and ranks multiple regression models bas
 
 """
 function criteria_table(
-  model::Vector{<:TableRegressionModel},
+  model::Vector{<:FittedLinearModel},
   criteria::Symbol...;
   best::Union{Bool,Int}=10)
 
@@ -189,7 +205,6 @@ function criteria_table(
 
   # If 'best' is false, return the full DataFrame
   if best === false
-    ct.model = ModelEquation.(ct.model)
     return ct
   elseif best < length(model)
     # If 'best' is less than the number of models, return the top 'best' models
@@ -197,21 +212,20 @@ function criteria_table(
     return criteria_table(top_models, criteria...; best=false) # Re-run with selected models
   else
     # Otherwise, return the full DataFrame
-    ct.model = ModelEquation.(ct.model)
     return ct
   end
 end
 
-criteria_table(model::TableRegressionModel, criteria::Symbol...) = criteria_table([model], criteria...)
+criteria_table(model::FittedLinearModel, criteria::Symbol...) = criteria_table([model], criteria...)
 
 """
-    criteria_selection(model::Vector{<:TableRegressionModel}, criteria::Symbol...)
+    criteria_selection(model::Vector{<:FittedLinearModel}, criteria::Symbol...)
 
 The `criteria_selection` function evaluates and ranks a vector of regression models based on specified 
   criteria, returning the best model according to the combined ranking.
 
 # Parameters:
-- `model::Vector{<:TableRegressionModel}`: 
+- `model::Vector{<:FittedLinearModel}`: 
   A vector of linear regression models to be evaluated and compared.
 
 - `criteria::Symbol...`: 
@@ -228,8 +242,7 @@ The `criteria_selection` function evaluates and ranks a vector of regression mod
   If no criteria are specified, the function will use all available criteria by default.
 
 # Returns:
-- `TableRegressionModel`: 
+- `FittedLinearModel`: 
   The best model based on the combined ranking of the specified criteria.
 """
-criteria_selection(model::Vector{<:TableRegressionModel}, criteria::Symbol...) =
-  criteria_table(model, criteria..., best=5)[1, 1].model
+criteria_selection(model::Vector{<:FittedLinearModel}, criteria::Symbol...) = criteria_table(model, criteria..., best=5)[1, 1]
