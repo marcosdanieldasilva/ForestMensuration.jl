@@ -198,9 +198,6 @@ qualitative_models = regression(:h, :dbh, data, :plot)
 
 # Select the best model
 top_qual_model = criteria_selection(qualitative_models, :adjr2, :syx, :aic)
-
-# View the model equation
-ModelEquation(top_qual_model)
 ```
 
 \
