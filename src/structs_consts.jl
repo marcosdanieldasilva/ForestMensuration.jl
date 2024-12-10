@@ -118,8 +118,8 @@ Creates a new `FittedLinearModel` instance.
 # Returns
 - `FittedLinearModel{F, D, T, C}`: A new fitted linear model.
 """
-function FittedLinearModel(formula::F, data::N, β::Array{T,1}, σ²::T, adjr²::T, syx::T, aic::T, bic::T, normality::B, coefs_significant::B) where {F,N,T,C}
-  return FittedLinearModel{F,N,T,C}(formula, data, β, σ², adjr², syx, aic, bic, normality, coefs_significant)
+function FittedLinearModel(formula::F, data::N, β::Array{T,1}, σ²::T, adjr²::T, syx::T, aic::T, bic::T, normality::B, coefs_significant::B) where {F,N,T,B}
+  return FittedLinearModel{F,N,T,B}(formula, data, β, σ², adjr², syx, aic, bic, normality, coefs_significant)
 end
 
 """
