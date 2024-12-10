@@ -1,86 +1,3 @@
-function _nulldeviance(x::Vector{<:Real})
-  mean_x = mean(x)
-  out = Vector{Float64}(undef, length(x))
-  @simd for i in eachindex(x)
-    out[i] = abs2(x[i] - mean_x)
-  end
-  return sum(out)
-end
-
-_p_result(test::HypothesisTests.HypothesisTest) = pvalue(test) > 0.05 ? true : false
-
-"""
-Function to calculate various statistical criteria for evaluating regression models.
-
-This function computes several metrics that are useful for comparing the performance of 
-different regression models, including goodness-of-fit, residual error metrics, and model quality measures.
-
-Arguments:
-- `model::FittedLinearModel`: A fitted linear regression model.
-
-Returns:
-- `parameters::Matrix{Float64}`: A matrix containing the calculated metrics.
-"""
-function _criteria_parameters(model::FittedLinearModel)::Matrix{Float64}
-  # Number of observations (n) in the dataset
-  n = model.data[1] |> length
-  # Model coefficients
-  coefficients = model.β
-  ncoef = length(coefficients)
-  # Degrees of freedom for residuals (dof_resid)
-  dof_resid = n - ncoef
-  # Actual observed values (response variable)
-  y = model.data[1]
-  # Predicted values from the model
-  ŷ = predict(model)
-  # Residuals: the difference between observed and predicted values
-  residual = y - ŷ
-  # Deviance: sum of squared residuals (SSR)
-  SSR = residual ⋅ residual
-  # Mean Squared Error (MSE)
-  MSE = SSR / n
-  # Root Mean Squared Error (RMSE)
-  RMSE = √MSE
-  # Mean Absolute Error (MAE): average absolute residual
-  MAE = mean(abs.(residual))
-  # Standard error of the estimate (Syx) as a percentage of the mean response
-  syx_in_percentage = √(SSR / dof_resid) / mean(y) * 100
-  # Coefficient of determination (R²): proportion of variance explained
-  r_2 = 1 - SSR / _nulldeviance(y)
-  # Adjusted R²: adjusted for the number of predictors
-  adj_r² = 1 - (1 - r_2) * (n - 1) / dof_resid
-  # Log-likelihood of the model
-  loglike = -n / 2 * (log(2π * MSE) + 1)
-  # Akaike Information Criterion (AIC): model quality measure
-  AIC = -2 * loglike + 2 * ncoef
-  # Bayesian Information Criterion (BIC): penalizes model complexity more than AIC
-  BIC = -2 * loglike + log(n) * ncoef
-
-  # Normality test for residuals using Kolmogorov-Smirnov test
-  normality_p = try
-    if n < 100
-      ExactOneSampleKSTest(HypothesisTests.ksstats(residual, fit_mle(Normal, residual))...) |> _p_result
-    else
-      ApproximateOneSampleKSTest(HypothesisTests.ksstats(residual, fit_mle(Normal, residual))...) |> _p_result
-    end
-  catch
-    false
-  end
-
-  # Test for coefficient significance using p-values
-  dispersion = rmul!(inv(model.chol), model.σ²)
-  standard_errors = sqrt.(diag(dispersion))
-  t_values = coefficients ./ standard_errors
-  p_values = ccdf.(Ref(FDist(1, dof_resid)), abs2.(t_values))
-
-  # Check if all coefficients are significant at the 0.05 level
-  coefs_significant = all(p_values .< 0.05) ? true : false
-
-  # Return a matrix containing the calculated parameters
-  parameters = [r_2 adj_r² syx_in_percentage RMSE MAE AIC BIC normality_p coefs_significant]
-  return parameters
-end
-
 function _calculate_ranks(ct::DataFrame, selected_criteria::Vector{Symbol})
 
   n = size(ct, 1)
@@ -129,6 +46,8 @@ function _calculate_ranks(ct::DataFrame, selected_criteria::Vector{Symbol})
 
   return combined_rank
 end
+
+_criteria_parameters(model::FittedLinearModel) = [model.adjr² model.syx model.aic model.bic model.normality model.coefs_significant]
 
 """
     criteria_table(model::Vector{<:FittedLinearModel}, criteria::Symbol...; best::Union{Bool,Int}=10)
@@ -180,14 +99,11 @@ The `criteria_table` function evaluates and ranks multiple regression models bas
 - **Vector of Models**:
   `criteria_table([model1, model2], :aic, :mae)`
 """
-function criteria_table(
-  model::Vector{<:FittedLinearModel},
-  criteria::Symbol...;
-  best::Union{Bool,Int}=10
-)
+function criteria_table(model::Vector{<:FittedLinearModel}, criteria::Symbol...; best::Union{Bool,Int}=10)
 
   # Define allowed fields for criteria
-  allowed_fields = [:r2, :adjr2, :syx, :rmse, :mae, :aic, :bic, :normality, :significance]
+  # allowed_fields = [:r2, :adjr2, :syx, :rmse, :mae, :aic, :bic, :normality, :significance]
+  allowed_fields = [:adjr2, :syx, :aic, :bic, :normality, :significance]
 
   # Determine selected criteria
   if isempty(criteria)

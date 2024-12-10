@@ -92,12 +92,17 @@ Represents a fitted linear model.
 - `RMSE::T`: The root mean squared error.
 - `chol::C`: The Cholesky decomposition of X'X.
 """
-struct FittedLinearModel{F<:FormulaTerm,N<:NamedTuple,T<:Float64,C<:Cholesky{Float64,Matrix{Float64}}}
+struct FittedLinearModel{F<:FormulaTerm,N<:NamedTuple,T<:Float64,B<:Bool}
   formula::F
   data::N
   β::Array{T,1}
   σ²::T
-  chol::C
+  adjr²::T
+  syx::T
+  aic::T
+  bic::T
+  normality::B
+  coefs_significant::B
 end
 
 """
@@ -109,13 +114,12 @@ Creates a new `FittedLinearModel` instance.
 - `β::Array{T, 1}`: The regression coefficients.
 - `σ²::T`: The variance of residuals.
 - `RMSE::T`: The root mean squared error.
-- `chol::C`: The Cholesky decomposition of X'X.
 
 # Returns
 - `FittedLinearModel{F, D, T, C}`: A new fitted linear model.
 """
-function FittedLinearModel(formula::F, data::N, β::Array{T,1}, σ²::T, chol::C) where {F,N,T,C}
-  return FittedLinearModel{F,N,T,C}(formula, data, β, σ², chol)
+function FittedLinearModel(formula::F, data::N, β::Array{T,1}, σ²::T, adjr²::T, syx::T, aic::T, bic::T, normality::B, coefs_significant::B) where {F,N,T,C}
+  return FittedLinearModel{F,N,T,C}(formula, data, β, σ², adjr², syx, aic, bic, normality, coefs_significant)
 end
 
 """

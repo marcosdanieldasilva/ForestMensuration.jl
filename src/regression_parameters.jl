@@ -81,10 +81,8 @@ end
 function _generate_combined_terms(x_term::AbstractTerm, y_term::AbstractTerm)::Vector{MixTerm}
 
   # Define transformations for the x_term variable
-  # x^2: square of the x_term
-  # log1p: log(1 + x_term) to prevent log(0) issues
   x2 = FunctionTerm(x -> x^2, [x_term], :($(x_term)^2))
-  log_x = FunctionTerm(log1p, [x_term], :(log1p($(x_term))))
+  log_x = FunctionTerm(log, [x_term], :(log($(x_term))))
 
   # Collect all x transformations into a list
   x_terms = [
@@ -94,10 +92,8 @@ function _generate_combined_terms(x_term::AbstractTerm, y_term::AbstractTerm)::V
   ]
 
   # Define transformations for the y_term variable 
-  # y^2: square of the y_term
-  # log1p: log(1 + y_term) to prevent log(0) issues
   y2 = FunctionTerm(y -> y^2, [y_term], :($(y_term)^2))
-  log_y = FunctionTerm(log1p, [y_term], :(log1p($(y_term))))
+  log_y = FunctionTerm(log, [y_term], :(log($(y_term))))
 
   # Collect all y transformations into a list
   y_terms = [
@@ -115,26 +111,26 @@ function _generate_combined_terms(x_term::AbstractTerm, y_term::AbstractTerm)::V
   # Combine the sum_terms and interaction_terms into a new set of terms
   combined_terms = [st + it for st in sum_terms for it in interaction_terms]
 
-  # The number of interaction terms generated
-  n = length(interaction_terms)
+  # # The number of interaction terms generated
+  # n = length(interaction_terms)
 
-  # Loop over x_terms and combine them with pairs of interaction terms
-  for x in x_terms
-    for i in 1:n-1
-      for j in i+1:n
-        push!(combined_terms, x + interaction_terms[i] + interaction_terms[j])
-      end
-    end
-  end
+  # # Loop over x_terms and combine them with pairs of interaction terms
+  # for x in x_terms
+  #   for i in 1:n-1
+  #     for j in i+1:n
+  #       push!(combined_terms, x + interaction_terms[i] + interaction_terms[j])
+  #     end
+  #   end
+  # end
 
-  # Similarly, loop over y_terms and combine them with pairs of interaction terms
-  for y in y_terms
-    for i in 1:n-1
-      for j in i+1:n
-        push!(combined_terms, y + interaction_terms[i] + interaction_terms[j])
-      end
-    end
-  end
+  # # Similarly, loop over y_terms and combine them with pairs of interaction terms
+  # for y in y_terms
+  #   for i in 1:n-1
+  #     for j in i+1:n
+  #       push!(combined_terms, y + interaction_terms[i] + interaction_terms[j])
+  #     end
+  #   end
+  # end
 
   # Return the final vector of all combined terms
   return combined_terms

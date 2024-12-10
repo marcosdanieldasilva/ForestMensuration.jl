@@ -1,3 +1,36 @@
+function _predict(ft::FormulaTerm, x::Vector{<:Real}, ŷ::Vector{<:Real}, σ²::Real)
+  function_name = nameof(ft.lhs.f)
+  # The Meyer factor is derived from the model's residual variance (σ²) and is used for adjustment
+  meyer_factor = exp(σ² / 2)
+  return @. begin
+    if function_name == :log
+      exp(ŷ) * meyer_factor
+    elseif function_name == :log_minus
+      exp(ŷ) * meyer_factor + 1.3
+    elseif function_name == :log1p
+      expm1(ŷ) * meyer_factor
+    elseif function_name == :one_by_y
+      1 / ŷ
+    elseif function_name == :one_by_y_minus
+      1 / ŷ + 1.3
+    elseif function_name == :one_by_sqrt
+      1 / ŷ^2
+    elseif function_name == :one_by_sqrt_minus
+      1 / ŷ^2 + 1.3
+    elseif function_name == :x_by_sqrt_y
+      (x / ŷ)^2
+    elseif function_name == :x_by_sqrt_y_minus
+      (x / ŷ)^2 + 1.3
+    elseif function_name == :square_x_by_y
+      x^2 / ŷ
+    elseif function_name == :square_x_by_y_minus
+      x^2 / ŷ + 1.3
+    else
+      ŷ
+    end
+  end
+end
+
 function _predict(model::FittedLinearModel, x::Vector{<:Real}, ŷ::Vector{<:Real})
   function_name = nameof(model.formula.lhs.f)
   # The Meyer factor is derived from the model's residual variance (σ²) and is used for adjustment

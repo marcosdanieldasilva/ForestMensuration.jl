@@ -10,11 +10,64 @@ function _create_matrix_formulas!(matrix_formulas::Vector{MatrixTerm}, x_term_li
   end
 end
 
-function _fit_regression!(fitted_models::Vector{FittedLinearModel},
-  y_term_list::Vector{AbstractTerm},
-  matrix_formulas::Vector{MatrixTerm},
-  cols::NamedTuple
-)
+function _fit_linear_model(ft::FormulaTerm, Y::Vector{<:Real}, X::Matrix{<:Real}, data::NamedTuple)
+  (y, x, q...) = data
+  ȳ = mean(y)
+  β = X'Y
+  # Compute the Cholesky decomposition of X'X for optimization
+  chol = cholesky(X'X)
+  # Calculate the coefficients of the fitted regression
+  ldiv!(chol, β)
+  # Calculate the predicted values
+  ŷ = similar(Y)
+  mul!(ŷ, X, β)
+  # Number of observations and predictor variables
+  (n, ncoef) = size(X)
+  # Degrees of freedom for residuals
+  dof_residuals = n - ncoef
+  # regression residual
+  residual = Y - ŷ
+  # Deviance (Sum of Squared Residuals, SSR)
+  σ² = (residual ⋅ residual) / dof_residuals
+  if isa(ft.lhs, FunctionTerm)
+    # corrrect predict value
+    ŷ = _predict(ft, x, ŷ, σ²)
+    # true residual: the difference between observed and predicted values
+    residual = y - ŷ
+  end
+  # Deviance: sum of squared residuals (SSR)
+  SSR = residual ⋅ residual
+  # Total Sum of Squares (SST)
+  SST = sum(abs2.(y .- ȳ))
+  # Coefficient of determination (R²): proportion of variance explained
+  r² = 1 - SSR / SST
+  # Adjusted R²: adjusted for the number of predictors
+  adjr² = 1 - (1 - r²) * (n - 1) / dof_residuals
+  # Mean Squared Error (MSE)
+  MSE = SSR / n
+  # Standard error of the estimate (Syx) as a percentage of the mean response
+  Syx = √(SSR / dof_residuals) / ȳ * 100
+  # Log-likelihood of the model)
+  loglike = -n / 2 * (log(2π * MSE) + 1)
+  # Akaike Information Criterion (AIC): model quality measure
+  AIC = -2 * loglike + 2 * ncoef
+  # Bayesian Information Criterion (BIC): penalizes model complexity more than AIC
+  BIC = -2 * loglike + log(n) * ncoef
+  # Test for coefficient significance using p-values
+  dispersion = rmul!(inv(chol), σ²)
+  standard_errors = sqrt.(diag(dispersion))
+  t_values = β ./ standard_errors
+  p_values = ccdf.(Ref(FDist(1, dof_residuals)), abs2.(t_values))
+  # Check if all coefficients are significant at the 0.05 level
+  coefs_significant = all(p_values .< 0.05) ? true : false
+  normality = goodness_of_fit_test(fit_mle(Normal, residual), residual) |> pvalue > 0.05 ? true : false
+  # Pass the fitted model to FittedLinearModel structure
+  fitted_models = FittedLinearModel(ft, data, β, σ², adjr², Syx, AIC, BIC, normality, coefs_significant)
+
+  return fitted_models
+end
+
+function _fit_regression!(fitted_models::Vector{FittedLinearModel}, y_term_list::Vector{AbstractTerm}, matrix_formulas::Vector{MatrixTerm}, cols::NamedTuple)
 
   # Dictionary to store model column data for each y term
   model_cols = Dict{AbstractTerm,Union{Vector{<:Real},Nothing}}()
@@ -49,29 +102,23 @@ function _fit_regression!(fitted_models::Vector{FittedLinearModel},
     end
 
     try
-      # Calculate the regression coefficients
-      β = X'Y
-      # Compute the Cholesky decomposition of X'X for optimization
-      chol = cholesky!(X'X)
-      # Calculate the coefficients of the fitted regression
-      ldiv!(chol, β)
-      # Calculate the predicted values
-      ŷ = similar(Y)
-      mul!(ŷ, X, β)
-      # Number of observations and predictor variables
-      (n, p) = size(X)
-      # Degrees of freedom for residuals
-      dof_residuals = n - p
-      residual = Y - ŷ
-      # Deviance (Sum of Squared Residuals, SSR)
-      σ² = (residual ⋅ residual) / dof_residuals
-      # fit the FormulaTerm
       ft = FormulaTerm(y, x)
       # Pass the fitted model to FittedLinearModel structure
-      push!(fitted_models, FittedLinearModel(ft, cols, β, σ², chol))
+      push!(fitted_models, _fit_linear_model(ft, Y, X, cols))
     catch
       # Handle any errors silently during model fitting
     end
+  end
+end
+
+
+function regression(ft::FormulaTerm, data::AbstractDataFrame)
+  try
+    Y, X = modelcols(ft, data)
+    return _fit_linear_model(ft, Y, X, columntable(data))
+  catch
+    ft = apply_schema(ft, schema(data))
+    return _fit_linear_model(ft, Y, X, columntable(data))
   end
 end
 
@@ -175,6 +222,49 @@ function regression(y::Symbol, x::Symbol, data::AbstractDataFrame, q::Symbol...)
   fitted_models = Vector{FittedLinearModel}()
 
   _fit_regression!(fitted_models, y_term_list, matrix_formulas, cols)
+
+  isempty(fitted_models) && error("Failed to fit any models")
+
+  return fitted_models
+end
+
+function regression(z::S, y::S, x::S, data::AbstractDataFrame, q::S...) where {S<:Symbol}
+
+  new_data = dropmissing(data[:, [z, y, x, q...]])
+
+  n, k = size(new_data)
+
+  if n < k + 2
+    error("There are not enough data points to perform regression. At least $(k + 2) observations are required.")
+  end
+
+  #Attempt to coerce the z, y and x columns to the Continuous scitype (e.g., Float64)
+  try
+    coerce!(new_data, z => ScientificTypes.Continuous, y => ScientificTypes.Continuous, x => ScientificTypes.Continuous)
+  catch
+    # If coercion fails, an error will be thrown
+    error("Unable to coerce variables '$(y)' and '$(x)' to Continuous. Please ensure they contain numeric values.")
+  end
+
+  # Convert the DataFrame to a column table (named tuple of vectors)
+  cols = columntable(new_data)
+
+  z_term = concrete_term(term(z), cols, ContinuousTerm)
+  y_term = concrete_term(term(y), cols, ContinuousTerm)
+  x_term = concrete_term(term(x), cols, ContinuousTerm)
+  q_term = [concrete_term(term(terms), cols, CategoricalTerm) for terms ∈ q]
+
+  z_term_list = _dependent_variable(z_term)
+
+  combined_term_list = _generate_combined_terms(y_term, x_term)
+
+  matrix_formulas = Vector{MatrixTerm}(undef, length(combined_term_list))
+
+  isempty(q_term) ? _create_matrix_formulas!(matrix_formulas, combined_term_list) : _create_matrix_formulas!(matrix_formulas, combined_term_list, q_term...)
+
+  fitted_models = Vector{FittedLinearModel}()
+
+  _fit_regression!(fitted_models, z_term_list, matrix_formulas, cols)
 
   isempty(fitted_models) && error("Failed to fit any models")
 
