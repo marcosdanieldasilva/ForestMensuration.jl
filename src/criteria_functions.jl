@@ -4,23 +4,26 @@ function _calculate_ranks(ct::DataFrame, selected_criteria::Vector{Symbol})
   ranks = Dict()
 
   # Calculate ranks for each criterion
+  if :pvalue in selected_criteria
+    ranks[:pvalue] = competerank(ct[!, "pvalue"], rev=true)
+  end
   if :r2 in selected_criteria
     ranks[:r2] = competerank(ct[!, "r2"], rev=true)
   end
   if :adjr2 in selected_criteria
     ranks[:adjr2] = competerank(ct[!, "adjr2"], rev=true)
   end
-  if :pvalue in selected_criteria
-    ranks[:pvalue] = competerank(ct[!, "pvalue"], rev=true)
-  end
-  if :syx in selected_criteria
-    ranks[:syx] = competerank(ct[!, "syx"])
+  if :mse in selected_criteria
+    ranks[:mse] = competerank(ct[!, "mse"])
   end
   if :rmse in selected_criteria
     ranks[:rmse] = competerank(ct[!, "rmse"])
   end
   if :mae in selected_criteria
     ranks[:mae] = competerank(ct[!, "mae"])
+  end
+  if :syx in selected_criteria
+    ranks[:syx] = competerank(ct[!, "syx"])
   end
   if :aic in selected_criteria
     ranks[:aic] = competerank(ct[!, "aic"])
@@ -33,6 +36,12 @@ function _calculate_ranks(ct::DataFrame, selected_criteria::Vector{Symbol})
     normality_ranks = competerank(ct[!, "normality"], rev=true)
     penalized_non_normal_ranks = [normality_ranks[i] == 1 ? 1 : normality_ranks[i] * n for i in 1:n]
     ranks[:normality] = penalized_non_normal_ranks
+  end
+  if :homoscedasticity in selected_criteria
+    # Penalize non-homoscedasticitys models with a higher rank
+    homoscedasticity_ranks = competerank(ct[!, "homoscedasticity"], rev=true)
+    penalized_non_homoscedasticity_ranks = [homoscedasticity_ranks[i] == 1 ? 1 : homoscedasticity_ranks[i] * n for i in 1:n]
+    ranks[:homoscedasticity] = penalized_non_homoscedasticity_ranks
   end
   if :significance in selected_criteria
     # Penalize non-significance models with a higher rank
@@ -47,7 +56,9 @@ function _calculate_ranks(ct::DataFrame, selected_criteria::Vector{Symbol})
   return combined_rank
 end
 
-_criteria_parameters(model::FittedLinearModel) = [model.adjr² model.syx model.aic model.bic model.normality model.coefs_significant]
+_criteria_parameters(model::FittedLinearModel) = [
+  model.r² model.adjr² model.mse model.rmse model.mae model.syx model.aic model.bic model.normality model.homoscedasticity model.significance
+]
 
 """
     criteria_table(model::Vector{<:FittedLinearModel}, criteria::Symbol...; best::Union{Bool,Int}=10)
@@ -102,13 +113,12 @@ The `criteria_table` function evaluates and ranks multiple regression models bas
 function criteria_table(model::Vector{<:FittedLinearModel}, criteria::Symbol...; best::Union{Bool,Int}=10)
 
   # Define allowed fields for criteria
-  # allowed_fields = [:r2, :adjr2, :syx, :rmse, :mae, :aic, :bic, :normality, :significance]
-  allowed_fields = [:adjr2, :syx, :aic, :bic, :normality, :significance]
+  allowed_fields = [:r2, :adjr2, :mse, :rmse, :mae, :syx, :aic, :bic, :normality, :homoscedasticity, :significance]
 
   # Determine selected criteria
   if isempty(criteria)
     # Use default criteria if none are specified
-    selected_criteria = [:adjr2, :syx, :aic, :bic, :normality, :significance]
+    selected_criteria = [:adjr2, :syx, :aic, :bic, :normality, :homoscedasticity, :significance]
   elseif :all in criteria
     # If :all is included, use all fields except :all itself
     selected_criteria = setdiff(allowed_fields, [:all])

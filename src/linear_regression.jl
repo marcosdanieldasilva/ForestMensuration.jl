@@ -11,61 +11,77 @@ function _create_matrix_formulas!(matrix_formulas::Vector{MatrixTerm}, x_term_li
 end
 
 function _fit_linear_model(ft::FormulaTerm, Y::Vector{<:Real}, X::Matrix{<:Real}, data::NamedTuple)
+  # Extract the dependent variable (y), independent variables (x), and additional parameters (q) from data
   (y, x, q...) = data
+  # Compute the mean of the dependent variable (ȳ) for later calculations
   ȳ = mean(y)
+  # Compute the initial product of the design matrix transpose and the dependent variable
   β = X'Y
-  # Compute the Cholesky decomposition of X'X for optimization
+  # Perform Cholesky decomposition on X'X for efficient linear system solving
   chol = cholesky(X'X)
-  # Calculate the coefficients of the fitted regression
+  # Solve for regression coefficients β using the Cholesky decomposition
   ldiv!(chol, β)
-  # Calculate the predicted values
+  # Allocate space for predicted values (ŷ) and calculate them
   ŷ = similar(Y)
   mul!(ŷ, X, β)
-  # Number of observations and predictor variables
+  # Determine the number of observations (n) and the number of predictors (ncoef)
   (n, ncoef) = size(X)
-  # Degrees of freedom for residuals
+  # Calculate the degrees of freedom for residuals
   dof_residuals = n - ncoef
-  # regression residual
+  # Compute the residuals (difference between observed and predicted values)
   residual = Y - ŷ
-  # Deviance (Sum of Squared Residuals, SSR)
+  # Compute the variance of residuals (σ²) adjusted by degrees of freedom
   σ² = (residual ⋅ residual) / dof_residuals
+  # Correct the predicted values and residuals for models with a function on the left-hand side of the formula
   if isa(ft.lhs, FunctionTerm)
-    # corrrect predict value
+    # Adjust predicted values for transformed response
     ŷ = _predict(ft, x, ŷ, σ²)
-    # true residual: the difference between observed and predicted values
+    # Recompute residuals using adjusted predicted values
     residual = y - ŷ
   end
-  # Deviance: sum of squared residuals (SSR)
+  # Calculate the Sum of Squared Residuals (SSR)
   SSR = residual ⋅ residual
-  # Total Sum of Squares (SST)
+  # Calculate the Total Sum of Squares (SST) based on the deviation of y from its mean
   SST = sum(abs2.(y .- ȳ))
-  # Coefficient of determination (R²): proportion of variance explained
+  # Compute the coefficient of determination (R²), a measure of model fit
   r² = 1 - SSR / SST
-  # Adjusted R²: adjusted for the number of predictors
+  # Compute the adjusted R², penalized for the number of predictors
   adjr² = 1 - (1 - r²) * (n - 1) / dof_residuals
-  # Mean Squared Error (MSE)
+  # Calculate the Mean Squared Error (MSE) as SSR divided by the number of observations
   MSE = SSR / n
-  # Standard error of the estimate (Syx) as a percentage of the mean response
+  # Calculate the Root Mean Squared Error (RMSE), a measure of prediction accuracy
+  RMSE = √MSE
+  # Calculate the Mean Absolute Error (MAE) as the average absolute residual value
+  MAE = mean(abs.(residual))
+  # Calculate the standard error of the estimate (Syx) as a percentage of the mean response
   Syx = √(SSR / dof_residuals) / ȳ * 100
-  # Log-likelihood of the model)
+  # Compute the log-likelihood of the model for information criteria
   loglike = -n / 2 * (log(2π * MSE) + 1)
-  # Akaike Information Criterion (AIC): model quality measure
+  # Compute the Akaike Information Criterion (AIC) for model quality
   AIC = -2 * loglike + 2 * ncoef
-  # Bayesian Information Criterion (BIC): penalizes model complexity more than AIC
+  # Compute the Bayesian Information Criterion (BIC) for penalized model complexity
   BIC = -2 * loglike + log(n) * ncoef
-  # Test for coefficient significance using p-values
+  # Perform significance testing for coefficients using t-statistics and p-values
   dispersion = rmul!(inv(chol), σ²)
   standard_errors = sqrt.(diag(dispersion))
   t_values = β ./ standard_errors
   p_values = ccdf.(Ref(FDist(1, dof_residuals)), abs2.(t_values))
-  # Check if all coefficients are significant at the 0.05 level
-  coefs_significant = all(p_values .< 0.05) ? true : false
+  # Check if all coefficients are statistically significant at the 0.05 level
+  significance = all(p_values .< 0.05) ? true : false
+  # Test for normality of residuals using goodness-of-fit
   normality = goodness_of_fit_test(fit_mle(Normal, residual), residual) |> pvalue > 0.05 ? true : false
-  # Pass the fitted model to FittedLinearModel structure
-  fitted_models = FittedLinearModel(ft, data, β, σ², adjr², Syx, AIC, BIC, normality, coefs_significant)
-
+  # Select and perform the appropriate test for homoscedasticity based on residual normality
+  homoscedasticity = (
+    normality ? WhiteTest(X, residual, type=:linear) : WhiteTest(X, residual, type=:White)
+  ) |> pvalue > 0.05 ? true : false
+  # Package the results into a FittedLinearModel structure
+  fitted_models = FittedLinearModel(
+    ft, data, β, σ², r², adjr², MSE, RMSE, MAE, Syx, AIC, BIC, normality, homoscedasticity, significance
+  )
+  # Return the fitted model object
   return fitted_models
 end
+
 
 function _fit_regression!(fitted_models::Vector{FittedLinearModel}, y_term_list::Vector{AbstractTerm}, matrix_formulas::Vector{MatrixTerm}, cols::NamedTuple)
 
@@ -110,7 +126,6 @@ function _fit_regression!(fitted_models::Vector{FittedLinearModel}, y_term_list:
     end
   end
 end
-
 
 function regression(ft::FormulaTerm, data::AbstractDataFrame)
   try

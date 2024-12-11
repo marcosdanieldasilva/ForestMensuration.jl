@@ -82,45 +82,112 @@ abstract type Newton <: CubingMethod end
 
 
 """
+    struct FittedLinearModel{F<:FormulaTerm,N<:NamedTuple,T<:Float64,B<:Bool}
+      
 Represents a fitted linear model.
 
 # Fields
-- `formula::F`: The formula used for the model.
-- `data::N`: The data frame containing the data.
-- `β::Array{T, 1}`: The regression coefficients.
-- `σ²::T`: The variance of residuals.
-- `RMSE::T`: The root mean squared error.
-- `chol::C`: The Cholesky decomposition of X'X.
+- `formula::F`: The formula used to specify the relationship between dependent and independent variables.
+- `data::N`: The data set (e.g., NamedTuple or DataFrame) containing the variables used in the model.
+- `β::Array{T,1}`: The estimated regression coefficients (a vector).
+- `σ²::T`: The variance of residuals, indicating the variability of residuals around the fitted values.
+- `r²::T`: The coefficient of determination (R²), measuring the proportion of variance explained by the model.
+- `adjr²::T`: The adjusted R², adjusted for the number of predictors.
+- `mse::T`: The mean squared error, representing the average squared residual.
+- `rmse::T`: The root mean squared error, a measure of the prediction error.
+- `syx::T`: The standard error of the estimate (Syx), expressed as a percentage of the mean response.
+- `aic::T`: The Akaike Information Criterion, used for model comparison.
+- `bic::T`: The Bayesian Information Criterion, penalizing model complexity more heavily than AIC.
+- `normality::B`: Boolean flag indicating whether residuals follow a normal distribution (`true` or `false`).
+- `homoscedasticity::B`: Boolean flag indicating whether residuals have constant variance (`true` for homoscedasticity).
+- `significance::B`: Boolean flag indicating whether all coefficients are statistically significant (`true` if all p-values < 0.05).
 """
 struct FittedLinearModel{F<:FormulaTerm,N<:NamedTuple,T<:Float64,B<:Bool}
   formula::F
   data::N
   β::Array{T,1}
   σ²::T
+  r²::T
   adjr²::T
+  mse::T
+  rmse::T
+  mae::T
   syx::T
   aic::T
   bic::T
   normality::B
-  coefs_significant::B
+  homoscedasticity::B
+  significance::B
 end
 
 """
-Creates a new `FittedLinearModel` instance.
+    FittedLinearModel(formula::F, data::N, β::Array{T,1}, σ²::T, r²::T, adjr²::T, mse::T, rmse::T, mae::T, syx::T, aic::T, bic::T, normality::B, homoscedasticity::B, significance::B)
+
+    Creates a new `FittedLinearModel` instance.
 
 # Arguments
-- `formula::F`: The formula used for the model.
-- `data::N`: The data frame containing the data.
-- `β::Array{T, 1}`: The regression coefficients.
-- `σ²::T`: The variance of residuals.
-- `RMSE::T`: The root mean squared error.
+- `formula::F`: The formula used to specify the relationship between dependent and independent variables.
+- `data::N`: The data set (e.g., NamedTuple or DataFrame) containing the variables used in the model.
+- `β::Array{T,1}`: The estimated regression coefficients (a vector).
+- `σ²::T`: The variance of residuals, indicating the variability of residuals around the fitted values.
+- `r²::T`: The coefficient of determination (R²), measuring the proportion of variance explained by the model.
+- `adjr²::T`: The adjusted R², adjusted for the number of predictors.
+- `mse::T`: The mean squared error, representing the average squared residual.
+- `rmse::T`: The root mean squared error, a measure of the prediction error.
+- `mse::T`: The mean absolute error as the average absolute residual value.
+- `syx::T`: The standard error of the estimate (Syx), expressed as a percentage of the mean response.
+- `aic::T`: The Akaike Information Criterion, used for model comparison.
+- `bic::T`: The Bayesian Information Criterion, penalizing model complexity more heavily than AIC.
+- `normality::B`: Boolean flag indicating whether residuals follow a normal distribution (`true` or `false`).
+- `homoscedasticity::B`: Boolean flag indicating whether residuals have constant variance (`true` for homoscedasticity).
+- `significance::B`: Boolean flag indicating whether all coefficients are statistically significant (`true` if all p-values < 0.05).
 
 # Returns
-- `FittedLinearModel{F, D, T, C}`: A new fitted linear model.
+- `FittedLinearModel{F, N, T, B}`: A new fitted linear model instance, encapsulating all model parameters and metrics.
+
+# Type Parameters
+- `F`: The type of the formula term (e.g., `FormulaTerm`).
+- `N`: The type of the data structure (e.g., `NamedTuple`).
+- `T`: The numeric type used for calculations (e.g., `Float64`).
+- `B`: The boolean type (`Bool`).
+
 """
-function FittedLinearModel(formula::F, data::N, β::Array{T,1}, σ²::T, adjr²::T, syx::T, aic::T, bic::T, normality::B, coefs_significant::B) where {F,N,T,B}
-  return FittedLinearModel{F,N,T,B}(formula, data, β, σ², adjr², syx, aic, bic, normality, coefs_significant)
+function FittedLinearModel(
+  formula::F,
+  data::N,
+  β::Array{T,1},
+  σ²::T,
+  r²::T,
+  adjr²::T,
+  mse::T,
+  rmse::T,
+  mae::T,
+  syx::T,
+  aic::T,
+  bic::T,
+  normality::B,
+  homoscedasticity::B,
+  significance::B
+) where {F,N,T,B}
+  return FittedLinearModel{F,N,T,B}(
+    formula,
+    data,
+    β,
+    σ²,
+    r²,
+    adjr²,
+    mse,
+    rmse,
+    mae,
+    syx,
+    aic,
+    bic,
+    normality,
+    homoscedasticity,
+    significance
+  )
 end
+
 
 """
     struct SiteAnalysis
