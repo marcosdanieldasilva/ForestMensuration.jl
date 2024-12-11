@@ -18,12 +18,15 @@ square_x_by_y_minus(x::Real, y::Real) = x^2 / (y - 1.3)
 # - `Vector{AbstractTerm}`: A list of transformed dependent variable terms.
 function _dependent_variable(y_term::AbstractTerm, x_term::AbstractTerm)::Vector{AbstractTerm}
   return [
-    y_term, FunctionTerm(log, [y_term], :(log($(y_term)))),
+    y_term,
+    FunctionTerm(log, [y_term], :(log($(y_term)))),
     FunctionTerm(log_minus, [y_term], :(log_minus($(y_term) - 1.3))),
-    FunctionTerm(log1p, [y_term], :(log1p($(y_term)))), FunctionTerm(one_by_y, [y_term], :(1 / ($(y_term)))),
+    FunctionTerm(log1p, [y_term], :(log1p($(y_term)))),
+    FunctionTerm(one_by_y, [y_term], :(1 / ($(y_term)))),
     FunctionTerm(one_by_y_minus, [y_term], :(1 / ($(y_term) - 1.3))),
     FunctionTerm(one_by_sqrt, [y_term], :(1 / √($(y_term)))),
-    FunctionTerm(one_by_sqrt_minus, [y_term], :(1 / √($(y_term) - 1.3))), FunctionTerm(x_by_sqrt_y, [x_term, y_term], :($(x_term) / √$(y_term))),
+    FunctionTerm(one_by_sqrt_minus, [y_term], :(1 / √($(y_term) - 1.3))),
+    FunctionTerm(x_by_sqrt_y, [x_term, y_term], :($(x_term) / √$(y_term))),
     FunctionTerm(x_by_sqrt_y_minus, [x_term, y_term], :($(x_term) / √($(y_term) - 1.3))),
     FunctionTerm(square_x_by_y, [x_term, y_term], :($(x_term)^2 / $(y_term))),
     FunctionTerm(square_x_by_y_minus, [x_term, y_term], :($(x_term)^2 / ($(y_term) - 1.3)))
@@ -37,12 +40,9 @@ end
 # - `Vector{AbstractTerm}`: A list of transformed dependent variable term.
 function _dependent_variable(y_term::AbstractTerm)::Vector{AbstractTerm}
   return [
-    y_term, FunctionTerm(log, [y_term], :(log($(y_term)))),
-    FunctionTerm(log_minus, [y_term], :(log_minus($(y_term) - 1.3))),
-    FunctionTerm(log1p, [y_term], :(log1p($(y_term)))), FunctionTerm(one_by_y, [y_term], :(1 / ($(y_term)))),
-    FunctionTerm(one_by_y_minus, [y_term], :(1 / ($(y_term) - 1.3))),
-    FunctionTerm(one_by_sqrt, [y_term], :(1 / √($(y_term)))),
-    FunctionTerm(one_by_sqrt_minus, [y_term], :(1 / √($(y_term) - 1.3)))
+    y_term,
+    FunctionTerm(log, [y_term], :(log($(y_term)))),
+    FunctionTerm(log1p, [y_term], :(log1p($(y_term))))
   ]
 end
 
@@ -65,16 +65,22 @@ function _independent_variable(x_term::AbstractTerm)::Vector{MixTerm}
     log_x,
     log_x2,
     inv_x,
-    inv_x2, x_term + x2,
+    inv_x2,
+    x_term + x2,
     x_term + log_x,
     x_term + log_x2,
     x_term + inv_x,
-    x_term + inv_x2, x2 + log_x,
+    x_term + inv_x2,
+    x2 + log_x,
     x2 + log_x2,
-    x2 + inv_x, log_x + log_x2,
+    x2 + inv_x,
+    x2 + inv_x2,
+    log_x + log_x2,
     log_x + inv_x,
-    log_x + inv_x2, log_x2 + inv_x,
-    log_x2 + inv_x2, inv_x + inv_x2
+    log_x + inv_x2,
+    log_x2 + inv_x,
+    log_x2 + inv_x2,
+    inv_x + inv_x2
   ]
 end
 
@@ -105,32 +111,32 @@ function _generate_combined_terms(x_term::AbstractTerm, y_term::AbstractTerm)::V
   # Generate all possible sums between x_terms and y_terms
   sum_terms = [x + y for x in x_terms for y in y_terms]
 
-  # Generate all possible interactions (products) between x_terms and y_terms
+  # # Generate all possible interactions (products) between x_terms and y_terms
   interaction_terms = [x & y for x in x_terms for y in y_terms]
 
-  # Combine the sum_terms and interaction_terms into a new set of terms
-  combined_terms = [st + it for st in sum_terms for it in interaction_terms]
+  # # Combine the sum_terms and interaction_terms into a new set of terms
+  combined_terms = vcat(sum_terms, [st + it for st in sum_terms for it in interaction_terms])
 
-  # # The number of interaction terms generated
-  # n = length(interaction_terms)
+  # The number of interaction terms generated
+  n = length(interaction_terms)
 
-  # # Loop over x_terms and combine them with pairs of interaction terms
-  # for x in x_terms
-  #   for i in 1:n-1
-  #     for j in i+1:n
-  #       push!(combined_terms, x + interaction_terms[i] + interaction_terms[j])
-  #     end
-  #   end
-  # end
+  # Loop over x_terms and combine them with pairs of interaction terms
+  for x in x_terms
+    for i in 1:n-1
+      for j in i+1:n
+        push!(combined_terms, x + interaction_terms[i] + interaction_terms[j])
+      end
+    end
+  end
 
-  # # Similarly, loop over y_terms and combine them with pairs of interaction terms
-  # for y in y_terms
-  #   for i in 1:n-1
-  #     for j in i+1:n
-  #       push!(combined_terms, y + interaction_terms[i] + interaction_terms[j])
-  #     end
-  #   end
-  # end
+  # Similarly, loop over y_terms and combine them with pairs of interaction terms
+  for y in y_terms
+    for i in 1:n-1
+      for j in i+1:n
+        push!(combined_terms, y + interaction_terms[i] + interaction_terms[j])
+      end
+    end
+  end
 
   # Return the final vector of all combined terms
   return combined_terms

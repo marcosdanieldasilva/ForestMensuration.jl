@@ -34,6 +34,7 @@ import Plots: cgrad
 import StatsBase: fit, Histogram
 
 include("structs_consts.jl")
+include("goodness_of_fit_test.jl")
 include("linear_regression.jl")
 include("prediction.jl")
 include("regression_parameters.jl")
