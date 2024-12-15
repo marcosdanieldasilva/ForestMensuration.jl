@@ -1,15 +1,3 @@
-function _create_matrix_formulas!(matrix_formulas::Vector{MatrixTerm}, x_term_list::Vector{MixTerm})
-  @inbounds for (k, x) ∈ enumerate(x_term_list)
-    matrix_formulas[k] = MatrixTerm(β0 + x)
-  end
-end
-
-function _create_matrix_formulas!(matrix_formulas::Vector{MatrixTerm}, x_term_list::Vector{MixTerm}, q_term::AbstractTerm...)
-  @inbounds for (k, x) ∈ enumerate(x_term_list)
-    matrix_formulas[k] = MatrixTerm(β0 + x + sum(q_term))
-  end
-end
-
 function _fit_linear_model(ft::FormulaTerm, Y::Vector{<:Real}, X::Matrix{<:Real}, data::NamedTuple)
   # Extract the dependent variable (y), independent variables (x), and additional parameters (q) from data
   (y, x, q...) = data
@@ -61,6 +49,8 @@ function _fit_linear_model(ft::FormulaTerm, Y::Vector{<:Real}, X::Matrix{<:Real}
   AIC = -2 * loglike + 2 * ncoef
   # Compute the Bayesian Information Criterion (BIC) for penalized model complexity
   BIC = -2 * loglike + log(n) * ncoef
+  # Test for normality of residuals using goodness-of-fit
+  normality = goodness_of_fit_test(fit_mle(Normal, residual), residual) |> pvalue > 0.05 ? true : false
   # Perform significance testing for coefficients using t-statistics and p-values
   dispersion = rmul!(inv(chol), σ²)
   standard_errors = sqrt.(diag(dispersion))
@@ -68,63 +58,12 @@ function _fit_linear_model(ft::FormulaTerm, Y::Vector{<:Real}, X::Matrix{<:Real}
   p_values = ccdf.(Ref(FDist(1, dof_residuals)), abs2.(t_values))
   # Check if all coefficients are statistically significant at the 0.05 level
   significance = all(p_values .< 0.05) ? true : false
-  # Test for normality of residuals using goodness-of-fit
-  normality = goodness_of_fit_test(fit_mle(Normal, residual), residual) |> pvalue > 0.05 ? true : false
-  # Select and perform the appropriate test for homoscedasticity based on residual normality
-  homoscedasticity = (
-    normality ? WhiteTest(X, residual, type=:linear) : WhiteTest(X, residual, type=:White)
-  ) |> pvalue > 0.05 ? true : false
   # Package the results into a FittedLinearModel structure
   fitted_models = FittedLinearModel(
-    ft, data, β, σ², r², adjr², MSE, RMSE, MAE, Syx, AIC, BIC, normality, homoscedasticity, significance
+    ft, data, β, σ², r², adjr², MSE, RMSE, MAE, Syx, AIC, BIC, normality, significance
   )
   # Return the fitted model object
   return fitted_models
-end
-
-
-function _fit_regression!(fitted_models::Vector{FittedLinearModel}, y_term_list::Vector{AbstractTerm}, matrix_formulas::Vector{MatrixTerm}, cols::NamedTuple)
-
-  # Dictionary to store model column data for each y term
-  model_cols = Dict{AbstractTerm,Union{Vector{<:Real},Nothing}}()
-
-  # Dictionary to store model matrix data for each matrix term
-  model_matrix = Dict{MatrixTerm,Union{Matrix{<:Real},Nothing}}()
-
-  # Precompute model columns for each y term in y_term_list using modelcols function
-  @inbounds for y ∈ y_term_list
-    model_cols[y] = try
-      modelcols(y, cols)
-    catch nothing
-    end
-  end
-
-  # Precompute model matrices for each x term (matrix formulas) using modelmatrix function
-  @inbounds for x ∈ matrix_formulas
-    model_matrix[x] = try
-      modelmatrix(x, cols)
-    catch nothing
-    end
-  end
-
-  # Loop over all combinations of y terms and matrix terms
-  @inbounds for (y, x) ∈ Iterators.product(y_term_list, matrix_formulas)
-    Y = model_cols[y]  # Extract precomputed columns for y
-    X = model_matrix[x]  # Extract precomputed matrix for x
-
-    # Skip if either Y or X is missing (nothing)
-    if Y === nothing || X === nothing
-      continue
-    end
-
-    try
-      ft = FormulaTerm(y, x)
-      # Pass the fitted model to FittedLinearModel structure
-      push!(fitted_models, _fit_linear_model(ft, Y, X, cols))
-    catch
-      # Handle any errors silently during model fitting
-    end
-  end
 end
 
 function regression(ft::FormulaTerm, data::AbstractDataFrame)
@@ -202,7 +141,7 @@ best_models = criteria_table(models, :adjr2, :rmse)
 ```
 """
 function regression(y::Symbol, x::Symbol, data::AbstractDataFrame, q::Symbol...)
-
+  # Remover linhas com dados faltantes nas colunas relevantes
   new_data = dropmissing(data[:, [y, x, q...]])
 
   n, k = size(new_data)
@@ -219,33 +158,56 @@ function regression(y::Symbol, x::Symbol, data::AbstractDataFrame, q::Symbol...)
     error("Unable to coerce variables '$(y)' and '$(x)' to Continuous. Please ensure they contain numeric values.")
   end
 
-  # Convert the DataFrame to a column table (named tuple of vectors)
   cols = columntable(new_data)
 
+  # Criar termos concretos para Y, X1, X2 e Q
   y_term = concrete_term(term(y), cols, ContinuousTerm)
   x_term = concrete_term(term(x), cols, ContinuousTerm)
-  q_term = [concrete_term(term(terms), cols, CategoricalTerm) for terms ∈ q]
+  q_terms = [concrete_term(term(qq), cols, CategoricalTerm) for qq in q]
 
+  # Obter a lista de termos dependentes
   y_term_list = _dependent_variable(y_term, x_term)
 
-  x_term_list = _independent_variable(x_term)
+  # Construir o dicionário para variáveis dependentes
+  model_dependent_variable = Dict{AbstractTerm,Union{AbstractVector,Nothing}}()
 
-  matrix_formulas = Vector{MatrixTerm}(undef, length(x_term_list))
+  for yt in y_term_list
+    model_dependent_variable[yt] = try
+      modelcols(yt, cols)
+    catch
+      nothing
+    end
+  end
 
-  isempty(q_term) ? _create_matrix_formulas!(matrix_formulas, x_term_list) : _create_matrix_formulas!(matrix_formulas, x_term_list, q_term...)
+  # Preparar armazenamento para as matrizes do modelo
+  model_matrix = _generate_terms(x_term, cols, q_terms...)
 
   fitted_models = Vector{FittedLinearModel}()
 
-  _fit_regression!(fitted_models, y_term_list, matrix_formulas, cols)
+  # Solve for each combination of y and matrix formula
+  for y in y_term_list
+    Y = model_dependent_variable[y]
+
+    if Y === nothing
+      continue
+    end
+
+    for (mt, X) in model_matrix
+      try
+        push!(fitted_models, _fit_linear_model(FormulaTerm(y, mt), Y, X, cols))
+      catch
+      end
+    end
+  end
 
   isempty(fitted_models) && error("Failed to fit any models")
 
   return fitted_models
 end
 
-function regression(z::S, y::S, x::S, data::AbstractDataFrame, q::S...) where {S<:Symbol}
-
-  new_data = dropmissing(data[:, [z, y, x, q...]])
+function regression(y::Symbol, x1::Symbol, x2::Symbol, data::AbstractDataFrame, q::Symbol...)
+  # Remover linhas com dados faltantes nas colunas relevantes
+  new_data = dropmissing(data[:, [y, x1, x2, q...]])
 
   n, k = size(new_data)
 
@@ -253,33 +215,56 @@ function regression(z::S, y::S, x::S, data::AbstractDataFrame, q::S...) where {S
     error("There are not enough data points to perform regression. At least $(k + 2) observations are required.")
   end
 
-  #Attempt to coerce the z, y and x columns to the Continuous scitype (e.g., Float64)
+  #Attempt to coerce the y and x columns to the Continuous scitype (e.g., Float64)
   try
-    coerce!(new_data, z => ScientificTypes.Continuous, y => ScientificTypes.Continuous, x => ScientificTypes.Continuous)
+    coerce!(new_data, y => ScientificTypes.Continuous, x1 => ScientificTypes.Continuous, x2 => ScientificTypes.Continuous)
   catch
     # If coercion fails, an error will be thrown
     error("Unable to coerce variables '$(y)' and '$(x)' to Continuous. Please ensure they contain numeric values.")
   end
 
-  # Convert the DataFrame to a column table (named tuple of vectors)
   cols = columntable(new_data)
 
-  z_term = concrete_term(term(z), cols, ContinuousTerm)
+  # Criar termos concretos para Y, X1, X2 e Q
   y_term = concrete_term(term(y), cols, ContinuousTerm)
-  x_term = concrete_term(term(x), cols, ContinuousTerm)
-  q_term = [concrete_term(term(terms), cols, CategoricalTerm) for terms ∈ q]
+  x1_term = concrete_term(term(x1), cols, ContinuousTerm)
+  x2_term = concrete_term(term(x2), cols, ContinuousTerm)
+  q_terms = [concrete_term(term(qq), cols, CategoricalTerm) for qq in q]
 
-  z_term_list = _dependent_variable(z_term)
+  # Obter a lista de termos dependentes
+  y_term_list = _dependent_variable(y_term)
 
-  combined_term_list = _generate_combined_terms(y_term, x_term)
+  # Construir o dicionário para variáveis dependentes
+  model_dependent_variable = Dict{AbstractTerm,Union{AbstractVector,Nothing}}()
 
-  matrix_formulas = Vector{MatrixTerm}(undef, length(combined_term_list))
+  for yt in y_term_list
+    model_dependent_variable[yt] = try
+      modelcols(yt, cols)
+    catch
+      nothing
+    end
+  end
 
-  isempty(q_term) ? _create_matrix_formulas!(matrix_formulas, combined_term_list) : _create_matrix_formulas!(matrix_formulas, combined_term_list, q_term...)
+  # Preparar armazenamento para as matrizes do modelo
+  model_matrix = _generate_terms(x1_term, x2_term, cols, q_terms...)
 
   fitted_models = Vector{FittedLinearModel}()
 
-  _fit_regression!(fitted_models, z_term_list, matrix_formulas, cols)
+  # Solve for each combination of y and matrix formula
+  for y in y_term_list
+    Y = model_dependent_variable[y]
+
+    if Y === nothing
+      continue
+    end
+
+    for (mt, X) in model_matrix
+      try
+        push!(fitted_models, _fit_linear_model(FormulaTerm(y, mt), Y, X, cols))
+      catch
+      end
+    end
+  end
 
   isempty(fitted_models) && error("Failed to fit any models")
 

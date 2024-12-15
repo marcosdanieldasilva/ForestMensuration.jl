@@ -37,12 +37,6 @@ function _calculate_ranks(ct::DataFrame, selected_criteria::Vector{Symbol})
     penalized_non_normal_ranks = [normality_ranks[i] == 1 ? 1 : normality_ranks[i] * n for i in 1:n]
     ranks[:normality] = penalized_non_normal_ranks
   end
-  if :homoscedasticity in selected_criteria
-    # Penalize non-homoscedasticitys models with a higher rank
-    homoscedasticity_ranks = competerank(ct[!, "homoscedasticity"], rev=true)
-    penalized_non_homoscedasticity_ranks = [homoscedasticity_ranks[i] == 1 ? 1 : homoscedasticity_ranks[i] * n for i in 1:n]
-    ranks[:homoscedasticity] = penalized_non_homoscedasticity_ranks
-  end
   if :significance in selected_criteria
     # Penalize non-significance models with a higher rank
     significance_ranks = competerank(ct[!, "significance"], rev=true)
@@ -57,7 +51,7 @@ function _calculate_ranks(ct::DataFrame, selected_criteria::Vector{Symbol})
 end
 
 _criteria_parameters(model::FittedLinearModel) = [
-  model.r² model.adjr² model.mse model.rmse model.mae model.syx model.aic model.bic model.normality model.homoscedasticity model.significance
+  model.r² model.adjr² model.mse model.rmse model.mae model.syx model.aic model.bic model.normality model.significance
 ]
 
 """
@@ -113,12 +107,12 @@ The `criteria_table` function evaluates and ranks multiple regression models bas
 function criteria_table(model::Vector{<:FittedLinearModel}, criteria::Symbol...; best::Union{Bool,Int}=10)
 
   # Define allowed fields for criteria
-  allowed_fields = [:r2, :adjr2, :mse, :rmse, :mae, :syx, :aic, :bic, :normality, :homoscedasticity, :significance]
+  allowed_fields = [:r2, :adjr2, :mse, :rmse, :mae, :syx, :aic, :bic, :normality, :significance]
 
   # Determine selected criteria
   if isempty(criteria)
     # Use default criteria if none are specified
-    selected_criteria = [:adjr2, :syx, :aic, :bic, :normality, :homoscedasticity, :significance]
+    selected_criteria = [:adjr2, :syx, :aic, :bic, :normality, :significance]
   elseif :all in criteria
     # If :all is included, use all fields except :all itself
     selected_criteria = setdiff(allowed_fields, [:all])

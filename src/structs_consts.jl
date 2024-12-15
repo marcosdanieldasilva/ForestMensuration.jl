@@ -99,7 +99,6 @@ Represents a fitted linear model.
 - `aic::T`: The Akaike Information Criterion, used for model comparison.
 - `bic::T`: The Bayesian Information Criterion, penalizing model complexity more heavily than AIC.
 - `normality::B`: Boolean flag indicating whether residuals follow a normal distribution (`true` or `false`).
-- `homoscedasticity::B`: Boolean flag indicating whether residuals have constant variance (`true` for homoscedasticity).
 - `significance::B`: Boolean flag indicating whether all coefficients are statistically significant (`true` if all p-values < 0.05).
 """
 struct FittedLinearModel{F<:FormulaTerm,N<:NamedTuple,T<:Float64,B<:Bool}
@@ -116,12 +115,11 @@ struct FittedLinearModel{F<:FormulaTerm,N<:NamedTuple,T<:Float64,B<:Bool}
   aic::T
   bic::T
   normality::B
-  homoscedasticity::B
   significance::B
 end
 
 """
-    FittedLinearModel(formula::F, data::N, β::Array{T,1}, σ²::T, r²::T, adjr²::T, mse::T, rmse::T, mae::T, syx::T, aic::T, bic::T, normality::B, homoscedasticity::B, significance::B)
+    FittedLinearModel(formula::F, data::N, β::Array{T,1}, σ²::T, r²::T, adjr²::T, mse::T, rmse::T, mae::T, syx::T, aic::T, bic::T, normality::B, significance::B)
 
     Creates a new `FittedLinearModel` instance.
 
@@ -139,7 +137,6 @@ end
 - `aic::T`: The Akaike Information Criterion, used for model comparison.
 - `bic::T`: The Bayesian Information Criterion, penalizing model complexity more heavily than AIC.
 - `normality::B`: Boolean flag indicating whether residuals follow a normal distribution (`true` or `false`).
-- `homoscedasticity::B`: Boolean flag indicating whether residuals have constant variance (`true` for homoscedasticity).
 - `significance::B`: Boolean flag indicating whether all coefficients are statistically significant (`true` if all p-values < 0.05).
 
 # Returns
@@ -166,7 +163,6 @@ function FittedLinearModel(
   aic::T,
   bic::T,
   normality::B,
-  homoscedasticity::B,
   significance::B
 ) where {F,N,T,B}
   return FittedLinearModel{F,N,T,B}(
@@ -183,7 +179,6 @@ function FittedLinearModel(
     aic,
     bic,
     normality,
-    homoscedasticity,
     significance
   )
 end
