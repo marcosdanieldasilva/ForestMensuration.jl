@@ -18,6 +18,8 @@ function _fit_linear_model(ft::FormulaTerm, Y::Vector{<:Real}, X::Matrix{<:Real}
   dof_residuals = n - ncoef
   # Compute the residuals (difference between observed and predicted values)
   residual = Y - ŷ
+  # Calculate the Sum of Squared Residuals (SSR)
+  SSR = residual ⋅ residual
   # Compute the variance of residuals (σ²) adjusted by degrees of freedom
   σ² = (residual ⋅ residual) / dof_residuals
   # Correct the predicted values and residuals for models with a function on the left-hand side of the formula
@@ -26,9 +28,12 @@ function _fit_linear_model(ft::FormulaTerm, Y::Vector{<:Real}, X::Matrix{<:Real}
     ŷ = _predict(ft, x, ŷ, σ²)
     # Recompute residuals using adjusted predicted values
     residual = y - ŷ
+    SSR = residual ⋅ residual
+    # Compute the variance of residuals (σ²) adjusted
+    σ²adjusted = SSR / dof_residuals
+  else
+    σ²adjusted = σ²
   end
-  # Calculate the Sum of Squared Residuals (SSR)
-  SSR = residual ⋅ residual
   # Calculate the Total Sum of Squares (SST) based on the deviation of y from its mean
   SST = sum(abs2.(y .- ȳ))
   # Compute the coefficient of determination (R²), a measure of model fit
@@ -42,9 +47,9 @@ function _fit_linear_model(ft::FormulaTerm, Y::Vector{<:Real}, X::Matrix{<:Real}
   # Calculate the Mean Absolute Error (MAE) as the average absolute residual value
   MAE = mean(abs.(residual))
   # Calculate the standard error of the estimate (Syx) as a percentage of the mean response
-  Syx = √(SSR / dof_residuals) / ȳ * 100
+  Syx = √σ²adjusted / ȳ * 100
   # Compute the log-likelihood of the model for information criteria
-  loglike = -n / 2 * (log(2π * MSE) + 1)
+  loglike = -n / 2 * (log(2π * σ²adjusted) + 1)
   # Compute the Akaike Information Criterion (AIC) for model quality
   AIC = -2 * loglike + 2 * ncoef
   # Compute the Bayesian Information Criterion (BIC) for penalized model complexity
@@ -55,7 +60,7 @@ function _fit_linear_model(ft::FormulaTerm, Y::Vector{<:Real}, X::Matrix{<:Real}
   dispersion = rmul!(inv(chol), σ²)
   standard_errors = sqrt.(diag(dispersion))
   t_values = β ./ standard_errors
-  p_values = ccdf.(Ref(FDist(1, dof_residuals)), abs2.(t_values))
+  p_values = 2 .* ccdf.(TDist(dof_residuals), abs.(t_values))
   # Check if all coefficients are statistically significant at the 0.05 level
   significance = all(p_values .< 0.05) ? true : false
   # Package the results into a FittedLinearModel structure
