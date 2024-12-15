@@ -37,7 +37,7 @@ end
 
 
 # Optimized function to generate combined term matrices
-function _generate_terms(x_term::AbstractTerm, cols::NamedTuple, q_terms::AbstractTerm...)
+function _independent_variable(x_term::AbstractTerm, cols::NamedTuple, q_terms::AbstractTerm...)
   # Define the six base terms
   x2 = FunctionTerm(x -> x^2, [x_term], :($(x_term)^2))
   log_x = FunctionTerm(log, [x_term], :(log($(x_term))))
@@ -109,7 +109,7 @@ function _generate_terms(x_term::AbstractTerm, cols::NamedTuple, q_terms::Abstra
 
 end
 
-function _generate_terms(x1_term::AbstractTerm, x2_term::AbstractTerm, cols::NamedTuple, q_terms::AbstractTerm...)
+function _independent_variable(x1_term::AbstractTerm, x2_term::AbstractTerm, cols::NamedTuple, q_terms::AbstractTerm...)
   # Define transformations for the x1_term variable
   x1_2 = FunctionTerm(x -> x^2, [x1_term], :($(x1_term)^2))
   log_x1 = FunctionTerm(log, [x1_term], :(log($(x1_term))))

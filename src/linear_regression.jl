@@ -180,7 +180,7 @@ function regression(y::Symbol, x::Symbol, data::AbstractDataFrame, q::Symbol...)
   end
 
   # Preparar armazenamento para as matrizes do modelo
-  model_matrix = _generate_terms(x_term, cols, q_terms...)
+  model_matrix = _independent_variable(x_term, cols, q_terms...)
 
   fitted_models = Vector{FittedLinearModel}()
 
@@ -246,7 +246,7 @@ function regression(y::Symbol, x1::Symbol, x2::Symbol, data::AbstractDataFrame, 
   end
 
   # Preparar armazenamento para as matrizes do modelo
-  model_matrix = _generate_terms(x1_term, x2_term, cols, q_terms...)
+  model_matrix = _independent_variable(x1_term, x2_term, cols, q_terms...)
 
   fitted_models = Vector{FittedLinearModel}()
 
