@@ -111,7 +111,7 @@ function predict(model::LinearModel)
   return ŷ
 end
 
-predict(models::GroupedLinearModel) = predict(models, models.qualy_regression.data |> DataFrame)
+predict(model::GroupedLinearModel) = predict(model, model.qualy_regression.data |> DataFrame)
 
 """
     predict(model::LinearModel, data)
@@ -166,47 +166,41 @@ function predict(model::LinearModel, data)
   )
 end
 
-function predict(models::GroupedLinearModel, data::AbstractDataFrame)
+function predict(model::GroupedLinearModel, data::AbstractDataFrame)
   # Initialize a vector to store predictions, allowing for missing values
   predicts = Vector{Union{Missing,Real}}(missing, nrow(data))
-  regressions = models.grouped_models
-  x_name = propertynames(models.general_regression.data)[2]
-
+  regressions = model.grouped_models
+  x_name = propertynames(model.general_regression.data)[2]
   # Get the minimum and maximum values of the predictor variable in the entire dataset
-  x_min, x_max = extrema(models.general_regression.data[2])
-
+  x_min, x_max = extrema(model.general_regression.data[2])
   for i in 1:nrow(data)
     # Combine group keys into a single string to use as a dictionary key
-    group_key = join(data[i, models.group_names], " ")
-
+    group_key = join(data[i, model.group_names], " ")
     # Retrieve the value of the predictor variable for the current row
     x_value = data[i, x_name]
-
     if ismissing(x_value)
       # If the predictor value is missing, assign a missing value to the predict
       predicts[i] = missing
     elseif x_value < x_min || x_value > x_max
       # If the predictor value is outside the overall range, use the general regression model
-      predicts[i] = predict(models.general_regression, data[i, :])
+      predicts[i] = predict(model.general_regression, data[i, :])
     else
       if haskey(regressions, group_key)
         # Retrieve the regression model specific to the group
         group_model = regressions[group_key]
-
         # Get the minimum and maximum values of the predictor variable in the group data
         group_x_min, group_x_max = extrema(group_model.data[2])
-
         # Check if the predictor value is within the group's range
         if x_value < group_x_min || x_value > group_x_max
           # If the predictor value is outside the group's range, use the qualitative regression model
-          predicts[i] = predict(models.qualy_regression, data[i, :])
+          predicts[i] = predict(model.qualy_regression, data[i, :])
         else
           # If the predictor value is within the group's range, use the group-specific model
           predicts[i] = predict(group_model, data[i, :])
         end
       else
         # If no specific model exists for the group, use the general regression model
-        predicts[i] = predict(models.general_regression, data[i, :])
+        predicts[i] = predict(model.general_regression, data[i, :])
       end
     end
   end
@@ -258,9 +252,9 @@ function predict!(model::LinearModel, data::AbstractDataFrame)
   insertcols!(data, col_names[2] => coalesce.(replace(data[!, y], 0.0 => missing), data[!, col_names[1]]), makeunique=true)
 end
 
-function predict!(models::GroupedLinearModel, data::AbstractDataFrame)
-  y = propertynames(models.general_regression.data)[1]
+function predict!(model::GroupedLinearModel, data::AbstractDataFrame)
+  y = propertynames(model.general_regression.data)[1]
   col_names = Symbol(string(y, "_predict")), Symbol(string(y, "_real"))
-  insertcols!(data, col_names[1] => predict(models, data), makeunique=true)
+  insertcols!(data, col_names[1] => predict(model, data), makeunique=true)
   insertcols!(data, col_names[2] => coalesce.(replace(data[!, y], 0.0 => missing), data[!, col_names[1]]), makeunique=true)
 end

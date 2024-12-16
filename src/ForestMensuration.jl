@@ -53,6 +53,7 @@ export
   LinearModel,
   GroupedLinearModel,
   regression,
+  grouped_regression,
   predict,
   predict!,
   coef_table,

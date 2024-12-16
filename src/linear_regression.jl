@@ -277,7 +277,9 @@ function regression(y::Symbol, x1::Symbol, x2::Symbol, data::AbstractDataFrame, 
   return fitted_models
 end
 
-function regression(y::Symbol, x::Symbol, g::Vector{Symbol}, data::AbstractDataFrame)
+function grouped_regression(y::Symbol, x::Symbol, data::AbstractDataFrame, g::Symbol...)
+  isempty(g) && throw(ArgumentError("At least one grouping variable (g) must be provided after data, e.g., group_regression(:y, :x, data, :group1, :group2)."))
+  g = vcat(g...)
   group_data = dropmissing(data[:, [y, x, g...]])
   # Extract group attributes and initialize variables
   groups = RecipesPipeline._extract_group_attributes(tuple(eachcol(group_data[:, g])...))
@@ -296,7 +298,9 @@ function regression(y::Symbol, x::Symbol, g::Vector{Symbol}, data::AbstractDataF
   return GroupedLinearModel(general_regression, qualy_regression, grouped_models, g)
 end
 
-function regression(y::Symbol, x1::Symbol, x2::Symbol, g::Vector{Symbol}, data::AbstractDataFrame)
+function grouped_regression(y::Symbol, x1::Symbol, x2::Symbol, data::AbstractDataFrame, g::Symbol...)
+  isempty(g) && throw(ArgumentError("At least one grouping variable (g) must be provided."))
+  g = vcat(g...)
   group_data = dropmissing(data[:, [y, x1, x2, g...]])
   # Extract group attributes and initialize variables
   groups = RecipesPipeline._extract_group_attributes(tuple(eachcol(group_data[:, g])...))
