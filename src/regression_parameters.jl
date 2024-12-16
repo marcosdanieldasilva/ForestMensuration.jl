@@ -490,3 +490,23 @@ function _independent_variable(x1_term::AbstractTerm, x2_term::AbstractTerm, col
 
   return model_matrix
 end
+
+function coef_table(model::FittedLinearModel)
+  X = modelmatrix(model.formula, model.data)
+  (n, ncoef) = size(X)
+  dof_residuals = n - ncoef
+  dispersion = rmul!(inv(cholesky!(X'X)), model.σ²)
+  standard_errors = sqrt.(diag(dispersion))
+  t_values = model.β ./ standard_errors
+  p_values = 2 .* ccdf.(TDist(dof_residuals), abs.(t_values))
+  limit_interval = standard_errors * quantile(TDist(dof_residuals), 0.025) # to 95% of confidence (1 - 0.95) / 2
+  lower_limit = model.β + limit_interval
+  upper_limit = model.β - limit_interval
+  ctable = DataFrame(
+    "Coef. Names" => ForestMensuration._coefnames(model), "Coef. Values" => model.β,
+    "Std. Error" => standard_errors, "T Value" => t_values, "Pr(>|t|)" => p_values,
+    "Lower 95%" => lower_limit, "Upper 95%" => upper_limit
+  )
+
+  return ctable
+end

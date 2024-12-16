@@ -157,7 +157,6 @@ function predict(model::FittedLinearModel, data)
   )
 end
 
-
 """
     predict!(model::FittedLinearModel, data::AbstractDataFrame)
 

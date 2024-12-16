@@ -54,6 +54,7 @@ export
   regression,
   predict,
   predict!,
+  coef_table,
   criteria_table,
   criteria_selection,
   plot_regression,

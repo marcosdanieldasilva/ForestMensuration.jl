@@ -3,14 +3,15 @@ function _fit_linear_model(ft::FormulaTerm, Y::Vector{<:Real}, X::Matrix{<:Real}
   (y, x, q...) = data
   # Compute the mean of the dependent variable (ȳ) for later calculations
   ȳ = mean(y)
-  # Compute the initial product of the design matrix transpose and the dependent variable
+  # Compute the initial product of the transpose of the design matrix and the dependent variable
   β = X'Y
-  # Perform Cholesky decomposition on X'X for efficient linear system solving
-  chol = cholesky(X'X)
-  # Solve for regression coefficients β using the Cholesky decomposition
-  ldiv!(chol, β)
-  # Allocate space for predicted values (ŷ) and calculate them
+  # Perform in-place Cholesky decomposition on X'X
+  chol = cholesky!(X'X)
+  # Solve for regression coefficients β in-place using the Cholesky factor
+  ldiv!(chol, β)  # β = (X'X)⁻¹ * (X'Y)
+  # Allocate space for predicted values (ŷ) with the same structure as Y
   ŷ = similar(Y)
+  # Compute predicted values in-place (ŷ = X * β)
   mul!(ŷ, X, β)
   # Determine the number of observations (n) and the number of predictors (ncoef)
   (n, ncoef) = size(X)
