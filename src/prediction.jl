@@ -79,7 +79,6 @@ The `predict` function family provides a versatile way to generate predictions f
     - `FittedLinearModel`: A single linear regression model.
     - `GroupedLinearModel`: A grouped linear model where different regression models are fitted for different subsets of data.
 
-
 # Returns:
 - `Vector{<:Real}` or `Vector{Union{Missing, <:Real}}`: The predicted values on the original scale of `y`, adjusted for any transformations and corrected using the Meyer factor for logarithmic transformations.
 
@@ -112,12 +111,18 @@ function predict(model::FittedLinearModel)
   return ŷ
 end
 
+predict(models::GroupedLinearModel) = predict(models, models.qualy_regression.mf.data)
+
 """
     predict(model::FittedLinearModel, data)
 Predicts the response variable for a given dataset based on the provided regression model.
 
 # Arguments:
-- `model::FittedLinearModel`: A fitted linear regression model containing coefficients, formula, and other attributes.
+
+- `model`: 
+    The regression model(s) to be evaluated and compared. This parameter can accept:
+    - `FittedLinearModel`: A single linear regression model.
+    - `GroupedLinearModel`: A grouped linear model where different regression models are fitted for different subsets of data.
 - `data`: A dataset compatible with the Tables.jl interface. Must include the predictors required by the model.
 
 # Returns:
@@ -132,7 +137,7 @@ Predicts the response variable for a given dataset based on the provided regress
 function predict(model::FittedLinearModel, data)
   # Ensure the provided data is a valid table or DataFrameRow
   if !(Tables.istable(data) || data isa DataFrameRow)
-    throw(ArgumentError("The provided data must be a valid table. Ensure it is a supported type (e.g., DataFrame, NamedTuple, or any Tables.jl compatible structure)."))
+    throw(ArgumentError("The provided data must be a valid table. Ensure it is a supported type (e.g., DataFrame, DataFrameRow, NamedTuple, or any Tables.jl compatible structure)."))
   end
   # Convert AbstractDataFrame to a column table for compatibility with StatsModels
   if data isa AbstractDataFrame
@@ -160,8 +165,6 @@ function predict(model::FittedLinearModel, data)
     length(nonmissings)
   )
 end
-
-predict(models::GroupedLinearModel) = predict(models, models.qualy_regression.mf.data)
 
 function predict(models::GroupedLinearModel, data::AbstractDataFrame)
   # Initialize a vector to store predictions, allowing for missing values
