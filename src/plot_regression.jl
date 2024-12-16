@@ -9,7 +9,7 @@ function _calculate_qq(x::Vector{<:Real})
   return DataFrame(qx=qq.qx, qy=qq.qy)
 end
 
-function _graph_table(model::FittedLinearModel)
+function _graph_table(model::LinearModel)
   y = model.data[1]
   # Predicted values from the model
   ŷ = predict(model)
@@ -29,7 +29,7 @@ function _graph_table(model::FittedLinearModel)
 end
 
 """
-    plot_regression(model::FittedLinearModel)
+    plot_regression(model::LinearModel)
   
 The `plot_regression` function generates four essential diagnostic plots to analyze the performance 
   and validity of a linear regression model in Julia. These plots help in assessing the goodness-of-fit,
@@ -38,7 +38,7 @@ The `plot_regression` function generates four essential diagnostic plots to anal
     assumptions required for reliable inference and prediction.
 
 # Parameters:
-- `model::FittedLinearModel`: 
+- `model::LinearModel`: 
   The fitted linear regression model. This model is analyzed to generate the diagnostic plots.
 
 # Functionality:
@@ -69,7 +69,7 @@ The function automatically applies color schemes and adjusts plot aesthetics to 
 plots = plot_regression(model)
 ```
 """
-function plot_regression(model::FittedLinearModel)
+function plot_regression(model::LinearModel)
   data = DataFrame(model.data)
   n = size(data, 2)
   if n > 2

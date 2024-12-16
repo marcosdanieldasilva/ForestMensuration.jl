@@ -50,12 +50,12 @@ function _calculate_ranks(ct::DataFrame, selected_criteria::Vector{Symbol})
   return combined_rank
 end
 
-_criteria_parameters(model::FittedLinearModel) = [
+_criteria_parameters(model::LinearModel) = [
   model.r² model.adjr² model.mse model.rmse model.mae model.syx model.aic model.bic model.normality model.significance
 ]
 
 """
-    criteria_table(model::Vector{<:FittedLinearModel}, criteria::Symbol...; best::Union{Bool,Int}=10)
+    criteria_table(model::Vector{<:LinearModel}, criteria::Symbol...; best::Union{Bool,Int}=10)
 
 The `criteria_table` function evaluates and ranks multiple regression models based on specified criteria. 
   It generates a comprehensive table of performance metrics for each model, calculates ranks for these 
@@ -65,9 +65,9 @@ The `criteria_table` function evaluates and ranks multiple regression models bas
 # Parameters:
 - `model`: 
   The regression model(s) to be evaluated and compared. This parameter can accept:
-  - **Single Linear Regression Model (`FittedLinearModel`)**:
+  - **Single Linear Regression Model (`LinearModel`)**:
     Evaluates a single linear regression model.
-  - **Vector of Linear Regression Models (`Vector{<:FittedLinearModel}`)**:
+  - **Vector of Linear Regression Models (`Vector{<:LinearModel}`)**:
     Evaluates and compares multiple linear regression models.
     
 - `criteria::Symbol...`: 
@@ -104,7 +104,7 @@ The `criteria_table` function evaluates and ranks multiple regression models bas
 - **Vector of Models**:
   `criteria_table([model1, model2], :aic, :mae)`
 """
-function criteria_table(model::Vector{<:FittedLinearModel}, criteria::Symbol...; best::Union{Bool,Int}=10)
+function criteria_table(model::Vector{<:LinearModel}, criteria::Symbol...; best::Union{Bool,Int}=10)
 
   # Define allowed fields for criteria
   allowed_fields = [:r2, :adjr2, :mse, :rmse, :mae, :syx, :aic, :bic, :normality, :significance]
@@ -162,16 +162,16 @@ function criteria_table(model::Vector{<:FittedLinearModel}, criteria::Symbol...;
   end
 end
 
-criteria_table(model::FittedLinearModel, criteria::Symbol...) = criteria_table([model], criteria...)
+criteria_table(model::LinearModel, criteria::Symbol...) = criteria_table([model], criteria...)
 
 """
-    criteria_selection(model::Vector{<:FittedLinearModel}, criteria::Symbol...)
+    criteria_selection(model::Vector{<:LinearModel}, criteria::Symbol...)
 
 The `criteria_selection` function evaluates and ranks a vector of regression models based on specified 
   criteria, returning the best model according to the combined ranking.
 
 # Parameters:
-- `model::Vector{<:FittedLinearModel}`: 
+- `model::Vector{<:LinearModel}`: 
   A vector of linear regression models to be evaluated and compared.
 
 - `criteria::Symbol...`: 
@@ -188,7 +188,7 @@ The `criteria_selection` function evaluates and ranks a vector of regression mod
   If no criteria are specified, the function will use all available criteria by default.
 
 # Returns:
-- `FittedLinearModel`: 
+- `LinearModel`: 
   The best model based on the combined ranking of the specified criteria.
 """
-criteria_selection(model::Vector{<:FittedLinearModel}, criteria::Symbol...) = criteria_table(model, criteria..., best=5)[1, 1]
+criteria_selection(model::Vector{<:LinearModel}, criteria::Symbol...) = criteria_table(model, criteria..., best=5)[1, 1]

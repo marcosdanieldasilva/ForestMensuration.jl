@@ -82,7 +82,7 @@ abstract type Newton <: CubingMethod end
 
 
 """
-    struct FittedLinearModel{F<:FormulaTerm,N<:NamedTuple,T<:Float64,B<:Bool}
+    struct LinearModel{F<:FormulaTerm,N<:NamedTuple,T<:Float64,B<:Bool}
       
 Represents a fitted linear model.
 
@@ -101,7 +101,7 @@ Represents a fitted linear model.
 - `normality::B`: Boolean flag indicating whether residuals follow a normal distribution (`true` or `false`).
 - `significance::B`: Boolean flag indicating whether all coefficients are statistically significant (`true` if all p-values < 0.05).
 """
-struct FittedLinearModel{F<:FormulaTerm,N<:NamedTuple,T<:Float64,B<:Bool}
+struct LinearModel{F<:FormulaTerm,N<:NamedTuple,T<:Float64,B<:Bool}
   formula::F
   data::N
   β::Array{T,1}
@@ -119,9 +119,9 @@ struct FittedLinearModel{F<:FormulaTerm,N<:NamedTuple,T<:Float64,B<:Bool}
 end
 
 """
-    FittedLinearModel(formula::F, data::N, β::Array{T,1}, σ²::T, r²::T, adjr²::T, mse::T, rmse::T, mae::T, syx::T, aic::T, bic::T, normality::B, significance::B)
+    LinearModel(formula::F, data::N, β::Array{T,1}, σ²::T, r²::T, adjr²::T, mse::T, rmse::T, mae::T, syx::T, aic::T, bic::T, normality::B, significance::B)
 
-    Creates a new `FittedLinearModel` instance.
+    Creates a new `LinearModel` instance.
 
 # Arguments
 - `formula::F`: The formula used to specify the relationship between dependent and independent variables.
@@ -140,7 +140,7 @@ end
 - `significance::B`: Boolean flag indicating whether all coefficients are statistically significant (`true` if all p-values < 0.05).
 
 # Returns
-- `FittedLinearModel{F, N, T, B}`: A new fitted linear model instance, encapsulating all model parameters and metrics.
+- `LinearModel{F, N, T, B}`: A new fitted linear model instance, encapsulating all model parameters and metrics.
 
 # Type Parameters
 - `F`: The type of the formula term (e.g., `FormulaTerm`).
@@ -149,7 +149,7 @@ end
 - `B`: The boolean type (`Bool`).
 
 """
-function FittedLinearModel(
+function LinearModel(
   formula::F,
   data::N,
   β::Array{T,1},
@@ -165,7 +165,7 @@ function FittedLinearModel(
   normality::B,
   significance::B
 ) where {F,N,T,B}
-  return FittedLinearModel{F,N,T,B}(
+  return LinearModel{F,N,T,B}(
     formula,
     data,
     β,
@@ -183,7 +183,7 @@ function FittedLinearModel(
   )
 end
 
-struct GroupedLinearModel{F<:FittedLinearModel,St<:String,Sy<:Symbol}
+struct GroupedLinearModel{F<:LinearModel,St<:String,Sy<:Symbol}
   general_regression::F
   qualy_regression::F
   grouped_models::Dict{St,F}

@@ -491,7 +491,7 @@ function _independent_variable(x1_term::AbstractTerm, x2_term::AbstractTerm, col
   return model_matrix
 end
 
-function coef_table(model::FittedLinearModel)
+function coef_table(model::LinearModel)
   X = modelmatrix(model.formula, model.data)
   (n, ncoef) = size(X)
   dof_residuals = n - ncoef

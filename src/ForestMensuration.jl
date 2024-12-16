@@ -50,7 +50,8 @@ include("show.jl")
 
 export
   # Regression
-  FittedLinearModel,
+  LinearModel,
+  GroupedLinearModel,
   regression,
   predict,
   predict!,

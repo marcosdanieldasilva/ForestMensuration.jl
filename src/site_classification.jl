@@ -1,12 +1,12 @@
 # Partial function to calculate deltas for age and index age
 # Calculate the delta (difference) between the model matrices for age and index age.
 # Arguments
-# - `model::FittedLinearModel`: The fitted regression model.
+# - `model::LinearModel`: The fitted regression model.
 # - `data_age::AbstractDataFrame`: The data frame containing the current age data.
 # - `index_age::Real`: The index age for which the delta is calculated.
 # Returns
 # - `Δ::Vector{Real}`: The delta for each observation.
-function _calculate_delta(model::FittedLinearModel, data_age::AbstractDataFrame, index_age::Real)
+function _calculate_delta(model::LinearModel, data_age::AbstractDataFrame, index_age::Real)
   (yname, xname, qname...) = propertynames(model.data)
   data_index_age = deepcopy(data_age[!, [yname, xname, qname...]])
   data_index_age[!, xname] .= index_age
@@ -26,7 +26,7 @@ function _calculate_delta(model::FittedLinearModel, data_age::AbstractDataFrame,
 end
 
 """
-    site_classification(model::FittedLinearModel, data_age::AbstractDataFrame, index_age::Real)
+    site_classification(model::LinearModel, data_age::AbstractDataFrame, index_age::Real)
     
 Calculate the site classification (site index) for each observation given a fitted model, a table do predict and an index age.
 
@@ -42,7 +42,7 @@ By predicting the dominant height at the index age using a fitted growth model, 
 
 # Arguments:
 
-- `model::FittedLinearModel`: The fitted regression model that relates dominant height to age. This model is typically derived from empirical data and captures the growth patterns of the species in question.
+- `model::LinearModel`: The fitted regression model that relates dominant height to age. This model is typically derived from empirical data and captures the growth patterns of the species in question.
 - `data_age::AbstractDataFrame`: A data frame containing the current age data for each observation. It should include an `age` column representing the age of the trees.
 - `index_age::Real`: The index age (reference or rotation age) used for site classification. This is the age at which the site index is evaluated and compared.
 
@@ -95,7 +95,7 @@ julia> site_classification(reg, data_to_predict, 60)
 )
 ```
 """
-function site_classification(model::FittedLinearModel, data_age::AbstractDataFrame, index_age::Real)
+function site_classification(model::LinearModel, data_age::AbstractDataFrame, index_age::Real)
   if index_age <= 0
     throw(DomainError("Index Age must be positive."))
   end
@@ -112,7 +112,7 @@ function site_classification(model::FittedLinearModel, data_age::AbstractDataFra
 end
 
 """
-    site_classification(model::FittedLinearModel, index_age::Real)
+    site_classification(model::LinearModel, index_age::Real)
 
 Calculate the site classification (site index) for each observation given a fitted model and an index age.
 
@@ -128,7 +128,7 @@ By predicting the dominant height at the index age using a fitted growth model, 
 
 # Arguments:
 
-- `model::FittedLinearModel`: The fitted regression model that relates dominant height to age. This model is typically derived from empirical data and captures the growth patterns of the species in question.
+- `model::LinearModel`: The fitted regression model that relates dominant height to age. This model is typically derived from empirical data and captures the growth patterns of the species in question.
 - `index_age::Real`: The index age (reference or rotation age) used for site classification. This is the age at which the site index is evaluated and compared.
 
 # Returns
@@ -192,14 +192,14 @@ julia> site_classification(reg, 60)
 )
 ```
 """
-function site_classification(model::FittedLinearModel, index_age::Real)
+function site_classification(model::LinearModel, index_age::Real)
   # Extract the data from the fitted model
   data_age = model.data |> DataFrame
   return site_classification(model, data_age, index_age)
 end
 
 """
-    hdom_classification(model::FittedLinearModel, data_age::AbstractDataFrame, index_age::Real, site::Vector{<:Real})
+    hdom_classification(model::LinearModel, data_age::AbstractDataFrame, index_age::Real, site::Vector{<:Real})
 
 Calculate the dominant height for each observation given the site classification, a fitted model, and an index age.
 
@@ -214,7 +214,7 @@ The `hdom_classification` function calculates the dominant height for each obser
 
 # Arguments:
 
-- `model::FittedLinearModel`: The fitted regression model relating dominant height to age and site index. This model is used to predict heights based on site classes.
+- `model::LinearModel`: The fitted regression model relating dominant height to age and site index. This model is used to predict heights based on site classes.
 - `data_age::AbstractDataFrame`: A DataFrame containing the current age data. It should include an `age` column representing the ages for which the dominant height is to be calculated.
 - `index_age::Real`: The index age used in the growth model. It serves as the reference age for site index calculations.
 - `site::Vector{<:Real}`: A vector containing the site classification values (site indices) for each observation. Each value corresponds to an expected dominant height at the index age.
@@ -271,7 +271,7 @@ julia> hdom_classification(reg, data_to_predict, 60, sites)
  20.9
 ```
 """
-function hdom_classification(model::FittedLinearModel, data_age::AbstractDataFrame, index_age::Real, site::Vector{<:Real})
+function hdom_classification(model::LinearModel, data_age::AbstractDataFrame, index_age::Real, site::Vector{<:Real})
   if index_age <= 0
     throw(DomainError("Index Age must be positive."))
   elseif any(x -> x < 0, site)
@@ -295,8 +295,8 @@ function hdom_classification(model::FittedLinearModel, data_age::AbstractDataFra
 end
 
 """
-    site_table(model::FittedLinearModel, index_age::Real)
-    site_table(model::FittedLinearModel, index_age::Real, hi::Real)
+    site_table(model::LinearModel, index_age::Real)
+    site_table(model::LinearModel, index_age::Real, hi::Real)
 
 Calculate the site table and plot a site graph given a fitted model, index age, and height increment.
 
@@ -311,7 +311,7 @@ The `site_table` function generates a site table based on a fitted growth model,
 By using the fitted model to predict dominant heights at various ages and site indices, the site table provides a comprehensive overview of growth patterns across different site qualities.
 
 # Arguments
-- `model::FittedLinearModel`: The fitted regression model.
+- `model::LinearModel`: The fitted regression model.
 - `index_age::Real`: The index age for site classification.
 - `hi::Real`: The height increment for site classification.
 
@@ -352,7 +352,7 @@ julia> site_table(reg, 60, 1)
    5 │    84.0     20.8     22.0     23.1     24.3
 ```
 """
-function site_table(model::FittedLinearModel, index_age::Real, hi::Real)
+function site_table(model::LinearModel, index_age::Real, hi::Real)
   if hi <= 0
     throw(DomainError("The height increment must be positive."))
   end
@@ -404,7 +404,7 @@ function site_table(model::FittedLinearModel, index_age::Real, hi::Real)
 
 end
 
-function site_table(model::FittedLinearModel, index_age::Real)
+function site_table(model::LinearModel, index_age::Real)
   # Calculate site classification
   site = site_classification(model, index_age)
   # Compute the class breadth

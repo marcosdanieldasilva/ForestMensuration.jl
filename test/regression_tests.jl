@@ -30,7 +30,7 @@
     data_valid = DataFrame(y=[1.0, 2.0, 3.0, 4.0], x=[2.0, 3.0, 4.0, 5.0])
     models = regression(:y, :x, data_valid)
     @test length(models) > 0
-    @test models[1] isa FittedLinearModel
+    @test models[1] isa LinearModel
   end
 
 
