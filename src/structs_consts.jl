@@ -183,6 +183,12 @@ function FittedLinearModel(
   )
 end
 
+struct GroupedLinearModel{F<:FittedLinearModel,St<:String,Sy<:Symbol}
+  general_regression::F
+  qualy_regression::F
+  grouped_models::Dict{St,F}
+  group_names::Vector{Sy}
+end
 
 """
     struct SiteAnalysis

@@ -22,3 +22,12 @@ function show(io::IO, model::FittedLinearModel)
 
   print(io, output)
 end
+
+function show(io::IO, models::GroupedLinearModel)
+  grouped_models = models.grouped_models
+  isempty(grouped_models) && return show(io, grouped_models)
+  summary(io, grouped_models), println(io, ":")
+  for (k, v) in grouped_models
+    println(io, "  $k => $v")
+  end
+end

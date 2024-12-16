@@ -276,3 +276,57 @@ function regression(y::Symbol, x1::Symbol, x2::Symbol, data::AbstractDataFrame, 
 
   return fitted_models
 end
+
+function regression(y::Symbol, x::Symbol, g::Vector{S}, data::AbstractDataFrame, q::Symbol...)
+  group_data = dropmissing(data[:, [y, x, g..., q...]])
+  # Extract group attributes and initialize variables
+  groups = RecipesPipeline._extract_group_attributes(tuple(eachcol(group_data[:, g])...))
+  labels, idxs = getfield(groups, 1), getfield(groups, 2)
+  # Perform general regression
+  general_regression = criteria_selection(regression(y, x, data))
+  # Perform  qualitative regression
+  qualy_regression = criteria_selection(regression(y, x, data, vcat(g, q...)...))
+  # Perform group-specific regressions
+  grouped_models = Dict{String,FittedLinearModel}()
+
+  for (i, label) in enumerate(labels)
+    if ismissing(q)
+      grouped_models[label] = criteria_selection(regression(y, x, group_data[idxs[i], :]))
+    else
+      try
+        grouped_models[label] = criteria_selection(regression(y, x, group_data[idxs[i], :], q...))#, :adjr2, :syx, :rmse, :mae, :aic, :normality)
+      catch
+        grouped_models[label] = criteria_selection(regression(y, x, group_data[idxs[i], :]))
+      end
+    end
+  end
+  # Return the fitted model
+  return GroupedLinearModel(general_regression, qualy_regression, grouped_models, g)
+end
+
+function regression(y::Symbol, x1::Symbol, x2::Symbol, g::Vector{Symbol}, data::AbstractDataFrame, q::Symbol...)
+  group_data = dropmissing(data[:, [y, x1, x2, g..., q...]])
+  # Extract group attributes and initialize variables
+  groups = RecipesPipeline._extract_group_attributes(tuple(eachcol(group_data[:, g])...))
+  labels, idxs = getfield(groups, 1), getfield(groups, 2)
+  # Perform general regression
+  general_regression = criteria_selection(regression(y, x1, x2, data))
+  # Perform  qualitative regression
+  qualy_regression = criteria_selection(regression(y, x1, x2, data, vcat(g, q...)...))
+  # Perform group-specific regressions
+  grouped_models = Dict{String,FittedLinearModel}()
+
+  for (i, label) in enumerate(labels)
+    if ismissing(q)
+      grouped_models[label] = criteria_selection(regression(y, x1, x2, group_data[idxs[i], :]))
+    else
+      try
+        grouped_models[label] = criteria_selection(regression(y, x1, x2, group_data[idxs[i], :], q...))#, :adjr2, :syx, :rmse, :mae, :aic, :normality)
+      catch
+        grouped_models[label] = criteria_selection(regression(y, x1, x2, group_data[idxs[i], :]))
+      end
+    end
+  end
+  # Return the fitted model
+  return GroupedLinearModel(general_regression, qualy_regression, grouped_models, g)
+end
