@@ -14,7 +14,6 @@ function _diameter_interpolation(h0::Real, h::Vector{<:Real}, d::Vector{<:Real})
     end
   end
 end
-
 # Function to interpolate the height at a given diameter
 function _height_interpolation(d_limit::Real, h::Vector{<:Real}, d::Vector{<:Real})::Tuple{Float64,Int}
   if d_limit > d[1] || d_limit < d[end]
@@ -33,7 +32,6 @@ function _height_interpolation(d_limit::Real, h::Vector{<:Real}, d::Vector{<:Rea
       return (interpolated_height, i)
     end
   end
-
 end
 
 """

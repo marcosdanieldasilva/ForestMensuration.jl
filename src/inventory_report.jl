@@ -1,25 +1,7 @@
 # Generate an inventory report.
-# Arguments
-# - `x̅::Float64`: Mean volume per plot.
-# - `cv::Float64`: Coefficient of variation.
-# - `Ttab::Float64`: T-value for the confidence level.
-# - `s²x̅::Float64`: Mean variance.
-# - `sx̅::Float64`: Standard error.
-# - `plot_area::Union{Int, Float64, Symbol}`: Area of the plot.
-# - `f::Float64`: Sampling fraction.
-# - `population::String`: Population type ("infinite" or "finite").
-# - `n::Union{Int, Tuple}`: Number of measured plots.
-# - `required_plots::Union{Int, Tuple}`: Number of required plots.
-# - `missing_plots::Union{Int, Tuple}`: Number of missing plots.
-# - `N::Int`: Total number of plots.
-# - `lg::Symbol`: Language for the report (":pt" for Portuguese, ":en" for English).
-
-# Returns
-# - `DataFrame`: The inventory report.
 function _inventory_report(x̅::Float64, cv::Float64, Ttab::Float64, s²x̅::Float64, sx̅::Float64,
   plot_area::Union{Int,Float64,String}, f::Float64, population::String, n::Union{Int,Tuple},
-  required_plots::Union{Int,Tuple}, missing_plots::Union{Int,Tuple}, N::Int, lg::Symbol
-)
+  required_plots::Union{Int,Tuple}, missing_plots::Union{Int,Tuple}, N::Int, lg::Symbol)
 
   hectare_volume = plot_area == "u.a." ? NaN64 : round(x̅ / plot_area, digits=3)
   absolute_error = Ttab * sx̅

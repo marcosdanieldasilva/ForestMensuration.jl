@@ -61,8 +61,8 @@ function _fit_linear_model(ft::FormulaTerm, Y::Vector{<:Real}, X::Matrix{<:Real}
   standard_errors = sqrt.(diag(dispersion))
   t_values = β ./ standard_errors
   p_values = 2 .* ccdf.(TDist(dof_residuals), abs.(t_values))
-  # Check if all coefficients are statistically significant at the 0.05 level
-  significance = all(p_values .< 0.05) ? true : false
+  # Check if all coefficients are statistically significant at the 0.01 level (99%)
+  significance = all(p_values .< 0.01) ? true : false
   # Package the results into a FittedLinearModel structure
   fitted_models = FittedLinearModel(
     ft, data, β, σ², r², adjr², MSE, RMSE, MAE, Syx, AIC, BIC, normality, significance

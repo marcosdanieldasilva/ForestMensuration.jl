@@ -1,31 +1,10 @@
 # Calculates the number of classes using Sturges' formula.
-# Arguments
-# - `n::Int`: The number of observations.
-# Returns
-# - `Int`: The number of classes.
 _sturges(n::Int) = ceil(Int, log2(n)) + 1
-
 # Calculates the class center for a given value and class width.
-# Arguments
-# - `x::Real`: The value.
-# - `hi::Real`: The class width.
-# Returns
-# - `Real`: The class center.
 _class_center(x::Real, hi::Real) = round(x / hi) * hi + (hi / 2)
-
 # Calculates the amplitude (range) of a vector of values.
-# Arguments
-# - `x::Vector`: The vector of values.
-# Returns
-# - `Real`: The amplitude (range).
 _amplitude(x::Vector) = maximum(x) - minimum(x)
-
 # Calculates the class breadth (width) for a given amplitude and number of classes.
-# Arguments
-# - `h::Real`: The amplitude.
-# - `k::Int`: The number of classes.
-# Returns
-# - `Real`: The class breadth (width).
 function _class_breadth(h::Real, k::Int)
   hi = h / k
   log_hi = log10(hi)
@@ -57,12 +36,7 @@ function _class_breadth(h::Real, k::Int)
     return step^-1
   end
 end
-
 # Calculates the simple frequency of unique values in a vector.
-# Arguments
-# - `x::Vector`: The vector of values.
-# Returns
-# - `Vector`: The frequency of each unique value.
 _simple_frequency(x::Vector) = map(i -> count(==(i), x), unique(x) |> sort)
 
 """
