@@ -35,7 +35,6 @@ function _dependent_variable(y_term::AbstractTerm)::Vector{AbstractTerm}
   ]
 end
 
-
 # Optimized function to generate combined term matrices
 function _independent_variable(x_term::AbstractTerm, cols::NamedTuple, q_terms::AbstractTerm...)
   # Define the six base terms

@@ -72,15 +72,17 @@ function _fit_linear_model(ft::FormulaTerm, Y::Vector{<:Real}, X::Matrix{<:Real}
   return fitted_models
 end
 
-function regression(ft::FormulaTerm, data::AbstractDataFrame)
-  try
-    Y, X = modelcols(ft, data)
-    return _fit_linear_model(ft, Y, X, columntable(data))
-  catch
-    ft = apply_schema(ft, schema(data))
-    return _fit_linear_model(ft, Y, X, columntable(data))
-  end
-end
+# function regression(ft::FormulaTerm, data::AbstractDataFrame)
+#   data = columntable(data)
+#   try
+#     Y, X = modelcols(ft, data)
+#     return _fit_linear_model(ft, Y, X, data)
+#   catch
+#     ft = apply_schema(ft, StatsModels.schema(data))
+#     Y, X = modelcols(ft, data)
+#     return _fit_linear_model(ft, Y, X, data)
+#   end
+# end
 
 """
     regression(y::Symbol, x::Symbol, data::AbstractDataFrame, q::Symbol...)
