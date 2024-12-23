@@ -54,7 +54,7 @@ function _calculate_ranks(ct::DataFrame, selected_criteria::Vector{Symbol})
 end
 
 _criteria_parameters(model::LinearModel) = [
-  model.r² model.adjr² model.mse model.rmse model.mae model.syx model.aic model.bic model.normality model.significance
+  model.r² model.adjr² model.d model.mse model.rmse model.mae model.syx model.aic model.bic model.normality model.significance
 ]
 
 """

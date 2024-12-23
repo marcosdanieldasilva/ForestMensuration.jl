@@ -42,7 +42,7 @@ function _fit_linear_model(ft::FormulaTerm, Y::Vector{<:Real}, X::Matrix{<:Real}
   # Compute the adjusted R², penalized for the number of predictors
   adjr² = 1 - (1 - r²) * (n - 1) / dof_residuals
   # Willmott’s index of agreement (d)
-  z .= @. abs(ŷ - ȳ) + abs(y - ȳ)
+  z = abs.(ŷ .- ȳ) .+ abs.(y .- ȳ)
   d = 1 - SSR / (z ⋅ z)
   # Calculate the Mean Squared Error (MSE) as SSR divided by the number of observations
   MSE = SSR / n
