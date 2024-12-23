@@ -93,6 +93,7 @@ Represents a fitted linear model.
 - `σ²::T`: The variance of residuals, indicating the variability of residuals around the fitted values.
 - `r²::T`: The coefficient of determination (R²), measuring the proportion of variance explained by the model.
 - `adjr²::T`: The adjusted R², adjusted for the number of predictors.
+- `d::T`: The Willmott’s index of agreement, indicating how closely the predicted values match the observed values.
 - `mse::T`: The mean squared error, representing the average squared residual.
 - `rmse::T`: The root mean squared error, a measure of the prediction error.
 - `syx::T`: The standard error of the estimate (Syx), expressed as a percentage of the mean response.
@@ -108,6 +109,7 @@ struct LinearModel{F<:FormulaTerm,N<:NamedTuple,T<:Float64,B<:Bool}
   σ²::T
   r²::T
   adjr²::T
+  d::T
   mse::T
   rmse::T
   mae::T
@@ -119,7 +121,7 @@ struct LinearModel{F<:FormulaTerm,N<:NamedTuple,T<:Float64,B<:Bool}
 end
 
 """
-    LinearModel(formula::F, data::N, β::Array{T,1}, σ²::T, r²::T, adjr²::T, mse::T, rmse::T, mae::T, syx::T, aic::T, bic::T, normality::B, significance::B)
+    LinearModel(formula::F, data::N, β::Array{T,1}, σ²::T, r²::T, adjr²::T, d::T, mse::T, rmse::T, mae::T, syx::T, aic::T, bic::T, normality::B, significance::B)
 
     Creates a new `LinearModel` instance.
 
@@ -130,6 +132,7 @@ end
 - `σ²::T`: The variance of residuals, indicating the variability of residuals around the fitted values.
 - `r²::T`: The coefficient of determination (R²), measuring the proportion of variance explained by the model.
 - `adjr²::T`: The adjusted R², adjusted for the number of predictors.
+- `d::T`: The Willmott’s index of agreement, indicating how closely the predicted values match the observed values.
 - `mse::T`: The mean squared error, representing the average squared residual.
 - `rmse::T`: The root mean squared error, a measure of the prediction error.
 - `mse::T`: The mean absolute error as the average absolute residual value.
@@ -156,6 +159,7 @@ function LinearModel(
   σ²::T,
   r²::T,
   adjr²::T,
+  d::T,
   mse::T,
   rmse::T,
   mae::T,
@@ -172,6 +176,7 @@ function LinearModel(
     σ²,
     r²,
     adjr²,
+    d,
     mse,
     rmse,
     mae,

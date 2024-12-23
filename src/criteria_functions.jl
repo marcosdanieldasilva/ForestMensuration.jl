@@ -13,6 +13,9 @@ function _calculate_ranks(ct::DataFrame, selected_criteria::Vector{Symbol})
   if :adjr2 in selected_criteria
     ranks[:adjr2] = competerank(ct[!, "adjr2"], rev=true)
   end
+  if :d in selected_criteria
+    ranks[:d] = competerank(ct[!, "d"], rev=true)
+  end
   if :mse in selected_criteria
     ranks[:mse] = competerank(ct[!, "mse"])
   end
@@ -74,6 +77,7 @@ The `criteria_table` function evaluates and ranks multiple regression models bas
   A variable number of symbols representing the evaluation criteria to include. Possible values include:
   - `:r2`: R², a measure of the model's explanatory power, representing the proportion of variance in the dependent variable explained by the predictors.
   - `:adjr2`: Adjusted R², a measure of the model's explanatory power, adjusted for the number of predictors.
+  - `d::T`: The Willmott’s index of agreement, indicating how closely the predicted values match the observed values.
   - `:syx`: Standard error of the estimate (Syx%) expressed as a percentage of the mean of the dependent 
   variable (y), indicating the precision of the model's predictions.
   - `:rmse`: Root Mean Squared Error, indicating the average magnitude of residuals.
@@ -107,12 +111,12 @@ The `criteria_table` function evaluates and ranks multiple regression models bas
 function criteria_table(model::Vector{<:LinearModel}, criteria::Symbol...; best::Union{Bool,Int}=10)
 
   # Define allowed fields for criteria
-  allowed_fields = [:r2, :adjr2, :mse, :rmse, :mae, :syx, :aic, :bic, :normality, :significance]
+  allowed_fields = [:r2, :adjr2, :d, :mse, :rmse, :mae, :syx, :aic, :bic, :normality, :significance]
 
   # Determine selected criteria
   if isempty(criteria)
     # Use default criteria if none are specified
-    selected_criteria = [:adjr2, :syx, :aic, :bic, :normality, :significance]
+    selected_criteria = [:adjr2, :d, :syx, :aic, :bic, :normality, :significance]
   elseif :all in criteria
     # If :all is included, use all fields except :all itself
     selected_criteria = setdiff(allowed_fields, [:all])

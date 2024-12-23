@@ -41,6 +41,9 @@ function _fit_linear_model(ft::FormulaTerm, Y::Vector{<:Real}, X::Matrix{<:Real}
   r² = 1 - SSR / SST
   # Compute the adjusted R², penalized for the number of predictors
   adjr² = 1 - (1 - r²) * (n - 1) / dof_residuals
+  # Willmott’s index of agreement (d)
+  z .= @. abs(ŷ - ȳ) + abs(y - ȳ)
+  d = 1 - SSR / (z ⋅ z)
   # Calculate the Mean Squared Error (MSE) as SSR divided by the number of observations
   MSE = SSR / n
   # Calculate the Root Mean Squared Error (RMSE), a measure of prediction accuracy
@@ -66,7 +69,7 @@ function _fit_linear_model(ft::FormulaTerm, Y::Vector{<:Real}, X::Matrix{<:Real}
   significance = all(p_values .< 0.01) ? true : false
   # Package the results into a LinearModel structure
   fitted_models = LinearModel(
-    ft, data, β, σ², r², adjr², MSE, RMSE, MAE, Syx, AIC, BIC, normality, significance
+    ft, data, β, σ², r², adjr², d, MSE, RMSE, MAE, Syx, AIC, BIC, normality, significance
   )
   # Return the fitted model object
   return fitted_models
@@ -160,7 +163,10 @@ function regression(y::Symbol, x::Symbol, data::AbstractDataFrame, q::Symbol...)
 
   #Attempt to coerce the y and x columns to the Continuous scitype (e.g., Float64)
   try
-    coerce!(new_data, y => ScientificTypes.Continuous, x => ScientificTypes.Continuous)
+    d = Dict{Symbol,Type}()
+    push!(d, y => ScientificTypes.Continuous, x => ScientificTypes.Continuous)
+    map(i -> push!(d, q[i] => ScientificTypes.Multiclass), eachindex(q))
+    coerce!(new_data, d)
   catch
     # If coercion fails, an error will be thrown
     error("Unable to coerce variables '$(y)' and '$(x)' to Continuous. Please ensure they contain numeric values.")
@@ -225,10 +231,13 @@ function regression(y::Symbol, x1::Symbol, x2::Symbol, data::AbstractDataFrame, 
 
   #Attempt to coerce the y and x columns to the Continuous scitype (e.g., Float64)
   try
-    coerce!(new_data, y => ScientificTypes.Continuous, x1 => ScientificTypes.Continuous, x2 => ScientificTypes.Continuous)
+    d = Dict{Symbol,Type}()
+    push!(d, y => ScientificTypes.Continuous, x1 => ScientificTypes.Continuous, x2 => ScientificTypes.Continuous)
+    map(i -> push!(d, q[i] => ScientificTypes.Multiclass), eachindex(q))
+    coerce!(new_data, d)
   catch
     # If coercion fails, an error will be thrown
-    error("Unable to coerce variables '$(y)' and '$(x)' to Continuous. Please ensure they contain numeric values.")
+    error("Unable to coerce variables '$(y)', '$(x1)' and '$(x2)' to Continuous. Please ensure they contain numeric values.")
   end
 
   cols = columntable(new_data)
