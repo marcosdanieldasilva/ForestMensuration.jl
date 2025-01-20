@@ -207,3 +207,17 @@ struct SiteAnalysis
   site_table::DataFrame
   site_plot::Plots.Plot
 end
+
+"""
+Represents a report for stratified sampling in forest inventory.
+
+# Fields
+- `anova::AbstractDataFrame`: ANOVA table.
+- `auxiliary_table::AbstractDataFrame`: Auxiliary table with additional statistics.
+- `result_table::AbstractDataFrame`: Result table with final estimates.
+"""
+struct StratifiedReport
+  anova::AbstractDataFrame
+  auxiliary_table::AbstractDataFrame
+  result_table::AbstractDataFrame
+end

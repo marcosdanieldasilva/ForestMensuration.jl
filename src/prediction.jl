@@ -155,10 +155,10 @@ function predict(model::LinearModel, data)
   ŷ = X * model.β
   # Handle special cases when the formula's left-hand side (lhs) is a function term
   if isa(model.formula.lhs, FunctionTerm)
-    ŷ = _predict(model, model.data[2], ŷ)
+    ŷ = _predict(model, x[1], ŷ)
   end
   # Return predictions, handling missing values if necessary
-  return length(unique(nonmissings)) == 1 ? ŷ[1] : StatsModels._return_predictions(
+  return length(ŷ) == 1 ? ŷ[1] : StatsModels._return_predictions(
     Tables.materializer(data),
     ŷ,
     nonmissings,

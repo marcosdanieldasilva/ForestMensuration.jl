@@ -15,6 +15,7 @@ The package facilitates the analysis of dendrometric and forest data, performs c
 module ForestMensuration
 using
   CategoricalArrays,
+  Chain,
   ColorTypes,
   DataFrames,
   Distributions,
@@ -45,6 +46,7 @@ include("dendrometric_averages.jl")
 include("cubage.jl")
 include("inventory_report.jl")
 include("simple_casual_sampling.jl")
+include("stratified_sampling.jl")
 include("site_classification.jl")
 include("show.jl")
 
@@ -82,6 +84,7 @@ export
   site_classification,
   site_table,
   # Forest Inventory
-  simple_casual_sampling
+  simple_casual_sampling,
+  stratified_sampling
 
 end
