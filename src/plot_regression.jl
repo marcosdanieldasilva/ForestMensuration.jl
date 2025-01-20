@@ -1,3 +1,14 @@
+function _evaluate_regression_type(model::LinearModel)
+  n = length(model.data)  # Number of columns in data    
+  if n == 2
+    return :simple
+  elseif n >= 3 && model.data[3] isa CategoricalVector
+    return :simple
+  else
+    return :multiple
+  end
+end
+
 function _rgba_to_string(rgba::ColorTypes.RGBA{Float64})
   r, g, b, a = red(rgba), green(rgba), blue(rgba), 0.6
   return "rgba($r, $g, $b, $a)"
@@ -72,49 +83,43 @@ plots = plot_regression(model)
 function plot_regression(model::LinearModel)
   data = DataFrame(model.data)
   n = size(data, 2)
-  if n > 2
+  rtype = _evaluate_regression_type(model)
+
+  if rtype == :simple && n > 2
     ngroups = groupby(data, 3:n).ngroups
+    color_palette = cgrad(:darktest, categorical=true, ngroups)
+  elseif rtype == :simple
+    color_palette = cgrad(:darktest)[1]
+  elseif rtype == :multiple && n > 3
+    ngroups = groupby(data, 4:n).ngroups
     color_palette = cgrad(:darktest, categorical=true, ngroups)
   else
     color_palette = cgrad(:darktest)[1]
   end
-  data = _graph_table(model)
+
+  data = ForestMensuration._graph_table(model)
   resid = data[:, end-2]
   col_names = propertynames(data)
   x_qqline = [extrema(data[:, end-1])...]
   quantx, quanty = quantile(data[:, end-1], [0.25, 0.75]), quantile(data[:, end], [0.25, 0.75])
   slp = diff(quanty) ./ diff(quantx)
   y_qqline = quanty .+ slp .* (x_qqline .- quantx)
-  axis = attr(ticks="outside", showline=true, linewidth=2, linecolor="black")
+  axis = attr(ticks="outside", showline=true, linewidth=1.5, linecolor="black")
 
-  trace1 = PlotlyJS.scatter(
-    data,
-    x=col_names[2],
-    y=col_names[1],
-    group=col_names[3:n],
-    mode="markers",
-    showlegend=n > 2 ? true : false
-  )
-  trace2 = PlotlyJS.scatter(
-    data,
-    x=col_names[2],
-    y=col_names[end-3],
-    group=col_names[3:n],
-    mode="lines",
-    showlegend=false
-  )
+  group_names = rtype == :simple ? col_names[3:n] : col_names[4:n]
+
   trace3 = PlotlyJS.scatter(
     data,
     x=col_names[end-3],
     y=col_names[end-2],
-    group=col_names[3:n],
+    group=group_names,
     mode="markers",
     showlegend=false
   )
   trace4 = PlotlyJS.histogram(
     data,
     x=col_names[end-2],
-    group=col_names[3:n],
+    group=group_names,
     showlegend=false,
     histnorm="probability density",
     nbinsx=length(fit(Histogram, resid).weights)
@@ -123,7 +128,7 @@ function plot_regression(model::LinearModel)
     data,
     x=col_names[end-1],
     y=col_names[end],
-    group=col_names[3:n],
+    group=group_names,
     mode="markers",
     showlegend=false
   )
@@ -136,66 +141,173 @@ function plot_regression(model::LinearModel)
     showlegend=false
   )
 
-  p1 = PlotlyJS.plot(
-    trace1,
-    Layout(
-      xaxis_title=col_names[2],
-      yaxis_title=col_names[1],
-      title="Observed vs Fitted Value",
-      xaxis=axis,
-      yaxis=axis
+  if rtype == :simple
+
+    specs = [Spec(kind="xy") Spec(kind="xy"); Spec(kind="histogram") Spec(kind="xy")]
+
+    fig = make_subplots(
+      rows=2, cols=2,
+      specs=specs,
+      subplot_titles=["Observed vs Fitted Value" "Residuals vs Fitted Value" "Histogram of Residuals" "Normal Q-Q Plot"]
     )
-  )
 
-  [add_trace!(p1, t) for t in trace2]
+    trace1 = PlotlyJS.scatter(
+      data,
+      x=col_names[2],
+      y=col_names[1],
+      group=group_names,
+      mode="markers",
+      showlegend=n > 2 ? true : false
+    )
+    trace2 = PlotlyJS.scatter(
+      data,
+      x=col_names[2],
+      y=col_names[end-3],
+      group=group_names,
+      mode="lines",
+      showlegend=false
+    )
 
-  p2 = PlotlyJS.plot(
-    trace3,
-    Layout(
+    p1 = PlotlyJS.plot(
+      trace1,
+      Layout(
+        xaxis_title=col_names[2],
+        yaxis_title=col_names[1],
+        title="Observed vs Fitted Value",
+        xaxis=axis,
+        yaxis=axis
+      )
+    )
+
+    [add_trace!(p1, t) for t in trace2]
+
+    p2 = PlotlyJS.plot(
+      trace3,
+      Layout(
+        xaxis_title="Predicted $(col_names[1])",
+        yaxis_title="Residuals",
+        title="Residuals vs Fitted Value",
+        size=8,
+        xaxis=axis,
+        yaxis=attr(ticks="outside", showline=true, linewidth=2, linecolor="black", zeroline=true, zerolinecolor="Grey")
+      )
+    )
+
+    p3 = PlotlyJS.plot(
+      trace4,
+      Layout(
+        xaxis_title="Residuals",
+        yaxis_title="Probability Density",
+        title="Histogram of Residuals",
+        xaxis=axis,
+        yaxis=axis
+      )
+    )
+
+    p4 = PlotlyJS.plot(
+      trace5,
+      Layout(
+        xaxis_title="Theoretical Quantiles",
+        yaxis_title="Empirical Quantiles",
+        title="Normal Q-Q Plot",
+        xaxis=axis,
+        yaxis=axis
+      )
+    )
+
+    map(i -> restyle!(i, marker_color=ForestMensuration._rgba_to_string.(color_palette)), [p1, p2, p3, p4])
+    add_trace!(p4, trace6)
+
+    fig = [p1 p2; p3 p4]
+
+    relayout!(
+      fig,
+      barmode="stack",
+      font_size=10,
+      font_family="Times New Roman",
+      margin=attr(l=40, r=40, t=20, b=40),
+      paper_bgcolor="LightSteelBlue"
+    )
+
+  else
+
+    specs = [Spec(kind="scene", rowspan=3) Spec(kind="xy"); missing Spec(kind="histogram"); missing Spec(kind="xy")]
+
+    fig = make_subplots(
+      rows=3, cols=2,
+      column_widths=[0.5, 0.4],
+      specs=specs,
+      subplot_titles=["Observed vs Fitted Value" "Observed $(col_names[2]) vs Fitted Value" "Observed $(col_names[3]) vs Fitted Value" "Residuals vs Fitted Value" "Histogram of Residuals" "Normal Q-Q Plot"],
+      vertical_spacing=0.15,
+      horizontal_spacing=0.0
+    )
+
+    trace1 = PlotlyJS.scatter3d(
+      data,
+      x=col_names[3],
+      y=col_names[2],
+      z=col_names[1],
+      group=group_names,
+      mode="markers",
+      showlegend=n > 3 ? true : false
+    )
+
+    trace2 = PlotlyJS.mesh3d(
+      data,
+      x=col_names[3],
+      y=col_names[2],
+      z=col_names[end-3],
+      group=group_names,
+      showlegend=false
+    )
+
+    # return fig
+    map(t -> add_trace!(fig, t, row=1, col=1), trace1)
+    map(t -> add_trace!(fig, t, row=1, col=1), trace2)
+    map(t -> add_trace!(fig, t, row=1, col=2), trace3)
+    map(t -> add_trace!(fig, t, row=2, col=2), trace4)
+    map(t -> add_trace!(fig, t, row=3, col=2), trace5)
+    add_trace!(fig, trace6, row=3, col=2)
+
+    restyle!(fig, marker_color=ForestMensuration._rgba_to_string.(color_palette))
+    restyle!(fig, color=ForestMensuration._rgba_to_string.(color_palette))
+
+    relayout!(
+      fig,
+      #p1
+      scene=attr(
+        zaxis_title=col_names[1],
+        yaxis_title=col_names[2],
+        xaxis_title=col_names[3],
+        axis=axis,
+        yaxis=axis,
+        xaxis=axis
+      ),
+      scene_camera=attr(
+        eye=attr(x=2.5, y=2.5, z=1.0),
+        center=attr(x=0, y=0, z=-0.2)),
+      #p2
       xaxis_title="Predicted $(col_names[1])",
       yaxis_title="Residuals",
-      title="Residuals vs Fitted Value",
-      size=8,
       xaxis=axis,
-      yaxis=attr(ticks="outside", showline=true, linewidth=2, linecolor="black", zeroline=true, zerolinecolor="Grey")
+      yaxis=axis,
+      xaxis2=axis,
+      yaxis2=yaxis = attr(ticks="outside", showline=true, linewidth=2, linecolor="black", zeroline=true, zerolinecolor="Grey"),
+      xaxis3=axis,
+      yaxis3=axis,
+      xaxis4=axis,
+      yaxis4=axis,
+      # p3
+      xaxis2_title="Residuals",
+      yaxis2_title="Probability Density",
+      barmode="stack",
+      title_font_size=8,
+      font_size=8,
+      font_family="Times New Roman",
+      margin=attr(l=20, r=10, t=30, b=5),
+      paper_bgcolor="LightSteelBlue"
     )
-  )
+  end
 
-  p3 = PlotlyJS.plot(
-    trace4,
-    Layout(
-      xaxis_title="Residuals",
-      yaxis_title="Probability Density",
-      title="Histogram of Residuals",
-      xaxis=axis,
-      yaxis=axis
-    )
-  )
-
-  p4 = PlotlyJS.plot(
-    trace5,
-    Layout(
-      xaxis_title="Theoretical Quantiles",
-      yaxis_title="Empirical Quantiles",
-      title="Normal Q-Q Plot",
-      xaxis=axis,
-      yaxis=axis
-    )
-  )
-
-  map(i -> restyle!(i, marker_color=_rgba_to_string.(color_palette)), [p1, p2, p3, p4])
-  add_trace!(p4, trace6)
-
-  p = [p1 p2; p3 p4]
-
-  relayout!(
-    p,
-    barmode="stack",
-    font_size=10,
-    font_family="Times New Roman",
-    margin=attr(l=40, r=40, t=20, b=40),
-    paper_bgcolor="LightSteelBlue"
-  )
-
-  return p
+  return fig
 end
