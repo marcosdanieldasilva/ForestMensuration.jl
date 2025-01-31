@@ -54,6 +54,7 @@ export
   grouped_regression,
   predict,
   predict!,
+  residuals,
   coef_table,
   criteria_table,
   criteria_selection,

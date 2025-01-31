@@ -69,23 +69,11 @@ function _fit_linear_model(ft::FormulaTerm, Y::Vector{<:Real}, X::Matrix{<:Real}
   significance = all(p_values .< 0.01) ? true : false
   # Package the results into a LinearModel structure
   fitted_models = LinearModel(
-    ft, data, β, σ², r², adjr², d, MSE, RMSE, MAE, Syx, AIC, BIC, normality, significance
+    ft, data, β, residual, σ², r², adjr², d, MSE, RMSE, MAE, Syx, AIC, BIC, normality, significance
   )
   # Return the fitted model object
   return fitted_models
 end
-
-# function regression(ft::FormulaTerm, data::AbstractDataFrame)
-#   data = columntable(data)
-#   try
-#     Y, X = modelcols(ft, data)
-#     return _fit_linear_model(ft, Y, X, data)
-#   catch
-#     ft = apply_schema(ft, StatsModels.schema(data))
-#     Y, X = modelcols(ft, data)
-#     return _fit_linear_model(ft, Y, X, data)
-#   end
-# end
 
 """
     regression(y::Symbol, x::Symbol, data::AbstractDataFrame, q::Symbol...)
@@ -286,46 +274,4 @@ function regression(y::Symbol, x1::Symbol, x2::Symbol, data::AbstractDataFrame, 
   isempty(fitted_models) && error("Failed to fit any models")
 
   return fitted_models
-end
-
-function grouped_regression(y::Symbol, x::Symbol, data::AbstractDataFrame, g::Symbol...)
-  isempty(g) && throw(ArgumentError("At least one grouping variable (g) must be provided after data, e.g., group_regression(:y, :x, data, :group1, :group2)."))
-  g = vcat(g...)
-  group_data = dropmissing(data[:, [y, x, g...]])
-  # Extract group attributes and initialize variables
-  groups = RecipesPipeline._extract_group_attributes(tuple(eachcol(group_data[:, g])...))
-  labels, idxs = getfield(groups, 1), getfield(groups, 2)
-  # Perform general regression
-  general_regression = criteria_selection(regression(y, x, data))
-  # Perform  qualitative regression
-  qualy_regression = criteria_selection(regression(y, x, data, g...), :adjr2, :syx, :aic, :bic, :normality)
-  # Perform group-specific regressions
-  grouped_models = Dict{String,LinearModel}()
-
-  for (i, label) in enumerate(labels)
-    grouped_models[label] = criteria_selection(regression(y, x, group_data[idxs[i], :]))
-  end
-  # Return the fitted model
-  return GroupedLinearModel(general_regression, qualy_regression, grouped_models, g)
-end
-
-function grouped_regression(y::Symbol, x1::Symbol, x2::Symbol, data::AbstractDataFrame, g::Symbol...)
-  isempty(g) && throw(ArgumentError("At least one grouping variable (g) must be provided."))
-  g = vcat(g...)
-  group_data = dropmissing(data[:, [y, x1, x2, g...]])
-  # Extract group attributes and initialize variables
-  groups = RecipesPipeline._extract_group_attributes(tuple(eachcol(group_data[:, g])...))
-  labels, idxs = getfield(groups, 1), getfield(groups, 2)
-  # Perform general regression
-  general_regression = criteria_selection(regression(y, x1, x2, data))
-  # Perform  qualitative regression
-  qualy_regression = criteria_selection(regression(y, x1, x2, data, g...), :adjr2, :syx, :aic, :bic, :normality)
-  # Perform group-specific regressions
-  grouped_models = Dict{String,LinearModel}()
-
-  for (i, label) in enumerate(labels)
-    grouped_models[label] = criteria_selection(regression(y, x1, x2, group_data[idxs[i], :]))
-  end
-  # Return the fitted model
-  return GroupedLinearModel(general_regression, qualy_regression, grouped_models, g)
 end

@@ -77,7 +77,6 @@ The `predict` function family provides a versatile way to generate predictions f
 - `model`: 
     The regression model(s) to be evaluated and compared. This parameter can accept:
     - `LinearModel`: A single linear regression model.
-    - `GroupedLinearModel`: A grouped linear model where different regression models are fitted for different subsets of data.
 
 # Returns:
 - `Vector{<:Real}` or `Vector{Union{Missing, <:Real}}`: The predicted values on the original scale of `y`, adjusted for any transformations and corrected using the Meyer factor for logarithmic transformations.
@@ -85,7 +84,6 @@ The `predict` function family provides a versatile way to generate predictions f
 # Key Features:
 - **Handles Transformed Dependent Variables:** If the dependent variable was transformed (e.g., using log transformations), the function correctly inverts the transformation to return predictions on the original scale.
 - **Applies Meyer Correction Factor:** For models using logarithmic transformations, the Meyer correction factor is applied to the predictions to correct for the bias introduced by the log transformation.
-- **Supports Grouped Models:** When using grouped models, the function automatically selects and applies the correct model for each data point based on its group membership.
 
 # Examples:
 - **Single Model Prediction:**
@@ -110,8 +108,6 @@ function predict(model::LinearModel)
   # Return the vector of predicted values
   return ŷ
 end
-
-predict(model::GroupedLinearModel) = predict(model, model.qualy_regression.data |> DataFrame)
 
 """
     predict(model::LinearModel, data)
@@ -166,49 +162,6 @@ function predict(model::LinearModel, data)
   )
 end
 
-function predict(model::GroupedLinearModel, data::AbstractDataFrame)
-  # Initialize a vector to store predictions, allowing for missing values
-  predicts = Vector{Union{Missing,Real}}(missing, nrow(data))
-  regressions = model.grouped_models
-  x_name = propertynames(model.general_regression.data)[2]
-  # Get the minimum and maximum values of the predictor variable in the entire dataset
-  x_min, x_max = extrema(model.general_regression.data[2])
-  for i in 1:nrow(data)
-    # Combine group keys into a single string to use as a dictionary key
-    group_key = join(data[i, model.group_names], " ")
-    # Retrieve the value of the predictor variable for the current row
-    x_value = data[i, x_name]
-    if ismissing(x_value)
-      # If the predictor value is missing, assign a missing value to the predict
-      predicts[i] = missing
-    elseif x_value < x_min || x_value > x_max
-      # If the predictor value is outside the overall range, use the general regression model
-      predicts[i] = predict(model.general_regression, data[i, :])
-    else
-      if haskey(regressions, group_key)
-        # Retrieve the regression model specific to the group
-        group_model = regressions[group_key]
-        # Get the minimum and maximum values of the predictor variable in the group data
-        group_x_min, group_x_max = extrema(group_model.data[2])
-        # Check if the predictor value is within the group's range
-        if x_value < group_x_min || x_value > group_x_max
-          # If the predictor value is outside the group's range, use the qualitative regression model
-          predicts[i] = predict(model.qualy_regression, data[i, :])
-        else
-          # If the predictor value is within the group's range, use the group-specific model
-          predicts[i] = predict(group_model, data[i, :])
-        end
-      else
-        # If no specific model exists for the group, use the general regression model
-        predicts[i] = predict(model.general_regression, data[i, :])
-      end
-    end
-  end
-
-  return predicts
-end
-
-
 """
     predict!(model::LinearModel, data::AbstractDataFrame)
 
@@ -221,8 +174,6 @@ The `predict!` function computes predictions from a regression model and adds th
 - `model`: 
     The regression model(s) to be evaluated and compared. This parameter can accept:
     - `LinearModel`: A single linear regression model.
-    - `GroupedLinearModel`: A grouped linear model where different regression models are fitted for different subsets of data.
-
 
 - `data`: The data frame (`AbstractDataFrame`) containing the input data. The function will add new columns to this data frame.
 
@@ -252,9 +203,7 @@ function predict!(model::LinearModel, data::AbstractDataFrame)
   insertcols!(data, col_names[2] => coalesce.(replace(data[!, y], 0.0 => missing), data[!, col_names[1]]), makeunique=true)
 end
 
-function predict!(model::GroupedLinearModel, data::AbstractDataFrame)
-  y = propertynames(model.general_regression.data)[1]
-  col_names = Symbol(string(y, "_predict")), Symbol(string(y, "_real"))
-  insertcols!(data, col_names[1] => predict(model, data), makeunique=true)
-  insertcols!(data, col_names[2] => coalesce.(replace(data[!, y], 0.0 => missing), data[!, col_names[1]]), makeunique=true)
-end
+"""
+    residuals(model::LinearModel)
+"""
+residuals(model::LinearModel) = model.residuals

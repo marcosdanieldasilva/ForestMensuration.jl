@@ -90,6 +90,7 @@ Represents a fitted linear model.
 - `formula::F`: The formula used to specify the relationship between dependent and independent variables.
 - `data::N`: The data set (e.g., NamedTuple or DataFrame) containing the variables used in the model.
 - `β::Array{T,1}`: The estimated regression coefficients (a vector).
+- `residuals::Array{T,1}`: The residuals, representing the difference between observed and predicted values.
 - `σ²::T`: The variance of residuals, indicating the variability of residuals around the fitted values.
 - `r²::T`: The coefficient of determination (R²), measuring the proportion of variance explained by the model.
 - `adjr²::T`: The adjusted R², adjusted for the number of predictors.
@@ -106,6 +107,7 @@ struct LinearModel{F<:FormulaTerm,N<:NamedTuple,T<:Float64,B<:Bool}
   formula::F
   data::N
   β::Array{T,1}
+  residuals::Array{T,1}
   σ²::T
   r²::T
   adjr²::T
@@ -121,7 +123,7 @@ struct LinearModel{F<:FormulaTerm,N<:NamedTuple,T<:Float64,B<:Bool}
 end
 
 """
-    LinearModel(formula::F, data::N, β::Array{T,1}, σ²::T, r²::T, adjr²::T, d::T, mse::T, rmse::T, mae::T, syx::T, aic::T, bic::T, normality::B, significance::B)
+    LinearModel(formula::F, data::N, β::Array{T,1}, residuals::Array{T,1}, σ²::T, r²::T, adjr²::T, d::T, mse::T, rmse::T, mae::T, syx::T, aic::T, bic::T, normality::B, significance::B)
 
     Creates a new `LinearModel` instance.
 
@@ -129,6 +131,7 @@ end
 - `formula::F`: The formula used to specify the relationship between dependent and independent variables.
 - `data::N`: The data set (e.g., NamedTuple or DataFrame) containing the variables used in the model.
 - `β::Array{T,1}`: The estimated regression coefficients (a vector).
+- `residuals::Array{T,1}`: The residuals, representing the difference between observed and predicted values.
 - `σ²::T`: The variance of residuals, indicating the variability of residuals around the fitted values.
 - `r²::T`: The coefficient of determination (R²), measuring the proportion of variance explained by the model.
 - `adjr²::T`: The adjusted R², adjusted for the number of predictors.
@@ -156,6 +159,7 @@ function LinearModel(
   formula::F,
   data::N,
   β::Array{T,1},
+  residuals::Array{T,1},
   σ²::T,
   r²::T,
   adjr²::T,
@@ -173,6 +177,7 @@ function LinearModel(
     formula,
     data,
     β,
+    residuals,
     σ²,
     r²,
     adjr²,
@@ -186,13 +191,6 @@ function LinearModel(
     normality,
     significance
   )
-end
-
-struct GroupedLinearModel{F<:LinearModel,St<:String,Sy<:Symbol}
-  general_regression::F
-  qualy_regression::F
-  grouped_models::Dict{St,F}
-  group_names::Vector{Sy}
 end
 
 """
