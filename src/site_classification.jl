@@ -372,28 +372,32 @@ function site_table(model::LinearModel, index_age::Real, hi::Real)
   new_column_names = [Symbol("S_$(s)") for s in names(site_table)[2:end]]
   rename!(site_table, [age; new_column_names])
   # Create the site plot
-  # site_plot = Plots.plot(
-  #   repeated_ages, hdom_predict,
-  #   group=categorical(repeated_sites, levels=sort(sites, rev=true)),
-  #   xlabel=age,
-  #   ylabel=hd,
-  #   title="Site Classification Plot",
-  #   legend=:outertopright,
-  #   markerstrokewidth=0,
-  #   seriesalpha=0.6,
-  #   framestyle=:box,
-  #   margin=3mm,
-  #   color_palette=cgrad(:darktest, categorical=true),
-  #   tick_direction=:out,
-  #   grid=:none,
-  #   titlefont=10,
-  #   fontfamily="times",
-  #   guidefontsize=9,
-  #   legendfontsize=7
-  # )
+  unique_sites = sort(sites, rev=true)
+  site_trace = AbstractTrace[]
+  for (i, s) in enumerate(unique_sites)
+    idx = findall(x -> x == s, repeated_sites)
+    push!(site_trace, scatter(
+      x=repeated_ages[idx],
+      y=hdom_predict[idx],
+      mode="markers+lines",
+      name=string(s),
+      marker=attr(
+        opacity=0.6,
+        line_width=0
+      ),
+      line=attr(width=2)
+    ))
+  end
 
-  return SiteAnalysis(site_table, [])
+  layout = Layout(
+    title="Site Classification Plot",
+    xaxis=attr(title=string(age)),
+    yaxis=attr(title=string(hd))
+  )
 
+  site_plot = plot(site_trace, layout)
+
+  return SiteAnalysis(site_table, site_plot)
 end
 
 function site_table(model::LinearModel, index_age::Real)

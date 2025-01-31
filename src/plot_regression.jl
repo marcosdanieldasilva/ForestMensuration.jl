@@ -108,7 +108,7 @@ function plot_regression(model::LinearModel)
 
   group_names = rtype == :simple ? col_names[3:n] : col_names[4:n]
 
-  trace3 = PlotlyJS.scatter(
+  trace3 = scatter(
     data,
     x=col_names[end-3],
     y=col_names[end-2],
@@ -117,7 +117,7 @@ function plot_regression(model::LinearModel)
     showlegend=false
   )
 
-  trace4 = PlotlyJS.histogram(
+  trace4 = histogram(
     data,
     x=col_names[end-2],
     group=group_names,
@@ -126,7 +126,7 @@ function plot_regression(model::LinearModel)
     nbinsx=length(fit(Histogram, resid).weights)
   )
 
-  trace5 = PlotlyJS.scatter(
+  trace5 = scatter(
     data,
     x=col_names[end-1],
     y=col_names[end],
@@ -135,7 +135,7 @@ function plot_regression(model::LinearModel)
     showlegend=false
   )
 
-  trace6 = PlotlyJS.scatter(
+  trace6 = scatter(
     ;
     x=x_qqline,
     y=y_qqline,
@@ -154,7 +154,7 @@ function plot_regression(model::LinearModel)
       subplot_titles=["Observed vs Fitted Value" "Residuals vs Fitted Value" "Histogram of Residuals" "Normal Q-Q Plot"]
     )
 
-    trace1 = PlotlyJS.scatter(
+    trace1 = scatter(
       data,
       x=col_names[2],
       y=col_names[1],
@@ -162,7 +162,7 @@ function plot_regression(model::LinearModel)
       mode="markers",
       showlegend=n > 2 ? true : false
     )
-    trace2 = PlotlyJS.scatter(
+    trace2 = scatter(
       data,
       x=col_names[2],
       y=col_names[end-3],
@@ -171,7 +171,7 @@ function plot_regression(model::LinearModel)
       showlegend=false
     )
 
-    p1 = PlotlyJS.plot(
+    p1 = plot(
       trace1,
       Layout(
         xaxis_title=col_names[2],
@@ -184,7 +184,7 @@ function plot_regression(model::LinearModel)
 
     [add_trace!(p1, t) for t in trace2]
 
-    p2 = PlotlyJS.plot(
+    p2 = plot(
       trace3,
       Layout(
         xaxis_title="Predicted $(col_names[1])",
@@ -196,7 +196,7 @@ function plot_regression(model::LinearModel)
       )
     )
 
-    p3 = PlotlyJS.plot(
+    p3 = plot(
       trace4,
       Layout(
         xaxis_title="Residuals",
@@ -207,7 +207,7 @@ function plot_regression(model::LinearModel)
       )
     )
 
-    p4 = PlotlyJS.plot(
+    p4 = plot(
       trace5,
       Layout(
         xaxis_title="Theoretical Quantiles",
@@ -247,7 +247,7 @@ function plot_regression(model::LinearModel)
       horizontal_spacing=0.0
     )
 
-    trace1 = PlotlyJS.scatter3d(
+    trace1 = scatter3d(
       data,
       x=col_names[3],
       y=col_names[2],
@@ -257,7 +257,7 @@ function plot_regression(model::LinearModel)
       showlegend=n > 3 ? true : false
     )
 
-    trace2 = PlotlyJS.mesh3d(
+    trace2 = mesh3d(
       data,
       x=col_names[3],
       y=col_names[2],
