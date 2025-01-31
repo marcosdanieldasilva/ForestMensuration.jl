@@ -1,11 +1,3 @@
-# Partial function to calculate deltas for age and index age
-# Calculate the delta (difference) between the model matrices for age and index age.
-# Arguments
-# - `model::LinearModel`: The fitted regression model.
-# - `data_age::AbstractDataFrame`: The data frame containing the current age data.
-# - `index_age::Real`: The index age for which the delta is calculated.
-# Returns
-# - `Δ::Vector{Real}`: The delta for each observation.
 function _calculate_delta(model::LinearModel, data_age::AbstractDataFrame, index_age::Real)
   (yname, xname, qname...) = propertynames(model.data)
   data_index_age = deepcopy(data_age[!, [yname, xname, qname...]])
@@ -380,27 +372,27 @@ function site_table(model::LinearModel, index_age::Real, hi::Real)
   new_column_names = [Symbol("S_$(s)") for s in names(site_table)[2:end]]
   rename!(site_table, [age; new_column_names])
   # Create the site plot
-  site_plot = Plots.plot(
-    repeated_ages, hdom_predict,
-    group=categorical(repeated_sites, levels=sort(sites, rev=true)),
-    xlabel=age,
-    ylabel=hd,
-    title="Site Classification Plot",
-    legend=:outertopright,
-    markerstrokewidth=0,
-    seriesalpha=0.6,
-    framestyle=:box,
-    margin=3mm,
-    color_palette=cgrad(:darktest, categorical=true),
-    tick_direction=:out,
-    grid=:none,
-    titlefont=10,
-    fontfamily="times",
-    guidefontsize=9,
-    legendfontsize=7
-  )
+  # site_plot = Plots.plot(
+  #   repeated_ages, hdom_predict,
+  #   group=categorical(repeated_sites, levels=sort(sites, rev=true)),
+  #   xlabel=age,
+  #   ylabel=hd,
+  #   title="Site Classification Plot",
+  #   legend=:outertopright,
+  #   markerstrokewidth=0,
+  #   seriesalpha=0.6,
+  #   framestyle=:box,
+  #   margin=3mm,
+  #   color_palette=cgrad(:darktest, categorical=true),
+  #   tick_direction=:out,
+  #   grid=:none,
+  #   titlefont=10,
+  #   fontfamily="times",
+  #   guidefontsize=9,
+  #   legendfontsize=7
+  # )
 
-  return SiteAnalysis(site_table, site_plot)
+  return SiteAnalysis(site_table, [])
 
 end
 

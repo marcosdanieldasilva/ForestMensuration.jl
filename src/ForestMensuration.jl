@@ -14,23 +14,19 @@ The package facilitates the analysis of dendrometric and forest data, performs c
 module ForestMensuration
 using
   CategoricalArrays,
-  Chain,
-  ColorTypes,
   DataFrames,
   Distributions,
   HypothesisTests,
   LinearAlgebra,
   PlotlyJS,
-  Plots,
-  Plots.PlotMeasures,
-  RecipesPipeline,
+  PlotUtils,
   Reexport,
   ScientificTypes,
   StatsBase,
   StatsModels,
   Tables
 
-import Plots: cgrad
+# import Plots: cgrad
 import StatsBase: fit, Histogram
 
 include("structs_consts.jl")

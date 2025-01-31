@@ -9,28 +9,27 @@ function _evaluate_regression_type(model::LinearModel)
   end
 end
 
-function _rgba_to_string(rgba::ColorTypes.RGBA{Float64})
-  r, g, b, a = red(rgba), green(rgba), blue(rgba), 0.6
-  return "rgba($r, $g, $b, $a)"
-end
-
 function _calculate_qq(x::Vector{<:Real})
   dist = fit_mle(Normal, x)
   qq = qqbuild(dist, x)
   return DataFrame(qx=qq.qx, qy=qq.qy)
 end
 
+function _rgba_to_string(rgba::RGBA{Float64})
+  r, g, b, a = red(rgba), green(rgba), blue(rgba), alpha(rgba)
+  return "rgba($r, $g, $b, $a)"
+end
+
 function _graph_table(model::LinearModel)
-  y = model.data[1]
   # Predicted values from the model
   ŷ = predict(model)
   # Residuals: the difference between observed and predicted values
-  resid = y - ŷ
+  residual = model.residuals
   # Fit the residuals to a normal distribution and build the Q-Q plot data
-  dist = fit_mle(Normal, resid)
-  qq = qqbuild(dist, resid)
+  dist = fit_mle(Normal, residual)
+  qq = qqbuild(dist, residual)
   # Create a DataFrame combining the original data with the residuals and predicted values
-  data = hcat(DataFrame(model.data), DataFrame(pred=ŷ, resid=resid), makeunique=true)
+  data = hcat(DataFrame(model.data), DataFrame(pred=ŷ, resid=residual), makeunique=true)
   # sort the data by rediduals values
   sort!(data, size(data, 2))
   # Insert the Q-Q plot values as new columns, ensuring unique column names
@@ -38,6 +37,7 @@ function _graph_table(model::LinearModel)
   sort!(data, 2)
   return data
 end
+
 
 """
     plot_regression(model::LinearModel)
@@ -97,7 +97,7 @@ function plot_regression(model::LinearModel)
     color_palette = cgrad(:darktest)[1]
   end
 
-  data = ForestMensuration._graph_table(model)
+  data = _graph_table(model)
   resid = data[:, end-2]
   col_names = propertynames(data)
   x_qqline = [extrema(data[:, end-1])...]
@@ -116,6 +116,7 @@ function plot_regression(model::LinearModel)
     mode="markers",
     showlegend=false
   )
+
   trace4 = PlotlyJS.histogram(
     data,
     x=col_names[end-2],
@@ -124,6 +125,7 @@ function plot_regression(model::LinearModel)
     histnorm="probability density",
     nbinsx=length(fit(Histogram, resid).weights)
   )
+
   trace5 = PlotlyJS.scatter(
     data,
     x=col_names[end-1],
@@ -132,6 +134,7 @@ function plot_regression(model::LinearModel)
     mode="markers",
     showlegend=false
   )
+
   trace6 = PlotlyJS.scatter(
     ;
     x=x_qqline,
@@ -215,7 +218,9 @@ function plot_regression(model::LinearModel)
       )
     )
 
-    map(i -> restyle!(i, marker_color=ForestMensuration._rgba_to_string.(color_palette)), [p1, p2, p3, p4])
+    map(i -> restyle!(i, marker_color=_rgba_to_string.(color_palette)), [p1, p2, p3, p4])
+
+
     add_trace!(p4, trace6)
 
     fig = [p1 p2; p3 p4]
@@ -269,8 +274,8 @@ function plot_regression(model::LinearModel)
     map(t -> add_trace!(fig, t, row=3, col=2), trace5)
     add_trace!(fig, trace6, row=3, col=2)
 
-    restyle!(fig, marker_color=ForestMensuration._rgba_to_string.(color_palette))
-    restyle!(fig, color=ForestMensuration._rgba_to_string.(color_palette))
+    restyle!(fig, marker_color=_rgba_to_string.(color_palette))
+    restyle!(fig, color=_rgba_to_string.(color_palette))
 
     relayout!(
       fig,

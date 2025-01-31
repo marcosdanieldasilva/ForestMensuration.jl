@@ -203,5 +203,6 @@ Define SiteAnalysis struct to store the analysis results
 """
 struct SiteAnalysis
   site_table::DataFrame
-  site_plot::Plots.Plot
+  # site_plot::Plots.Plot
+  site_plot
 end
