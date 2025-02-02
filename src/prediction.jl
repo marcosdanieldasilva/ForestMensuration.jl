@@ -115,10 +115,7 @@ Predicts the response variable for a given dataset based on the provided regress
 
 # Arguments:
 
-- `model`: 
-    The regression model(s) to be evaluated and compared. This parameter can accept:
-    - `LinearModel`: A single linear regression model.
-    - `GroupedLinearModel`: A grouped linear model where different regression models are fitted for different subsets of data.
+- `model::LinearModel`: The fitted linear regression model to be evaluated and compared.
 - `data`: A dataset compatible with the Tables.jl interface. Must include the predictors required by the model.
 
 # Returns:
@@ -171,10 +168,7 @@ The `predict!` function computes predictions from a regression model and adds th
     these missing values.
 
 # Parameters:
-- `model`: 
-    The regression model(s) to be evaluated and compared. This parameter can accept:
-    - `LinearModel`: A single linear regression model.
-
+- `model::LinearModel`: The fitted linear regression model to be evaluated and compared. 
 - `data`: The data frame (`AbstractDataFrame`) containing the input data. The function will add new columns to this data frame.
 
 # Functionality:
@@ -205,5 +199,17 @@ end
 
 """
     residuals(model::LinearModel)
+    
+# Parameters:
+- `model::LinearModel`: The fitted linear regression model to be evaluated and compared.
+
+# Returns
+    The residuals, representing the difference between observed and predicted values.
+
+# Examples:
+```julia
+# Apply residuals function to a model
+residuals(model)
+```
 """
 residuals(model::LinearModel) = model.residuals
