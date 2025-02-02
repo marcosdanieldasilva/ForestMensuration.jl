@@ -57,18 +57,5 @@ models = regression(:h, :d, data);
 
 # Select the best model
 top_model = criteria_selection(models)
-TableRegressionModel{LinearModel{GLM.LmResp{Vector{Float64}}, GLM.DensePredChol{Float64, LinearAlgebra.CholeskyPivoted{Float64, Matrix{Float64}, Vector{Int64}}}}, Matrix{Float64}}
-
-:(log_minus(h - 1.3)) ~ 1 + :(d ^ -1)
-
-Coefficients:
-─────────────────────────────────────────────────────────────────────────
-                 Coef.  Std. Error      t  Pr(>|t|)  Lower 95%  Upper 95%
-─────────────────────────────────────────────────────────────────────────
-(Intercept)    4.14963    0.170519  24.34    <1e-08    3.75641    4.54285
-d ^ -1       -37.6196     3.78782   -9.93    <1e-05  -46.3544   -28.8849
-
-# View the model equation
-ModelEquation(top_model)
-log_minus(h - 1.3) = 4.149631 - 37.6196 * d ^ -1
+log_minus(h - 1.3) = 4.1496 - 37.62 * d ^ -1
 ```
