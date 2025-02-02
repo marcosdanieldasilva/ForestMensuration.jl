@@ -2,15 +2,15 @@
 
 Documentation for [ForestMensuration](https://github.com/marcosdanieldasilva/ForestMensuration.jl).
 
-ForestMensuration.jl is a Julia package that provides a comprehensive set of functions for performing dendrometric calculations. Designed with ease of use in mind, the package offers tools that simplify complex forestry calculations, making it straightforward to:
+**ForestMensuration.jl** is a Julia package that offers a comprehensive suite of functions for dendrometric calculations. With a focus on simplicity and efficiency, it streamlines complex forestry computations through an intuitive interface. Key features include:
 
-- **Conduct regressions**: Easily fit linear models, including transformations and qualitative variables, to find the best relationships in your forestry data.
-- **Calculate tree and stand volume (cubage)**: Support for various methods such as Huber, Smalian, and Newton allows precise calculation of tree and stand volumes.
-- **Classify site productivity**: Implement site classification methods to assess the quality and productivity of forest sites.
-- **Compute dendrometric averages**: Calculate essential dendrometric metrics like mean diameter, quadratic mean diameter, and others to understand stand structure.
-- **Create frequency tables**: Generate frequency and diametric tables to analyze the distribution of dendrometric variables such as diameter and height.
+- **Regression Analysis**: Seamlessly fit linear models—complete with variable transformations and handling of categorical data—to uncover the best relationships in your forestry datasets.
+- **Tree and Stand Volume Estimation**: Accurately compute tree and stand volumes using a range of methods, including Huber, Smalian, and Newton techniques.
+- **Site Productivity Classification**: Implement advanced methods to evaluate and classify the productivity and quality of forest sites.
+- **Dendrometric Averaging**: Easily calculate essential metrics such as mean diameter, quadratic mean diameter, and other averages to analyze stand structure.
+- **Frequency and Diametric Tables**: Generate detailed frequency and diameter distribution tables to support comprehensive data analysis.
 
-The package facilitates the analysis of dendrometric and forest data, performs complex calculations with simple commands, and offers a user-friendly and intuitive interface.
+Whether you are conducting research or managing forestry operations, **ForestMensuration.jl** simplifies the process of analyzing dendrometric data, enabling you to perform sophisticated calculations with minimal effort.
 
 ```@meta
 CurrentModule = ForestMensuration
