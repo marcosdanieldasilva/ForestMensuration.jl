@@ -262,8 +262,15 @@ println(dominant_heights)
 The `site_table` function creates a comprehensive site table and an associated site plot. This table shows the predicted dominant heights at various ages for different site index classes. You can specify a height increment (`hi`) to define the granularity of the site classes.
 
 ```@example site_classification
-# Generate the site table and site plot
+# Generate the site table
 analysis = site_table(reg, index_age)
+```
+
+### Plotting the Site Index
+
+```@example site_classification
+# Generate site plot
+analysis.site_plot
 ```
 
 ## Frequency and Statistical Functions
