@@ -262,16 +262,8 @@ println(dominant_heights)
 The `site_table` function creates a comprehensive site table and an associated site plot. This table shows the predicted dominant heights at various ages for different site index classes. You can specify a height increment (`hi`) to define the granularity of the site classes.
 
 ```@example site_classification
-using ForestMensuration, DataFrames
-
 # Generate the site table and site plot
 analysis = site_table(reg, index_age)
-
-println("Site Table:")
-println(analysis.site_table)
-
-# To display the site plot (in an interactive environment)
-display(analysis.site_plot)
 ```
 
 ## Frequency and Statistical Functions
