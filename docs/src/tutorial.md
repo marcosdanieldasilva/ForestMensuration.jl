@@ -211,6 +211,69 @@ plot_regression(top_qual_model)
 
 ## Site Classification
 
+The site classification enable you to evaluate and classify forest sites based on regression models relating tree height and age. These functions are particularly useful for assessing site productivity and quality by comparing observed data with expected values derived from well-calibrated models.
+
+### Calculating Site Classification
+
+The `site_classification` function calculates the expected dominant height at a given index age for each observation based on a fitted regression model. This is a key step in classifying the productivity of a forest site.
+
+```@example site_classification
+using ForestMensuration, DataFrames
+
+# Create a DataFrame containing tree plot data
+data = DataFrame(
+    plot = repeat(1:6, inner=5),
+    age  = repeat([36, 48, 60, 72, 84], outer=6),
+    h    = [13.6, 17.8, 21.5, 21.5, 21.8,
+            14.3, 17.8, 21.0, 21.0, 21.4,
+            14.0, 17.5, 21.2, 21.2, 21.4,
+            13.4, 18.0, 20.8, 20.8, 23.2,
+            13.2, 17.4, 20.3, 20.3, 22.0,
+            13.2, 17.8, 21.3, 21.3, 22.5]
+)
+
+# Fit a regression model to relate height (h) to age
+reg = regression(:h, :age, data) |> criteria_selection
+
+# Define the target index age (for example, 60 months)
+index_age = 60
+
+# Calculate the site classification values (site indices) for each observation
+site_indices = site_classification(reg, data, index_age)
+
+println("Site Classification Values:")
+println(site_indices)
+```
+
+### Calculating Dominant Height Classification
+
+The `hdom_classification` function uses the site classification values to predict the dominant height for each observation at the specified index age. This reverses the site classification process, allowing you to forecast tree heights based on site productivity.
+
+```@example site_classification
+# Now, compute the dominant heights for each observation using the site indices
+dominant_heights = hdom_classification(reg, data, index_age, site_indices)
+
+println("Dominant Height Values:")
+println(dominant_heights)
+```
+
+### Generating a Site Table
+
+The `site_table` function creates a comprehensive site table and an associated site plot. This table shows the predicted dominant heights at various ages for different site index classes. You can specify a height increment (`hi`) to define the granularity of the site classes.
+
+```@example site_classification
+using ForestMensuration, DataFrames
+
+# Generate the site table and site plot
+analysis = site_table(reg, index_age)
+
+println("Site Table:")
+println(analysis.site_table)
+
+# To display the site plot (in an interactive environment)
+display(analysis.site_plot)
+```
+
 ## Frequency and Statistical Functions
 
 ### Creating Frequency Tables
