@@ -272,34 +272,3 @@ If you have a regression model (e.g., top_model from earlier), you can estimate 
 # Estimate heights for dendrometric averages using the regression model
 dendrometric_averages(top_model, area=0.05)
 ```
-
-\
-
-## Forest Inventory
-
-In this example, we will perform a forest inventory using the [`simple_casual_sampling`](@ref) function to conduct simple random sampling. We will use a desired error margin of 10% (default) and present the results in English (default).
-
-```@example inventory
-using ForestMensuration
-
-# First, define the volumes measured in each sample plot
-v = [381.7, 458.9, 468.2, 531.7, 474.1, 401.9, 469.1, 437.4, 435.3, 403.2, 397.1];
-
-#Define the area of each plot
-plot_area = 0.05  # hectares
-
-#Define the total area of the forest
-total_area = 10  # hectares
-
-# Use the simple_casual_sampling function
-simple_casual_sampling(v, plot_area, total_area)
-```
-
-\
-
-You can also set error threshold and change language
-
-```@example inventory
-# Setting the error to 5% and the language to Portuguese-BR
-simple_casual_sampling(v, plot_area, total_area, e=5, lg=:pt)
-```
