@@ -1,6 +1,6 @@
 # ForestMensuration
 
-ForestMensuration.jl provides advanced functions for dendrometric and forest inventory calculations in Julia.  
+ForestMensuration.jl provides advanced functions for dendrometric calculations in Julia.  
 Its focus is on accurate **tree cubage (volume estimation)**, modeling **hipometric relationships** (e.g. diameter versus height and dominant height versus age for site index estimation), as well as **volumetry, allometry,** and **biomass** estimation. These methods are essential for forest mensuration and biometrics, supporting forest inventory, management, and research.
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://marcosdanieldasilva.github.io/ForestMensuration.jl/stable/forestmensuration/)
@@ -31,7 +31,7 @@ ForestMensuration.jl is designed for professionals and researchers in forestry, 
   - Dominant height as a function of age for site index calculations.
 
 - **Allometry and Biomass Estimation:**  
-  Offers tools to predict tree volume and biomass based on measurements like diameter at breast height (DBH) and total height.
+  Offers tools to predict tree volume and biomass based on measurements like diameter at breast height and total height.
 
 These functions are crucial for generating accurate forest inventories and supporting decision-making in forest management.
 
