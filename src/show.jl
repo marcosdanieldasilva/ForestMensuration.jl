@@ -3,7 +3,9 @@ import Base: show
 # Custom show method for SiteAnalysis to display  the site_table and site_plot
 function show(io::IO, analysis::SiteAnalysis)
   show(io, analysis.site_table)
-  display(analysis.site_plot)
+  if !haskey(ENV, "CI")
+    display(analysis.site_plot)
+  end
 end
 
 _coefnames(model::LinearModel) = vcat("β0", string.(StatsModels.coefnames(model.formula.rhs.terms[2:end])))
