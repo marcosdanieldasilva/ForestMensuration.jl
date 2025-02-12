@@ -24,3 +24,26 @@ function show(io::IO, model::LinearModel)
 
   print(io, output)
 end
+
+function show(io::IO, test::T) where {T<:KolmogorovSmirnovTest}
+  println(io, name_of_test(test))
+  println(io, repeat("-", length(name_of_test(test))))
+  (α, Dn, Dcrit) = ks_parameters(test)
+  p = p_value(test)
+  result = p > test.α ? "FAIL TO REJECT H0" : "REJECT H0"
+  pval = StatsBase.PValue(p)
+  hypothesis(io, test)
+  println(io, "Test report:")
+  print(io, "  With $(Int((1 - test.α) * 100))% confidence: ", result)
+  println(io)
+  println(io, "  P-value:              ", pval)
+  println(io, "Estimators:")
+  print(io, "  D calculated:         ")
+  show(io, test.Dn)
+  println(io)
+  print(io, "  D critical:           ")
+  show(io, test.Dcrit)
+  println(io)
+  println(io, "Details:")
+  show_params(io, test)
+end
