@@ -116,7 +116,7 @@ function criteria_table(model::Vector{<:LinearModel}, criteria::Symbol...; best:
   # Determine selected criteria
   if isempty(criteria)
     # Use default criteria if none are specified
-    selected_criteria = [:adjr2, :d, :syx, :aic, :bic, :normality, :significance]
+    selected_criteria = [:adjr2, :d, :syx, :aic, :bic, :significance]
   elseif :all in criteria
     # If :all is included, use all fields except :all itself
     selected_criteria = setdiff(allowed_fields, [:all])
