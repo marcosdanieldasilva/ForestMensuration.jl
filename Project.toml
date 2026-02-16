@@ -1,7 +1,7 @@
 name = "ForestMensuration"
 uuid = "8fa9ba82-4654-4ff3-8d17-47720d346ae3"
-authors = ["Marcos Daniel da Silva <marcosdasilva@5a.tec.br> and contributors"]
 version = "2.0.1"
+authors = ["Marcos Daniel da Silva <marcosdasilva@5a.tec.br> and contributors"]
 
 [deps]
 CategoricalArrays = "324d7699-5711-5eae-9e2f-1d82baa6b597"
@@ -17,6 +17,7 @@ ScientificTypes = "321657f4-b219-11e9-178b-2701a2544e81"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StatsModels = "3eaba693-59b7-5ba5-a881-562e759f1c8d"
 Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
+Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
 CategoricalArrays = "0.10.8"
@@ -33,6 +34,7 @@ StatsBase = "0.34.3"
 StatsModels = "0.7.4"
 Tables = "1.12.0"
 Test = "1.11.0"
+Unitful = "1.28.0"
 julia = ">=1.10, <2.0"
 
 [extras]
