@@ -1,3 +1,11 @@
+# define union for imperial units only to handle dispatch
+const ImperialUnits = Union{typeof(u"inch"),typeof(u"ft"),typeof(u"yd"),typeof(u"mi")}
+
+const Len = Quantity{<:Real,𝐋}      # Length (d, h)
+const Area = Quantity{<:Real,𝐋^2}   # Area (G, Hectare / Acre)
+const Vol = Quantity{<:Real,𝐋^3}    # Volume (v)
+const Mass = Quantity{<:Real,𝐌}    # Mass (Biomass, Carbon)
+
 """
     const MixTerm = Union{AbstractTerm,Tuple{AbstractTerm,Vararg{AbstractTerm}}}
 
