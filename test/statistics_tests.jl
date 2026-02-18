@@ -1,71 +1,83 @@
 @testset "dendrometry_and_inventory.jl" begin
-  @testset "Basal Area Tests" begin
-    # Test 1: Standard case
-    d_standard = 30.0
-    expected_basalarea = 0.07068583470577035
-    @test basalarea(d_standard) |> ustrip ≈ expected_basalarea atol = 1e-6
-
-    # Test 2: Edge case with zero diameter (should throw an error)
-    d_zero = 0.0
-    @test_throws DomainError basalarea(d_zero)
-
-    # Test 3: Negative diameter (should throw an error)
-    @test_throws DomainError basalarea(-d_standard)
-  end
-
   @testset "Dendrometric Averages Function Tests" begin
-    # Test Data
-    diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0]
-    species = ["Oak", "Oak", "Oak", "Oak", "Oak", "Pine", "Pine", "Pine", "Pine", "Pine"]
-    data = DataFrame(species=species, diameters=diameters)
 
-    # Test 1: Standard Case
-    result_df = dendrometric_averages(diameters, area=0.05)
-    @test isa(result_df, DataFrame)
-
-    # Expected results
-    expected_values = Dict(
-      :d₋ => 12.7085,
-      :d̅ => 17.25,
-      :dg => 17.7799,
-      :dw => 18.6,
-      :dz => 17.2663,
-      :d₁₀₀ => 21.0,
-      :d₊ => 21.7915
-    )
-
-    # Compare the calculated values with expected values
-    for (key, expected) in expected_values
-      @test result_df[!, key][1] ≈ expected atol = 1e-4
+    @testset "Basal Area Tests" begin
+      dStandard = 30.0
+      expectedBasalArea = 0.07068583470577035
+      @test basalarea(dStandard) |> ustrip ≈ expectedBasalArea atol = 1e-6
+      dZero = 0.0
+      @test_throws DomainError basalarea(dZero)
+      @test_throws DomainError basalarea(-dStandard)
     end
 
-    # Test 2: Zero or Negative Area Value
-    @test_throws DomainError dendrometric_averages(diameters, area=-1.0)
-    @test_throws DomainError dendrometric_averages(diameters, area=0.0)
+    diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0]
+    heights = [10.2, 11.5, 12.3, 14.1, 14.9, 16.5, 17.2, 18.0, 19.6, 21.2]
+    plotArea = 0.05
 
-    # Test 3: Zero or Negative Diameters
+    @testset "Diameter Metrics Tests" begin
+      @test dm(diameters) |> ustrip ≈ 17.25 atol = 1e-4
+      @test dg(diameters) |> ustrip ≈ 17.779904 atol = 1e-6
+      @test dw(diameters) |> ustrip ≈ 18.6 atol = 1e-4
+      @test dz(diameters) |> ustrip ≈ 17.266296 atol = 1e-6
+      @test dd(diameters, plotArea) |> ustrip ≈ 21.0 atol = 1e-4
+      hohenadl = dh(diameters)
+      @test hohenadl.dl |> ustrip ≈ 12.708524 atol = 1e-6
+      @test hohenadl.du |> ustrip ≈ 21.791475 atol = 1e-6
+    end
 
-    @test_throws DomainError dendrometric_averages([0, 10.5, 12.0])
-    @test_throws DomainError dendrometric_averages(-diameters)
+    @testset "DataFrame dmetrics Tests" begin
+      dfDiameters = dmetrics(diameters) .|> ustrip
+      @test dfDiameters.dl[1] ≈ 12.708524 atol = 1e-6
+      @test dfDiameters.dm[1] ≈ 17.25 atol = 1e-4
+      @test dfDiameters.dg[1] ≈ 17.779904 atol = 1e-6
+      @test dfDiameters.dw[1] ≈ 18.6 atol = 1e-4
+      @test dfDiameters.dz[1] ≈ 17.266296 atol = 1e-6
+      @test isnan(dfDiameters.dd[1])
+      @test dfDiameters.du[1] ≈ 21.791475 atol = 1e-6
+      @test dfDiameters.dv[1] ≈ 26.3274 atol = 1e-4
+      dfDiametersArea = dmetrics(diameters, plotArea)
+      @test dfDiametersArea.dd[1] |> ustrip ≈ 21.0 atol = 1e-4
+    end
 
-    # Test 4: Grouped Dendrometric Averages
-    result_df = dendrometric_averages(:species, :diameters, data; area=0.02)
-    @test isa(result_df, DataFrame)
+    @testset "Height Metrics Tests" begin
+      @test hm(heights) |> ustrip ≈ 15.55 atol = 1e-4
+      @test hd(diameters, heights, plotArea) |> ustrip ≈ 18.5 atol = 1e-4
+      @test hg(diameters, heights) |> ustrip ≈ 17.148042 atol = 1e-6
+    end
 
-    # Expected results for the test data
-    expected_results = DataFrame(
-      species=["Oak", "Pine"],
-      d₋=[11.1283, 18.6283],
-      d̅=[13.5, 21.0],
-      dg=[13.6657, 21.1069],
-      dw=[14.1, 21.6],
-      dz=[13.5, 21.0],
-      d₁₀₀=[15.75, 23.25],
-      d₊=[15.8717, 23.3717]
-    )
+    @testset "DataFrame hmetrics Tests" begin
+      dfHeights = hmetrics(diameters, heights) .|> ustrip
+      @test dfHeights.hl[1] ≈ 11.9589 atol = 1e-4
+      @test dfHeights.hm[1] ≈ 15.55 atol = 1e-4
+      @test isnan(dfHeights.hd[1])
+      @test dfHeights.hg[1] ≈ 17.1480 atol = 1e-4
+      @test dfHeights.hu[1] ≈ 19.1411 atol = 1e-4
+      @test dfHeights.hv[1] ≈ 23.094 atol = 1e-3
+      dfHeightsArea = hmetrics(diameters, heights, plotArea)
+      @test dfHeightsArea.hd[1] |> ustrip ≈ 18.5 atol = 1e-4
+    end
 
-    for col in names(expected_results)[2:end]  # Skip 'species' column
-      @test result_df[!, col] ≈ expected_results[!, col] atol = 1e-4
+    @testset "DataFrame standmetrics Tests" begin
+      dfStand = standmetrics(diameters, heights, plotArea) .|> ustrip
+      @test dfStand.n[1] == 10
+      @test dfStand.g[1] ≈ 0.248284 atol = 1e-6
+      @test dfStand.EF[1] ≈ 20.0 atol = 1e-4
+      @test dfStand.N[1] ≈ 200.0 atol = 1e-4
+      @test dfStand.G[1] ≈ 4.96568 atol = 1e-5
+      @test dfStand.dl[1] ≈ 12.7085 atol = 1e-4
+      @test dfStand.dm[1] ≈ 17.25 atol = 1e-4
+      @test dfStand.dg[1] ≈ 17.7799 atol = 1e-4
+      @test dfStand.dw[1] ≈ 18.6 atol = 1e-4
+      @test dfStand.dz[1] ≈ 17.2663 atol = 1e-4
+      @test dfStand.dd[1] ≈ 21.0 atol = 1e-4
+      @test dfStand.du[1] ≈ 21.7915 atol = 1e-4
+      @test dfStand.dv[1] ≈ 26.3274 atol = 1e-4
+      @test dfStand.hl[1] ≈ 11.9589 atol = 1e-4
+      @test dfStand.hm[1] ≈ 15.55 atol = 1e-4
+      @test dfStand.hd[1] ≈ 18.5 atol = 1e-4
+      @test dfStand.hg[1] ≈ 17.148 atol = 1e-3
+      @test dfStand.hu[1] ≈ 19.1411 atol = 1e-4
+      @test dfStand.hv[1] ≈ 23.094 atol = 1e-3
     end
 
   end

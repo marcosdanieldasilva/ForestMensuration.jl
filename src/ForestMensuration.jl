@@ -33,6 +33,8 @@ import StatsBase: fit, Histogram
 
 import Unitful: 𝐋, 𝐌
 
+export @u_str, ustrip, uconvert
+
 include("structs_consts.jl")
 include("goodness_of_fit_test.jl")
 include("linear_regression.jl")
@@ -41,7 +43,7 @@ include("regression_parameters.jl")
 include("criteria_functions.jl")
 include("plot_regression.jl")
 include("frequency_tables.jl")
-include("dendrometric_averages.jl")
+include("dendrometrics.jl")
 include("cubage.jl")
 include("site_classification.jl")
 include("show.jl")
@@ -73,7 +75,9 @@ export
   Newton,
   # Frequency and Statistic functions
   basalarea,
-  dendrometric_averages,
+  dmetrics,
+  hmetrics,
+  standmetrics,
   diametric_table,
   frequency_table,
   # Site classification

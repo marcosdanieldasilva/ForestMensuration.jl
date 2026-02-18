@@ -222,7 +222,7 @@ dz(d::AbstractVector{<:Real}) = dz(d * u"cm")
 # Returns NaN if the sample size is insufficient.
 function dominantTreeCount(d::AbstractVector{<:Len}, area::Area)
   # detect unit system
-  u = unit(d[1])
+  u = first(d) |> unit
   if u isa ImperialUnits
     # imperial standard 40 trees per acre
     ntree = round(Int, ustrip(uconvert(u"ac", 40 * area)))
@@ -469,7 +469,7 @@ julia> hd(diameters, heights, plotArea)
 """
 function hd(d::AbstractVector{<:Len}, h::AbstractVector{<:Len}, area::Area)
   # validate vector lengths
-  length(h) == length(d) || throw(DimensionMismatch("vectors must have same length"))
+  length(d) == length(h) || throw(DimensionMismatch("height and diameter vectors must have same length"))
   # get target count of dominant trees
   ntree = dominantTreeCount(d, area)
   # return nan if sample is insufficient or invalid
@@ -478,6 +478,8 @@ function hd(d::AbstractVector{<:Len}, h::AbstractVector{<:Len}, area::Area)
   idx = partialsortperm(d, 1:Int(ntree), rev=true)
   return hm(h[idx])
 end
+
+hd(d::AbstractVector{<:Real}, h::AbstractVector{<:Real}, area::Real) = hd(d * u"cm", h * u"m", area * u"ha")
 
 """
     hg(d::AbstractVector{<:Len}, h::AbstractVector{<:Len})
@@ -507,18 +509,19 @@ Proposed by Lorey (1878), this is the standard mean height used in volumetric ca
 ```julia
 julia> diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0] * u"cm";
 julia> heights = [10.2, 11.5, 12.3, 14.1, 14.9, 16.5, 17.2, 18.0, 19.6, 21.2] * u"m";
-julia> hg(heights, diameters)
+julia> hg(diameters, heights)
 17.148042704626334 m
 ```
 
 """
 function hg(d::AbstractVector{<:Len}, h::AbstractVector{<:Len})
-  if length(h) != length(d)
-    throw(DimensionMismatch("height and diameter vectors must have the same length"))
-  end
+  length(d) == length(h) || throw(DimensionMismatch("height and diameter vectors must have same length"))
   g = basalarea.(d)
   return sum(h .* g) / sum(g)
 end
+
+hg(d::AbstractVector{<:Real}, h::AbstractVector{<:Real}) = hg(d * u"cm", h * u"m")
+
 
 """
     hmetrics(d::AbstractVector{<:Len}, h::AbstractVector{<:Len}, area::Area=0.0u"ha")
@@ -541,10 +544,11 @@ Aggregates the lower boundary, arithmetic mean, dominant height, Lorey's mean he
 * `hv`: coefficient of variation of the heights, expressed as a percentage.
 
 ```julia
-julia> heights = [10.2, 11.5, 12.3, 14.1, 14.9, 16.5, 17.2, 18.0, 19.6, 21.2] * u"m";
+
 julia> diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0] * u"cm";
+julia> heights = [10.2, 11.5, 12.3, 14.1, 14.9, 16.5, 17.2, 18.0, 19.6, 21.2] * u"m";
 julia> plotArea = 500u"m^2";
-julia> hmetrics(heights, diameters, plotArea)
+julia> hmetrics(diameters, heights, plotArea)
 1×6 DataFrame
  Row │ hl         hm         hd         hg         hu         hv      
      │ Quantity…  Quantity…  Quantity…  Quantity…  Quantity…  Float64
@@ -554,19 +558,21 @@ julia> hmetrics(heights, diameters, plotArea)
 """
 function hmetrics(d::AbstractVector{<:Len}, h::AbstractVector{<:Len}, area::Area=0.0u"ha")
   # validate vector lengths
-  length(h) == length(d) || throw(DimensionMismatch("height and diameter vectors must have same length"))
+  length(d) == length(h) || throw(DimensionMismatch("height and diameter vectors must have same length"))
   # mean height h̅
   h̅ = hm(h)
   s = std(h, mean=h̅)
   h₋, h₊ = h̅ - s, h̅ + s
   return DataFrame(
     hl=h₋, hm=h̅,
-    hd=hd(h, d, area),
-    hg=hg(h, d),
+    hd=hd(d, h, area),
+    hg=hg(d, h),
     hu=h₊,
     hv=s / h̅ * 100,
   )
 end
+
+hmetrics(d::AbstractVector{<:Real}, h::AbstractVector{<:Real}, area::Real=0.0) = hmetrics(d * u"cm", h * u"m", area * u"ha")
 
 """
 standmetrics(d::AbstractVector{<:Len}, h::AbstractVector{<:Len}, area::Area)
@@ -600,31 +606,59 @@ julia> heights = [10.2, 11.5, 12.3, 14.1, 14.9, 16.5, 17.2, 18.0, 19.6, 21.2] * 
 julia> plotArea = 500u"m^2";
 julia> standmetrics(diameters, heights, plotArea)
 1×19 DataFrame
- Row │ n      g             EF          N            G                  dl          dm         dg          dw         dz          dd         du          dv       hl          hm         hd         hg         hu          hv      
-     │ Int64  Quantity…     Quantity…   Quantity…    Quantity…          Quantity…   Quantity…  Quantity…   Quantity…  Quantity…   Quantity…  Quantity…   Float64  Quantity…   Quantity…  Quantity…  Quantity…  Quantity…   Float64 
-─────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1 │    10  0.248284 m^2  20.0 ha^-1  200.0 ha^-1  4.96568 m^2 ha^-1  12.7085 cm   17.25 cm  17.7799 cm    18.6 cm  17.2663 cm    21.0 cm  21.7915 cm  26.3274  12.7085 cm   17.25 cm     18.5 m   17.148 m  21.7915 cm  26.3274
+ Row │ n      g             EF          N            G                  dl          dm         dg          dw         dz          dd         du          dv       hl         hm         hd         hg         hu         hv      
+     │ Int64  Quantity…     Quantity…   Quantity…    Quantity…          Quantity…   Quantity…  Quantity…   Quantity…  Quantity…   Quantity…  Quantity…   Float64  Quantity…  Quantity…  Quantity…  Quantity…  Quantity…  Float64
+─────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   1 │    10  0.248284 m^2  20.0 ha^-1  200.0 ha^-1  4.96568 m^2 ha^-1  12.7085 cm   17.25 cm  17.7799 cm    18.6 cm  17.2663 cm    21.0 cm  21.7915 cm  26.3274  11.9589 m    15.55 m     18.5 m   17.148 m  19.1411 m   23.094
 ```
 """
 function standmetrics(d::AbstractVector{<:Len}, h::AbstractVector{<:Len}, area::Area)
+  length(d) == length(h) || throw(DimensionMismatch("height and diameter vectors must have same length"))
+
   n = length(d)
-  g = basalarea.(d) |> sum
-  EF = unit(g) == u"m^2" ? uconvert(u"ha", area)^-1.0 : uconvert(u"ac", area)^-1.0
-  N = n * EF
-  G = g * EF
-  dmet = dmetrics(d, area)
-  hmet = hmetrics(h, d, area)
-  return hcat(
-    DataFrame(
-      n=n,
-      g=g,
-      EF=EF,
-      N=N,
-      G=G
-    ),
-    dmet,
-    hmet
+  g = basalarea.(d)
+  EF = first(g) |> unit == u"m^2" ? uconvert(u"ha", area)^-1.0 : uconvert(u"ac", area)^-1.0
+  G = sum(g)
+
+  d̅ = dm(d)
+  sd = std(d, mean=d̅)
+  d₋, d₊ = d̅ - sd, d̅ + sd
+
+  h̅ = hm(h)
+  sh = std(h, mean=h̅)
+  h₋, h₊ = h̅ - sh, h̅ + sh
+
+  ntree = dominantTreeCount(d, area)
+  if isnan(ntree)
+    ddom = NaN64
+    hdom = NaN64
+  else
+    idx = partialsortperm(d, 1:Int(ntree), rev=true)
+    ddom = dm(d[idx])
+    hdom = hm(h[idx])
+  end
+
+  return DataFrame(
+    n=n,
+    g=G,
+    EF=EF,
+    N=n * EF,
+    G=G * EF,
+    dl=d₋,
+    dm=d̅,
+    dg=dg(d),
+    dw=dw(d),
+    dz=dz(d),
+    dd=ddom,
+    du=d₊,
+    dv=sd / d̅ * 100,
+    hl=h₋,
+    hm=h̅,
+    hd=hdom,
+    hg=sum(h .* g) / G,
+    hu=h₊,
+    hv=sh / h̅ * 100
   )
 end
 
-standmetrics(d::AbstractVector{<:Real}, h::AbstractVector{<:Real}, area::Real) = standmetrics(d * u"cm", h * u"m", area * u"ha")
+standmetrics(d::AbstractVector{<:Real}, h::AbstractVector{<:Real}, area::Real=0.0) = standmetrics(d * u"cm", h * u"m", area * u"ha")
