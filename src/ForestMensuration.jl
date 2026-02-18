@@ -17,6 +17,7 @@ using
   DataFrames,
   Distributions,
   HypothesisTests,
+  IrrationalConstants,
   LinearAlgebra,
   PlotUtils,
   PlotlyJS,
