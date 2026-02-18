@@ -2,15 +2,15 @@
   @testset "Basal Area Tests" begin
     # Test 1: Standard case
     d_standard = 30.0
-    expected_basal_area = 0.07068583470577035
-    @test basal_area(d_standard) ≈ expected_basal_area atol = 1e-6
+    expected_basalarea = 0.07068583470577035
+    @test basalarea(d_standard) |> ustrip ≈ expected_basalarea atol = 1e-6
 
     # Test 2: Edge case with zero diameter (should throw an error)
     d_zero = 0.0
-    @test_throws DomainError basal_area(d_zero)
+    @test_throws DomainError basalarea(d_zero)
 
     # Test 3: Negative diameter (should throw an error)
-    @test_throws DomainError basal_area(-d_standard)
+    @test_throws DomainError basalarea(-d_standard)
   end
 
   @testset "Dendrometric Averages Function Tests" begin

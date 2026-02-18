@@ -72,7 +72,7 @@ export
   Huber,
   Newton,
   # Frequency and Statistic functions
-  basal_area,
+  basalarea,
   dendrometric_averages,
   diametric_table,
   frequency_table,
