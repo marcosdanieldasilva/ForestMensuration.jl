@@ -306,31 +306,3 @@ frequency_table(data.h, 4)
 ```
 
 ## Calculating Dendrometric Averages
-
-he [`dendrometric_averages`](@ref) function computes various dendrometric averages of a forest stand, providing insights into the stand structure and growth patterns.
-
-```@example regression_data
-# Calculate dendrometric averages for the dataset
-dendrometric_averages(data.dbh, area=0.05)
-```
-
-\
-
-- d₋: Lower Hohenadl's diameter
-- d̄: Mean diameter
-- dg: Quadratic mean diameter
-- dw: Weise's diameter (60th percentile)
-- dz: Diameter of the tree with central basal area
-- d₁₀₀: Mean diameter of the 100 largest trees per hectare (returns NaN if fewer than 100 trees)
-- d₊: Upper Hohenadl's diameter
-
-\
-
-#### Estimating Heights Using a Regression Model
-
-If you have a regression model (e.g., top_model from earlier), you can estimate the corresponding heights for each calculated diameter.
-
-```@example regression_data
-# Estimate heights for dendrometric averages using the regression model
-dendrometric_averages(top_model, area=0.05)
-```
