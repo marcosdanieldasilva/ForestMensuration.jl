@@ -24,10 +24,13 @@ using
   ScientificTypes,
   StatsBase,
   StatsModels,
-  Tables
+  Tables,
+  Unitful
 
 # import Plots: cgrad
 import StatsBase: fit, Histogram
+
+import Unitful: 𝐋, 𝐌
 
 include("structs_consts.jl")
 include("goodness_of_fit_test.jl")
