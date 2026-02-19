@@ -12,7 +12,7 @@ Its focus is on accurate **tree cubage (volume estimation)**, modeling **hipomet
 
 Install the package via Julia's package manager:
 
-```julia
+```julia-repl
 using Pkg
 Pkg.add("ForestMensuration")
 ```
@@ -41,7 +41,7 @@ These functions are crucial for generating accurate forest inventories and suppo
 
 Compute the volume of a single tree using the Smalian method.
 
-```julia
+```julia-repl
 using ForestMensuration
 
 # Diameters at different heights (in cm)
@@ -63,7 +63,7 @@ cubage(Smalian, h, d)
 
 Fit a regression model between tree height (`h`) and diameter (`d`).
 
-```julia
+```julia-repl
 using ForestMensuration
 using DataFrames
 
@@ -102,7 +102,7 @@ log_minus(h - 1.3) = 4.1496 - 37.62 * d ^ -1
 
 Use volume data to build a regression model. The sample data includes tree volume (`v`), total height (`h`), and diameter at breast height (`d`).
 
-```julia
+```julia-repl
 using ForestMensuration
 using DataFrames
 
@@ -138,7 +138,7 @@ criteria_table(fitted_volume)
 
 Fit a regression model using biomass data. The data includes tree biomass (`p`), total height (`h`), and diameter at breast height (`d`).
 
-```julia
+```julia-repl
 using ForestMensuration
 using DataFrames
 

@@ -48,7 +48,7 @@ after clear-cutting.
 - `Float64`: The volume of the cylinder in cubic meters.
 
 # Example
-```julia
+```julia-repl
 julia> cylinder_volume(18.5, 30.0)
 1.3076879420567515
 ```
@@ -74,7 +74,7 @@ considered to have a conical shape.
 - `Float64`: The volume of the cone in cubic meters.
 
 # Example
-```julia
+```julia-repl
 julia> cone_volume(18.5, 30.0)
 0.4358959806855838
 ```
@@ -102,7 +102,7 @@ to total diameter.
 - `Float64`: The bark factor, which represents the proportion of the diameter without bark.
 
 # Example
-```julia
+```julia-repl
 julia> d_values = [30.0, 22.5, 20.2, 15.4, 13.2, 10.9];
 julia> e_values = [1.2, 1.1, 0.85, 0.66, 0.48, 0.0];
 julia> bark_factor(d_values, e_values)
@@ -135,7 +135,7 @@ In each section, diameters and lengths are measured at positions that vary accor
 - `Float64`: The volume of the bole in cubic meters.
 
 # Example
-```julia
+```julia-repl
 julia> d_values = [9.0, 7.0, 5.8, 5.1, 3.8, 1.9, 0.0];
 
 julia> h_values = [0.3, 1.3, 3.3, 5.3, 7.3, 9.3, 10.8];
@@ -195,7 +195,7 @@ Where:
 - `Float64`: The artificial form factor.
 
 # Example
-```julia
+```julia-repl
 julia> vt = 0.3378;
 
 julia> ht = 18.5;
@@ -236,7 +236,7 @@ Where:
 - `Float64`: The natural form factor.
 
 # Example
-```julia
+```julia-repl
 
 julia> vt = 0.3378;
 
@@ -283,7 +283,7 @@ to be estimated.
 - `Float64`: The form quotient.
 
 # Example
-```julia
+```julia-repl
 
 julia> ht = 18.5;
 
@@ -325,7 +325,7 @@ Determination can be carried out on felled trees or standing trees using equipme
 - `DataFrame`: A DataFrame with the calculated volumes and form factors.
 
 # Example
-```julia
+```julia-repl
 
 ```
 """
@@ -428,7 +428,7 @@ In each section, diameters and lengths are measured at positions that vary accor
 - `DataFrame`: A DataFrame with the calculated volumes, form factors, and bark-adjusted volumes.
 
 # Example
-```julia
+```julia-repl
 
 ```
 """
@@ -472,7 +472,7 @@ In each section, diameters and lengths are measured at positions that vary accor
 - `DataFrame`: A DataFrame with the calculated volumes and form factors for each tree.
 
 # Example
-```julia
+```julia-repl
 
 ```
 """
@@ -505,7 +505,7 @@ In each section, diameters and lengths are measured at positions that vary accor
 - `DataFrame`: A DataFrame with the calculated volumes, form factors, and bark-adjusted volumes for each tree.
 
 # Example
-```julia
+```julia-repl
 
 ```
 """

@@ -75,7 +75,7 @@ The function automatically applies color schemes and adjusts plot aesthetics to 
    versatile for different datasets and models.
 
 # Examples:
-```julia
+```julia-repl
 # Generate diagnostic plots for a fitted regression model
 plots = plot_regression(model)
 ```

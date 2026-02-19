@@ -87,7 +87,7 @@ The `predict` function family provides a versatile way to generate predictions f
 
 # Examples:
 - **Single Model Prediction:**
-  ```julia
+  ```julia-repl
   y_pred = predict(model)
   ```
 """
@@ -123,7 +123,7 @@ Predicts the response variable for a given dataset based on the provided regress
 
 # Examples:
 - **Single Model Prediction:**
-  ```julia
+  ```julia-repl
   y_pred = predict(model, data)
   ```
 """
@@ -185,7 +185,7 @@ The `predict!` function computes predictions from a regression model and adds th
      might not be measured for every tree, and predictions need to be filled in for these gaps.
 
 # Examples:
-```julia
+```julia-repl
 # Apply predictions to a data frame
 predict!(model, forest_inventory_data)
 ```
@@ -207,7 +207,7 @@ end
     The residuals, representing the difference between observed and predicted values.
 
 # Examples:
-```julia
+```julia-repl
 # Apply residuals function to a model
 residuals(model)
 ```

@@ -23,7 +23,7 @@ is the geometric figure with the smallest perimeter for a given area.
 
 # examples
 
-```julia
+```julia-repl
 julia> basalarea(30u"cm")
 0.07068583470577035 m^2
 
@@ -58,7 +58,7 @@ This function computes the basal area of a tree, which is the cross-sectional ar
 - `Float64`: The basal area of the tree in **square meters**.
 
 # Example
-```julia
+```julia-repl
 # Calculate the basal area for a tree with a diameter of 30 cm
 julia> basalarea(30)
 0.07068583470577035 m^2
@@ -93,7 +93,7 @@ unlike dg the arithmetic mean is highly sensitive to thinning interventions
 
 # examples
 
-```julia
+```julia-repl
 julia> diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0] * u"cm";
 julia> dm(diameters)
 17.25 cm
@@ -135,7 +135,7 @@ in even aged stands dg is always greater than or equal to the arithmetic mean.
 
 # examples
 
-```julia
+```julia-repl
 julia> diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0] * u"cm";
 julia> dg(diameters)
 17.779904386694547 cm
@@ -169,7 +169,7 @@ in even aged stands it separates the 60 percent smallest trees from the 40 perce
 
 # examples
 
-```julia
+```julia-repl
 julia> diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0] * u"cm";
 julia> dw(diameters)
 18.6 cm
@@ -206,7 +206,7 @@ it is generally larger than the arithmetic mean diameter and often close to the 
 
 # examples
 
-```julia
+```julia-repl
 julia> diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0] * u"cm";
 julia> dz(diameters)
 17.266296649832007 cm
@@ -271,7 +271,7 @@ where di are the diameters sorted in descending order
 
 # examples
 
-```julia
+```julia-repl
 # metric example 100 per ha
 julia> diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0] * u"cm";
 julia> plotArea = 500u"m^2";
@@ -320,7 +320,7 @@ these metrics are useful for understanding the variability and distribution of d
 
 # examples
 
-```julia
+```julia-repl
 julia> diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0] * u"cm";
 julia> hohenadl = dh(diameters)                        
 (dl = 12.708524468853764 cm, du = 21.791475531146236 cm)
@@ -363,7 +363,7 @@ Aggregates the arithmetic mean, quadratic mean, Hohenadl, Weise, central basal a
   - `dv`: coefficient of variation of the diameters, expressed as a percentage, representing the relative dispersion of the stand.
 
 # Examples
-```julia
+```julia-repl
 julia> dmetrics(diameters)
 1×8 DataFrame
  Row │ dl          dm          dg          dw          dz          dd       du          dv      
@@ -416,7 +416,7 @@ The arithmetic mean height is a basic descriptive statistic of the stand's verti
 
 # Examples
 
-```julia
+```julia-repl
 julia> heights = [10.2, 11.5, 12.3, 14.1, 14.9, 16.5, 17.2, 18.0, 19.6, 21.2] * u"m";
 
 julia> hm(heights)
@@ -458,7 +458,7 @@ Dominant height is one of the most important variables in forest mensuration. Be
 
 # Examples
 
-```julia
+```julia-repl
 julia> diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0] * u"cm";
 julia> heights = [10.2, 11.5, 12.3, 14.1, 14.9, 16.5, 17.2, 18.0, 19.6, 21.2] * u"m";
 julia> plotArea = 500u"m^2";
@@ -506,7 +506,7 @@ Proposed by Lorey (1878), this is the standard mean height used in volumetric ca
 
 # Examples
 
-```julia
+```julia-repl
 julia> diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0] * u"cm";
 julia> heights = [10.2, 11.5, 12.3, 14.1, 14.9, 16.5, 17.2, 18.0, 19.6, 21.2] * u"m";
 julia> hg(diameters, heights)
@@ -543,7 +543,7 @@ Aggregates the lower boundary, arithmetic mean, dominant height, Lorey's mean he
 * `hu`: upper height boundary (mean plus standard deviation).
 * `hv`: coefficient of variation of the heights, expressed as a percentage.
 
-```julia
+```julia-repl
 
 julia> diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0] * u"cm";
 julia> heights = [10.2, 11.5, 12.3, 14.1, 14.9, 16.5, 17.2, 18.0, 19.6, 21.2] * u"m";
@@ -600,7 +600,7 @@ This is the primary entry point for characterizing an individual plot in a fores
 
 # Examples
 
-```julia
+```julia-repl
 julia> diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0] * u"cm";
 julia> heights = [10.2, 11.5, 12.3, 14.1, 14.9, 16.5, 17.2, 18.0, 19.6, 21.2] * u"m";
 julia> plotArea = 500u"m^2";

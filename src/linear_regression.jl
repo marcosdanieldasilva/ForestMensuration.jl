@@ -130,7 +130,7 @@ This comprehensive set of models extends beyond the typical scope of forest biom
 This method is ideal for forestry researchers and practitioners who want to ensure they are not overlooking any potentially significant models by expanding their analysis to include a broader range of possible relationships between the variables.
 
 # Examples:
-```julia
+```julia-repl
 # Perform standard regression without grouping
 models = regression(:height, :diameter, data)
 
