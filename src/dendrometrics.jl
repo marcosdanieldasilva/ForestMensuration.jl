@@ -364,6 +364,7 @@ Aggregates the arithmetic mean, quadratic mean, Hohenadl, Weise, central basal a
 
 # Examples
 ```julia-repl
+julia> diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0] * u"cm";
 julia> dmetrics(diameters)
 1×8 DataFrame
  Row │ dl          dm          dg          dw          dz          dd       du          dv      
