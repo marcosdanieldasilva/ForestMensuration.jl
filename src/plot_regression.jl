@@ -2,8 +2,25 @@ function _evaluate_regression_type(model::LinearModel)
   n = length(model.data)  # Number of columns in data    
   if n == 2
     return :simple
-  elseif n >= 3 && model.data[3] isa CategoricalVector
-    return :simple
+  elseif n >= 3
+    # Heuristic to detect a categorical/grouping column without depending on CategoricalArrays
+    col = model.data[3]
+    is_cat = false
+    try
+      T = eltype(col)
+      is_cat = !(T <: Real)
+    catch
+      is_cat = false
+    end
+    if !is_cat
+      # fallback: small number of unique values indicates a categorical variable
+      try
+        is_cat = length(unique(col)) < max(5, length(col) ÷ 4)
+      catch
+        is_cat = false
+      end
+    end
+    return is_cat ? :simple : :multiple
   else
     return :multiple
   end

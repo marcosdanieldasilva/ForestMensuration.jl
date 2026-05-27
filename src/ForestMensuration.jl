@@ -13,7 +13,6 @@ The package facilitates the analysis of dendrometric and forest data, performs c
 """
 module ForestMensuration
 using
-  CategoricalArrays,
   DataFrames,
   Distributions,
   HypothesisTests,
