@@ -32,9 +32,9 @@ julia> basalarea(11.8u"inch")
 ```
 """
 function basalarea(d::Len)
-  ustrip(d) <= 0 && throw(DomainError("The diameter must be a positive value, observed values is $d"))
+  ustrip(d) <= 0 && throw(DomainError(d, "The diameter must be a positive value."))
 
-  g = quartπ * abs2(d)
+  g = π/4 * abs2(d)
 
   if unit(d) isa ImperialUnits
     return uconvert(u"ft^2", g)
