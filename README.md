@@ -26,7 +26,6 @@ ForestMensuration.jl is designed for professionals and researchers in forestry, 
 
 - **Hipometric Relationships:**  
   Implements regression-based methods for modeling relationships such as:
-
   - Diameter as a function of height.
   - Dominant height as a function of age for site index calculations.
 
@@ -43,15 +42,16 @@ Compute the volume of a single tree using the Smalian method.
 
 ```julia-repl
 using ForestMensuration
+using Unitful
 
 # Diameters at different heights (in cm)
-d = [30.0, 25.0, 20.0, 15.0, 10.0, 5.0, 0.0]
+d = [30.0, 25.0, 20.0, 15.0, 10.0, 5.0, 0.0]u"cm"
 
 # Corresponding heights (in m)
-h = [0.7, 1.3, 2.0, 4.0, 6.0, 8.0, 10.0]
+h = [0.7, 1.3, 2.0, 4.0, 6.0, 8.0, 10.0]u"m"
 
-# Calculate tree cubage using the Smalian method
-cubage(Smalian, h, d)
+# Calculate tree cubage
+cubage(h, d)
 1×11 DataFrame
  Row │ vt        v0         vc        vr       vn        d        h        hc       aff       nff       qf
      │ Float64   Float64    Float64   Float64  Float64   Float64  Float64  Float64  Float64   Float64   Float64

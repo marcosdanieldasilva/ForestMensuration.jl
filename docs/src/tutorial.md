@@ -2,7 +2,7 @@
 
 ## Computing the Cubage
 
-The [`cubage`](@ref) function calculates the volume of a tree (cubage) using different cubing methods. It can handle both single trees and multiple trees in a dataset. The available cubing methods are [`Smalian`](@ref), [`Newton`](@ref) and [`Huber`](@ref).
+The `cubage` function calculates the volume of a tree by sections from a profile of diameters and heights. It partitions the volume into stump, commercial, residual, and top sections, and can handle both single and multiple trees. The volume of each section is calculated using Smalian's formula. For calculating the volume of individual logs with other methods, see `smalian`, `newton`, and `huber`.
 
 ### Cubing a Simple Tree
 
@@ -10,15 +10,16 @@ When cubing a single tree, you need to provide vectors of diameters (d) and heig
 
 ```@example ex_cub_01
 using ForestMensuration
+using Unitful
 
 # Diameters at different heights (cm)
-d = [9.0, 7.0, 5.8, 5.1, 3.8, 1.9, 0.0]
+d = [9.0, 7.0, 5.8, 5.1, 3.8, 1.9, 0.0]u"cm"
 
 # Corresponding heights (m)
-h =  [0.3, 1.3, 3.3, 5.3, 7.3, 9.3, 10.8]
+h =  [0.3, 1.3, 3.3, 5.3, 7.3, 9.3, 10.8]u"m"
 
-# Calculate cubage using the Smalian method
-cubage(Smalian, h, d)
+# Calculate cubage
+cubage(h, d)
 ```
 
 \
@@ -28,8 +29,8 @@ cubage(Smalian, h, d)
 - vc: Commercial bole volume
 - vr: Residual volume above commercial limit
 - vn: Volume of the top (cone)
-- dbh: Diameter at breast height
-- ht: Total tree height
+- d: Diameter at breast height
+- h: Total tree height
 - hc: Commercial height
 - aff: Artificial form factor
 - nff: Natural form factor
@@ -43,13 +44,13 @@ With the bark thickness value, it is possible to calculate the bark factor and t
 
 ```@example ex_cub_01
 # Bark thickness at corresponding heights (cm)
-bark = [0.9, 0.5, 0.3, 0.2, 0.2, 0.1, 0.0]
+bark = [0.9, 0.5, 0.3, 0.2, 0.2, 0.1, 0.0]u"cm"
 
 # Define a commercial diameter limit
-diameter_limit = 4.0
+diameter_limit = 4.0u"cm"
 
-# Calculate cubage using the Newton method, including bark thickness and diameter limit
-cubage(Newton, h, d, bark, diameter_limit)
+# Calculate cubage including bark thickness and diameter limit
+cubage(h, d, bark; dlimit = diameter_limit)
 ```
 
 \
@@ -66,6 +67,7 @@ To calculate cubage for multiple trees, organize your data in a DataFrame with c
 ```@example ex_cub_02
 using ForestMensuration
 using DataFrames
+using Unitful
 
 # Sample data for multiple trees
 data = DataFrame(
@@ -76,10 +78,10 @@ data = DataFrame(
 )
 
 # Define a commercial diameter limit
-diameter_limit = 2.5
+diameter_limit = 2.5u"cm"
 
-# Calculate cubage for each tree using the Huber method
-cubage(Huber, :tree, :h, :d, data, diameter_limit)
+# Calculate cubage for each tree
+cubage(data.tree, data.h .* u"m", data.d .* u"cm"; dlimit = diameter_limit)
 ```
 
 \
@@ -90,7 +92,7 @@ Additionally, bark thickness values can be provided to calculate bark factors an
 
 ```@example ex_cub_02
 # Calculate cubage including bark thickness
-cubage(Huber, :tree, :h, :d, :bark, data, diameter_limit)
+cubage(data.tree, data.h .* u"m", data.d .* u"cm", data.bark .* u"cm"; dlimit = diameter_limit)
 ```
 
 ## Fitting Linear Regressions
@@ -333,14 +335,14 @@ dmetrics(diameters, plotArea)
 
 The resulting columns represent:
 
-* **dl**: Lower Hohenadl diameter (mean minus standard deviation).
-* **dm**: Arithmetic mean diameter.
-* **dg**: Quadratic mean diameter (diameter of the tree with mean basal area).
-* **dw**: Weise's diameter (60th percentile).
-* **dz**: Central basal area diameter.
-* **dd**: Dominant diameter (mean of the thickest trees).
-* **du**: Upper Hohenadl diameter (mean plus standard deviation).
-* **dv**: Coefficient of variation of the diameters (%).
+- **dl**: Lower Hohenadl diameter (mean minus standard deviation).
+- **dm**: Arithmetic mean diameter.
+- **dg**: Quadratic mean diameter (diameter of the tree with mean basal area).
+- **dw**: Weise's diameter (60th percentile).
+- **dz**: Central basal area diameter.
+- **dd**: Dominant diameter (mean of the thickest trees).
+- **du**: Upper Hohenadl diameter (mean plus standard deviation).
+- **dv**: Coefficient of variation of the diameters (%).
 
 ### Vertical Structure (Heights)
 
@@ -354,12 +356,12 @@ hmetrics(diameters, heights, plotArea)
 
 The resulting columns represent:
 
-* **hl**: Lower height boundary (mean minus standard deviation).
-* **hm**: Arithmetic mean height.
-* **hd**: Dominant height (based on the 100 thickest trees per hectare).
-* **hg**: Lorey's mean height (weighted by basal area).
-* **hu**: Upper height boundary (mean plus standard deviation).
-* **hv**: Coefficient of variation of the heights (%).
+- **hl**: Lower height boundary (mean minus standard deviation).
+- **hm**: Arithmetic mean height.
+- **hd**: Dominant height (based on the 100 thickest trees per hectare).
+- **hg**: Lorey's mean height (weighted by basal area).
+- **hu**: Upper height boundary (mean plus standard deviation).
+- **hv**: Coefficient of variation of the heights (%).
 
 ### Comprehensive Stand Summary
 
@@ -373,8 +375,8 @@ standmetrics(diameters, heights, plotArea)
 
 In addition to all the structural variables from `dmetrics` and `hmetrics`, the summary adds:
 
-* **n**: Total number of sampled trees in the plot.
-* **g**: Total basal area of the sampled plot.
-* **EF**: Expansion factor used to scale plot data to a per-hectare (or per-acre) basis.
-* **N**: Extrapolated number of trees per hectare/acre.
-* **G**: Extrapolated total basal area per hectare/acre.
+- **n**: Total number of sampled trees in the plot.
+- **g**: Total basal area of the sampled plot.
+- **EF**: Expansion factor used to scale plot data to a per-hectare (or per-acre) basis.
+- **N**: Extrapolated number of trees per hectare/acre.
+- **G**: Extrapolated total basal area per hectare/acre.

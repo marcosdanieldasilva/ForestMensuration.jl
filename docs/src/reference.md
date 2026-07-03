@@ -17,7 +17,6 @@ dg
 dw
 dz
 dd
-dh
 hm
 hd
 hg

@@ -1,6 +1,6 @@
 name = "ForestMensuration"
 uuid = "8fa9ba82-4654-4ff3-8d17-47720d346ae3"
-version = "2.0.1"
+version = "2.0.2"
 authors = ["Marcos Daniel da Silva <marcosdasilva@5a.tec.br> and contributors"]
 
 [deps]
