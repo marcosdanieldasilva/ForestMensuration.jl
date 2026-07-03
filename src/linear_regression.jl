@@ -60,6 +60,7 @@ function _fit_linear_model(ft::FormulaTerm, Y::Vector{<:Real}, X::Matrix{<:Real}
   BIC = -2 * loglike + log(n) * ncoef
   # Test for normality of residuals using goodness-of-fit
   normality = goodness_of_fit_test(fit_mle(Normal, residual), residual) |> pvalue > 0.05 ? true : false
+  # normality = ks_one_sample_acceptance(residual, 0.05, fit_mle(Normal, residual))
   # Perform significance testing for coefficients using t-statistics and p-values
   dispersion = rmul!(inv(chol), σ²)
   standard_errors = sqrt.(diag(dispersion))

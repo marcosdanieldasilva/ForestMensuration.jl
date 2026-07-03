@@ -37,13 +37,13 @@ function _calculate_ranks(ct::DataFrame, selected_criteria::Vector{Symbol})
   if :normality in selected_criteria
     # Penalize non-normal models with a higher rank
     normality_ranks = competerank(ct[!, "normality"], rev=true)
-    penalized_non_normal_ranks = [normality_ranks[i] == 1 ? 1 : normality_ranks[i] * n for i in 1:n]
+    penalized_non_normal_ranks = [normality_ranks[i] == 1 ? 1 : normality_ranks[i] * 2n for i in 1:n]
     ranks[:normality] = penalized_non_normal_ranks
   end
   if :significance in selected_criteria
     # Penalize non-significance models with a higher rank
     significance_ranks = competerank(ct[!, "significance"], rev=true)
-    penalized_non_significance_ranks = [significance_ranks[i] == 1 ? 1 : significance_ranks[i] * n for i in 1:n]
+    penalized_non_significance_ranks = [significance_ranks[i] == 1 ? 1 : significance_ranks[i] * 2n for i in 1:n]
     ranks[:significance] = penalized_non_significance_ranks
   end
 

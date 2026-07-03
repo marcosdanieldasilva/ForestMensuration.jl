@@ -24,7 +24,7 @@ function goodness_of_fit_test(dist::ContinuousUnivariateDistribution, x::Vector{
     # Use Anderson-Darling test when there are tied values
     test = OneSampleADTest(x, dist)
   else
-    if n < 40
+    if n < 100
       # Use Exact Kolmogorov-Smirnov test for small sample sizes
       test = ExactOneSampleKSTest(x, dist)
     else
