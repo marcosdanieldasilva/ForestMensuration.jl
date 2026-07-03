@@ -13,7 +13,6 @@ The package facilitates the analysis of dendrometric and forest data, performs c
 """
 module ForestMensuration
 using
-  CategoricalArrays,
   DataFrames,
   Distributions,
   HypothesisTests,
@@ -24,10 +23,15 @@ using
   ScientificTypes,
   StatsBase,
   StatsModels,
-  Tables
+  Tables,
+  Unitful
 
 # import Plots: cgrad
 import StatsBase: fit, Histogram
+
+import Unitful: 𝐋, 𝐌
+
+export @u_str, ustrip, uconvert
 
 include("structs_consts.jl")
 include("goodness_of_fit_test.jl")
@@ -38,7 +42,7 @@ include("regression_parameters.jl")
 include("criteria_functions.jl")
 include("plot_regression.jl")
 include("frequency_tables.jl")
-include("dendrometric_averages.jl")
+include("dendrometrics.jl")
 include("cubage.jl")
 include("site_classification.jl")
 include("show.jl")
@@ -56,21 +60,26 @@ export
   criteria_table,
   criteria_selection,
   plot_regression,
-  #Cubage
-  artificial_form_factor,
-  bark_factor,
-  bole_volume,
-  cone_volume,
+  # Cubage
+  artificialformfactor,
+  barkfactor,
+  conevolume,
   cubage,
-  cylinder_volume,
-  natural_form_factor,
-  quotient_form,
-  Smalian,
-  Huber,
-  Newton,
+  cylindervolume,
+  diameterinterpolation,
+  heightinterpolation,
+  naturalformfactor,
+  quotientform,
+  smalian,
+  newton,
+  huber,
+  removeunits,
+  restoreunits,
   # Frequency and Statistic functions
-  basal_area,
-  dendrometric_averages,
+  basalarea,
+  dmetrics,
+  hmetrics,
+  standmetrics,
   diametric_table,
   frequency_table,
   # Site classification

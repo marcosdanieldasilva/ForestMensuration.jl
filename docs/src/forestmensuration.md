@@ -20,7 +20,7 @@ CurrentModule = ForestMensuration
 
 The ForestMensuration package is available through the Julia package system and can be added by running Pkg.add("ForestMensuration") or by directly downloading it from the GitHub page:
 
-```julia-repl
+```julia-repl-repl
 pkg> add https://github.com/marcosdanieldasilva/ForestMensuration.jl
 ```
 

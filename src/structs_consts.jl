@@ -1,3 +1,11 @@
+# define union for imperial units only to handle dispatch
+const ImperialUnits = Union{typeof(u"inch"),typeof(u"ft"),typeof(u"yd"),typeof(u"mi")}
+
+const Len = Quantity{<:Real,𝐋}      # Length (d, h)
+const Area = Quantity{<:Real,𝐋^2}   # Area (G, Hectare / Acre)
+const Vol = Quantity{<:Real,𝐋^3}    # Volume (v)
+const Mass = Quantity{<:Real,𝐌}    # Mass (Biomass, Carbon)
+
 """
     const MixTerm = Union{AbstractTerm,Tuple{AbstractTerm,Vararg{AbstractTerm}}}
 
@@ -11,75 +19,6 @@ const MixTerm = Union{AbstractTerm,Tuple{AbstractTerm,Vararg{AbstractTerm}}}
 Represents an intercept term for linear models.
 """
 const β0 = InterceptTerm{true}()
-
-"""
-    abstract type CubingMethod
-  
-Abstract type representing a method for cubing (calculating volume).
-  # Subtypes
-  - Smalian
-  - Huber
-  - Newton
-
-"""
-abstract type CubingMethod end
-
-"""
-    abstract type Smalian <: CubingMethod
-
-Smalian Method:
-  The Smalian method measures diameters or circumferences at the ends of each section and calculates 
-  the total volume by:
-  - Vt = v0 + Σi=1:n(vi) + vt
-  - v0 = g0 * l0
-  - vi = (gi + gi+1)/2 * li
-  - vt = (1/3) * gn * ln
-  Where:
-  - v0 = volume of the stump;
-  - vi = volume of intermediate sections;
-  - vt = volume of the cone;
-  - g = basal area;
-  - l = length.
-"""
-abstract type Smalian <: CubingMethod end
-
-"""
-    abstract type Huber <: CubingMethod
-
-Huber Method:
-  The Huber method measures the diameter or circumference at the midpoint of the section, and the volume
-   is determined by:
-  - v = v0 + Σi=1:n(vi) + vt
-  - vi = gi * li
-  Where:
-  - v0 = volume of the stump;
-  - vi = volume of intermediate sections;
-  - vt = volume of the cone;
-  - g = basal area;
-  - l = length.
-"""
-abstract type Huber <: CubingMethod end
-
-"""
-    abstract type Newton <: CubingMethod
-
-Newton Method:
-  The Newton method involves measuring at 3 positions along each section (at the ends and in the middle 
-  of the logs). Therefore, it is a more laborious method than the others, but the estimated volume will 
-  be more accurate.
-  
-  - v = v0 + Σi=1:n(vi) + vt
-  - vi = (gi + gm + gi+1)/2 * li
-  Where:
-  - v0 = volume of the stump;
-  - vi = volume of intermediate sections;
-  - vt = volume of the cone;
-  - g = basal area;
-  - gm = basal area at the midpoint of the section;
-  - l = length.
-"""
-abstract type Newton <: CubingMethod end
-
 
 """
     struct LinearModel{F<:FormulaTerm,N<:NamedTuple,T<:Float64,B<:Bool}

@@ -52,7 +52,7 @@ Creates a frequency table for a vector of values given a class width.
 - `DataFrame`: A DataFrame containing the frequency table.
 
 # Example
-```julia
+```julia-repl
 
 # Define the vector of values
 julia> x = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0];
@@ -101,7 +101,7 @@ Creates a frequency table for a vector of values.
 - `DataFrame`: A DataFrame containing the frequency table.
 
 # Example
-```julia
+```julia-repl
 
 # Define the vector of values
 julia> x = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0];
@@ -139,7 +139,7 @@ Creates a frequency table for grouped data in a DataFrame.
 - `DataFrame`: A DataFrame containing the frequency table for each group.
 
 # Example
-```julia
+```julia-repl
 julia> using DataFrames
 
 # Define the data'
@@ -184,7 +184,7 @@ Creates a frequency table for grouped data in a DataFrame with a specified class
 - `DataFrame`: A DataFrame containing the frequency table for each group.
 
 # Example
-```julia
+```julia-repl
 julia> using DataFrames
 
 # Define the data'
@@ -228,7 +228,7 @@ Creates a diametric table for a vector of diameter values given a class width an
 - `DataFrame`: A DataFrame containing the diametric table.
 
 # Example
-```julia
+```julia-repl
 
 # Define the vector of diameter values
 julia> diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0];
@@ -284,7 +284,7 @@ Creates a diametric table for a vector of diameter values.
 - `DataFrame`: A DataFrame containing the diametric table.
 
 # Example
-```julia
+```julia-repl
 
 # Define the vector of diameter values
 julia> diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0];
@@ -322,7 +322,7 @@ Creates a diametric table for grouped data in a DataFrame.
 - `DataFrame`: A DataFrame containing the diametric table for each group.
 
 # Example
-```julia
+```julia-repl
 julia> using DataFrames
 
 # Define the data'
@@ -368,7 +368,7 @@ Creates a diametric table for grouped data in a DataFrame with a specified class
 - `DataFrame`: A DataFrame containing the diametric table for each group.
 
 # Example
-```julia
+```julia-repl
 julia> using DataFrames
 
 # Define the data'

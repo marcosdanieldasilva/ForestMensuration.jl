@@ -307,30 +307,74 @@ frequency_table(data.h, 4)
 
 ## Calculating Dendrometric Averages
 
-he [`dendrometric_averages`](@ref) function computes various dendrometric averages of a forest stand, providing insights into the stand structure and growth patterns.
+To evaluate the horizontal and vertical structure of a forest stand, ForestMensuration.jl provides comprehensive metric summary functions. We can analyze diameters, heights, and complete plot-level inventories in a single step.
 
-```@example regression_data
-# Calculate dendrometric averages for the dataset
-dendrometric_averages(data.dbh, area=0.05)
+First, let's define our sample plot data using Unitful quantities:
+
+```@example metrics
+using ForestMensuration
+
+diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0] * u"cm"
+heights = [10.2, 11.5, 12.3, 14.1, 14.9, 16.5, 17.2, 18.0, 19.6, 21.2] * u"m"
+plotArea = 500u"m^2"
+nothing # hide
+
 ```
 
-\
+### Horizontal Structure (Diameters)
 
-- d₋: Lower Hohenadl's diameter
-- d̄: Mean diameter
-- dg: Quadratic mean diameter
-- dw: Weise's diameter (60th percentile)
-- dz: Diameter of the tree with central basal area
-- d₁₀₀: Mean diameter of the 100 largest trees per hectare (returns NaN if fewer than 100 trees)
-- d₊: Upper Hohenadl's diameter
+The [`dmetrics`](@ref) function calculates a comprehensive set of dendrometric diameter averages, returning a single-row DataFrame.
 
-\
+```@example metrics
+# Calculate diameter metrics
+dmetrics(diameters, plotArea)
 
-#### Estimating Heights Using a Regression Model
-
-If you have a regression model (e.g., top_model from earlier), you can estimate the corresponding heights for each calculated diameter.
-
-```@example regression_data
-# Estimate heights for dendrometric averages using the regression model
-dendrometric_averages(top_model, area=0.05)
 ```
+
+The resulting columns represent:
+
+* **dl**: Lower Hohenadl diameter (mean minus standard deviation).
+* **dm**: Arithmetic mean diameter.
+* **dg**: Quadratic mean diameter (diameter of the tree with mean basal area).
+* **dw**: Weise's diameter (60th percentile).
+* **dz**: Central basal area diameter.
+* **dd**: Dominant diameter (mean of the thickest trees).
+* **du**: Upper Hohenadl diameter (mean plus standard deviation).
+* **dv**: Coefficient of variation of the diameters (%).
+
+### Vertical Structure (Heights)
+
+Similarly, the [`hmetrics`](@ref) function calculates the vertical structure metrics of the stand. It requires both diameters and heights to calculate weighted averages (like Lorey's mean height) and Assmann's dominant height.
+
+```@example metrics
+# Calculate height metrics
+hmetrics(diameters, heights, plotArea)
+
+```
+
+The resulting columns represent:
+
+* **hl**: Lower height boundary (mean minus standard deviation).
+* **hm**: Arithmetic mean height.
+* **hd**: Dominant height (based on the 100 thickest trees per hectare).
+* **hg**: Lorey's mean height (weighted by basal area).
+* **hu**: Upper height boundary (mean plus standard deviation).
+* **hv**: Coefficient of variation of the heights (%).
+
+### Comprehensive Stand Summary
+
+For a complete characterization of an individual plot, use the [`standmetrics`](@ref) function. It unifies horizontal structure, vertical structure, and spatial density into a single output, automatically scaling plot totals to per-hectare or per-acre equivalents using an Expansion Factor (EF).
+
+```@example metrics
+# Calculate full stand metrics and per-area extrapolations
+standmetrics(diameters, heights, plotArea)
+
+```
+
+In addition to all the structural variables from `dmetrics` and `hmetrics`, the summary adds:
+
+* **n**: Total number of sampled trees in the plot.
+* **g**: Total basal area of the sampled plot.
+* **EF**: Expansion factor used to scale plot data to a per-hectare (or per-acre) basis.
+* **N**: Extrapolated number of trees per hectare/acre.
+* **G**: Extrapolated total basal area per hectare/acre.
