@@ -798,43 +798,6 @@ function cubage(id::AbstractVector, h::AbstractVector{<:Len}, d::AbstractVector{
 end
 
 """
-    stripunits(df::AbstractDataFrame; rename_cols::Bool=true)
-
-Converts a DataFrame containing Unitful quantities into a plain numeric DataFrame.
-
-# Arguments
-- `df::AbstractDataFrame`: The input DataFrame containing columns with physical units.
-- `rename_cols::Bool`: If `true` (default), appends the unit symbol to the column header (e.g., `h` becomes `h (m)`). If `false`, strips the units but keeps original column names.
-
-# Returns
-- `DataFrame`: A new DataFrame with plain numeric types, ready for export.
-"""
-function stripunits(df::AbstractDataFrame; rename_cols::Bool=true)
-  df_clean = copy(df)
-
-  for colname in names(df_clean)
-    col = df_clean[!, colname]
-
-    T = nonmissingtype(eltype(col))
-
-    if T <: Quantity
-      u = unit(T)
-
-      if rename_cols
-        # Correção: Interpolação nativa do Julia sem barras invertidas
-        newname = "$(colname) ($(u))"
-        rename!(df_clean, colname => newname)
-        df_clean[!, newname] = ustrip.(col)
-      else
-        df_clean[!, colname] = ustrip.(col)
-      end
-    end
-  end
-
-  return df_clean
-end
-
-"""
     removeunits(df::AbstractDataFrame; renamecols::Bool=true)
 
 Converts a DataFrame containing Unitful quantities into a plain numeric DataFrame.
