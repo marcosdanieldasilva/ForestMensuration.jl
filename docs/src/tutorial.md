@@ -279,11 +279,11 @@ analysis.site_plot
 
 ### Creating Frequency Tables
 
-The [`frequency_table`](@ref) function creates frequency distributions for a vector of values, which is useful for analyzing the distribution of diameters or heights in your data.
+The [`frequencytable`](@ref) function creates frequency distributions for a vector of values, which is useful for analyzing the distribution of diameters or heights in your data.
 
 ```@example regression_data
 # Frequency table for diameters using Sturges' formula for class intervals
-frequency_table(data.dbh)
+frequencytable(data.dbh)
 ```
 
 \
@@ -304,7 +304,7 @@ You can specify the class width (hi) to customize the intervals.
 
 ```@example regression_data
 # Frequency table for heights with class width of 4 meters
-frequency_table(data.h, 4)
+frequencytable(data.h, 4)
 ```
 
 ## Calculating Dendrometric Averages

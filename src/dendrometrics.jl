@@ -1,72 +1,4 @@
 """
-    basalarea(d::Len)
-
-calculates the individual cross-sectional area (g) of a tree stem.
-
-# arguments
-- `d`: diameter at breast height as a unitful quantity e.g. 10u"cm" or 12u"inch". The diameter must be a positive value.
-
-# returns
-- `Quantity`: area in square feet ft2 if input is imperial or square meters m2 otherwise.
-
-# mathematical basis
-the calculation uses the standard geometric formula
-```math
-g = \\frac{\\pi d^2}{4}
-```
-
-# accuracy note
-
-most stems are not perfectly circular
-using a diameter tape slightly overestimates the true area because the circle
-is the geometric figure with the smallest perimeter for a given area.
-
-# examples
-
-```julia-repl
-julia> basalarea(30u"cm")
-0.07068583470577035 m^2
-
-julia> basalarea(11.8u"inch")
-0.7594363907740327 ft^2
-```
-"""
-function basalarea(d::Len)
-  ustrip(d) <= 0 && throw(DomainError(d, "The diameter must be a positive value."))
-
-  g = π/4 * abs2(d)
-
-  if unit(d) isa ImperialUnits
-    return uconvert(u"ft^2", g)
-  else
-    return uconvert(u"m^2", g)
-  end
-end
-
-"""
-    basalarea(d::Real)
-
-Calculates the basal area (g) of a tree given its diameter in centimeters.
-
-# Description
-This function computes the basal area of a tree, which is the cross-sectional area of the tree trunk at breast height (usually measured at 1.3 meters above ground). Basal area is a critical parameter in forest mensuration, used for estimating stand density, timber volume, and assessing competition among trees in a forest stand.
-
-# Arguments
-- `d::Real`: The diameter at breast height of the tree in **centimeters**. The diameter must be a positive value.
-
-# Returns
-- `Float64`: The basal area of the tree in **square meters**.
-
-# Example
-```julia-repl
-# Calculate the basal area for a tree with a diameter of 30 cm
-julia> basalarea(30)
-0.07068583470577035 m^2
-```
-"""
-basalarea(d::Real) = basalarea(d * u"cm")
-
-"""
     dm(d::AbstractVector{<:Len})
 
 calculates the arithmetic mean diameter dbar of a forest stand or sample.
@@ -101,7 +33,7 @@ julia> dm(diameters)
 """
 dm(d::AbstractVector{<:Len}) = mean(d)
 
-dm(d::AbstractVector{<:Real}) = dm(d * u"cm")
+dm(d::AbstractVector{<:Real}) = dm(d * DUNIT)
 
 """
     dg(d::AbstractVector{<:Len})
@@ -143,7 +75,7 @@ julia> dg(diameters)
 """
 dg(d::AbstractVector{<:Len}) = √(mean(abs2, d))
 
-dg(d::AbstractVector{<:Real}) = dg(d * u"cm")
+dg(d::AbstractVector{<:Real}) = dg(d * DUNIT)
 
 """
     dw(d::AbstractVector{<:Len})
@@ -177,7 +109,7 @@ julia> dw(diameters)
 """
 dw(d::AbstractVector{<:Len}) = quantile(d, 0.6)
 
-dw(d::AbstractVector{<:Real}) = dw(d * u"cm")
+dw(d::AbstractVector{<:Real}) = dw(d * DUNIT)
 
 """
     dz(d::AbstractVector{<:Len})
@@ -215,21 +147,22 @@ julia> dz(diameters)
 """
 dz(d::AbstractVector{<:Len}) = abs2.(d) |> median |> sqrt
 
-dz(d::AbstractVector{<:Real}) = dz(d * u"cm")
+dz(d::AbstractVector{<:Real}) = dz(d * DUNIT)
 
+
+# Auxiliary function returning a NaN quantity in the unit of `x`, used when a metric
+# cannot be computed. Keeping the unit makes DataFrame columns type-consistent, so a
+# missing dominant diameter still reads as a diameter rather than a bare number.
+_nanlike(x::AbstractVector{<:Len}) = NaN64 * unit(first(x))
 
 # Auxiliary function that calculates the target number of dominant trees (k) for the plot.
 # Returns NaN if the sample size is insufficient.
 function dominantTreeCount(d::AbstractVector{<:Len}, area::Area)
-  # detect unit system
-  u = first(d) |> unit
-  if u isa ImperialUnits
-    # imperial standard 40 trees per acre
-    ntree = round(Int, ustrip(uconvert(u"ac", 40 * area)))
-  else
-    # metric standard 100 trees per hectare
-    ntree = round(Int, ustrip(uconvert(u"ha", 100 * area)))
-  end
+  # detect unit system and the matching dominant-tree sampling standard
+  # (100 trees/ha for metric, 40 trees/ac for imperial)
+  refarea = referencearea(unit(first(d)))
+  standard = refarea == u"ha" ? 100 : 40
+  ntree = round(Int, ustrip(uconvert(refarea, standard * area)))
   # validate against sample size
   # return nan if we need more trees than available
   if ntree <= 0 || ntree > length(d)
@@ -245,11 +178,11 @@ calculates the dominant diameter ddom based on Assmann's definition
 average of the 100 thickest trees per hectare or 40 per acre.
 
 # arguments
-- `d`: vector of diameters at breast height with length units (e.g., cm or inch).
-- `area`: total sampled area used to determine the number of dominant trees.
+- `d`: vector of diameters at breast height with length units (e.g., cm or inch). Plain numbers are taken to be centimeters.
+- `area`: total sampled area used to determine the number of dominant trees. A plain number is taken to be hectares.
 
 # returns
-- `Quantity`: the arithmetic mean of the dominant trees in the same unit as input.
+- `Quantity`: the arithmetic mean of the dominant trees in the same unit as input, or a `NaN` in that unit when the plot holds fewer trees than the dominant-tree standard requires.
 
 # technical description
 the dominant diameter is a stable stand variable used to characterize site productive capacity
@@ -275,20 +208,24 @@ where di are the diameters sorted in descending order
 # metric example 100 per ha
 julia> diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0] * u"cm";
 julia> plotArea = 500u"m^2";
-julia> dd(diameters, area)
+julia> dd(diameters, plotArea)
+21.0 cm
+
+# without units: diameters in cm, area in ha
+julia> dd([10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0], 0.05)
 21.0 cm
 ```
 """
 function dd(d::AbstractVector{<:Len}, area::Area)
   # get target count of dominant trees
   ntree = dominantTreeCount(d, area)
-  # return nan if sample is insufficient or invalid
-  isnan(ntree) && return NaN64
+  # return nan (in the diameter unit) if sample is insufficient or invalid
+  isnan(ntree) && return _nanlike(d)
   # calculate mean of the ntree thickest trees
   return dm(partialsort(d, 1:Int(ntree), rev=true))
 end
 
-dd(d::AbstractVector{<:Real}, area::Real) = dd(d * u"cm", area * u"ha")
+dd(d::AbstractVector{<:Real}, area::Real) = dd(d * DUNIT, area * AUNIT)
 
 """
     dh(d::AbstractVector{<:Len})
@@ -339,17 +276,23 @@ function dh(d::AbstractVector{<:Len})
   return (; dl=d₋, du=d₊)
 end
 
-dh(d::AbstractVector{<:Real}) = dh(d * u"cm")
+dh(d::AbstractVector{<:Real}) = dh(d * DUNIT)
 
 """
     dmetrics(d::AbstractVector{<:Len}, area::Area=0.0u"ha")
+    dmetrics(d::AbstractVector{<:Real}, area::Real=0.0)
 
 Calculate a comprehensive set of dendrometric averages for a forest stand.
 Aggregates the arithmetic mean, quadratic mean, Hohenadl, Weise, central basal area, and dominant diameters.
 
 # Arguments
-- `d`: vector of diameters at breast height with length units (e.g., cm or inch).
-- `area`: sampled area used for dominant diameter calculation. Defaults to 0.0ha (which yields NaN for dominant diameter).
+- `d`: vector of diameters at breast height with length units (e.g., cm or inch). Plain numbers are taken to be centimeters.
+- `area`: sampled area used for dominant diameter calculation. A plain number is taken to be hectares. Defaults to 0.0ha (which yields NaN for dominant diameter).
+
+# Units
+
+Every diameter column is returned in the unit of `d`, so a stand measured in inches is
+summarised in inches. `dv` is a dimensionless percentage.
 
 # Returns
 - `DataFrame`: a single row dataframe containing:
@@ -367,10 +310,13 @@ Aggregates the arithmetic mean, quadratic mean, Hohenadl, Weise, central basal a
 julia> diameters = [10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0] * u"cm";
 julia> dmetrics(diameters)
 1×8 DataFrame
- Row │ dl          dm          dg          dw          dz          dd       du          dv      
-     │ Quantity…   Quantity…  Quantity…   Quantity…   Quantity…   Float64  Quantity…   Float64 
-─────┼────────────────────────────────────────────────────────────────────────────────────────
-   1 │ 12.7085 cm   17.25 cm  17.7799 cm    18.6 cm  17.2663 cm      NaN  21.7915 cm  26.3274
+ Row │ dl          dm          dg          dw          dz          dd        du          dv
+     │ Quantity…   Quantity…  Quantity…   Quantity…   Quantity…   Quantity…  Quantity…   Float64
+─────┼──────────────────────────────────────────────────────────────────────────────────────────
+   1 │ 12.7085 cm   17.25 cm  17.7799 cm    18.6 cm  17.2663 cm    NaN cm   21.7915 cm  26.3274
+
+# the same call without units, diameters taken as cm and the area as ha
+julia> dmetrics([10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.0], 0.05)
 ```
 
 """
@@ -391,7 +337,7 @@ function dmetrics(d::AbstractVector{<:Len}, area::Area=0.0u"ha")
 end
 
 
-dmetrics(d::AbstractVector{<:Real}, area::Real=0.0) = dmetrics(d * u"cm", area * u"ha")
+dmetrics(d::AbstractVector{<:Real}, area::Real=0.0) = dmetrics(d * DUNIT, area * AUNIT)
 
 """
     hm(h::AbstractVector{<:Len})
@@ -428,7 +374,7 @@ julia> hm(heights)
 """
 hm(h::AbstractVector{<:Len}) = mean(h)
 
-hm(d::AbstractVector{<:Real}) = hm(d * u"m")
+hm(d::AbstractVector{<:Real}) = hm(d * HUNIT)
 
 """
     hd(d::AbstractVector{<:Len}, h::AbstractVector{<:Len}, area::Area)
@@ -473,14 +419,14 @@ function hd(d::AbstractVector{<:Len}, h::AbstractVector{<:Len}, area::Area)
   length(d) == length(h) || throw(DimensionMismatch("height and diameter vectors must have same length"))
   # get target count of dominant trees
   ntree = dominantTreeCount(d, area)
-  # return nan if sample is insufficient or invalid
-  isnan(ntree) && return NaN64
+  # return nan (in the height unit) if sample is insufficient or invalid
+  isnan(ntree) && return _nanlike(h)
   # get indices of the ntree thickest trees
   idx = partialsortperm(d, 1:Int(ntree), rev=true)
   return hm(h[idx])
 end
 
-hd(d::AbstractVector{<:Real}, h::AbstractVector{<:Real}, area::Real) = hd(d * u"cm", h * u"m", area * u"ha")
+hd(d::AbstractVector{<:Real}, h::AbstractVector{<:Real}, area::Real) = hd(d * DUNIT, h * HUNIT, area * AUNIT)
 
 """
     hg(d::AbstractVector{<:Len}, h::AbstractVector{<:Len})
@@ -521,19 +467,24 @@ function hg(d::AbstractVector{<:Len}, h::AbstractVector{<:Len})
   return sum(h .* g) / sum(g)
 end
 
-hg(d::AbstractVector{<:Real}, h::AbstractVector{<:Real}) = hg(d * u"cm", h * u"m")
+hg(d::AbstractVector{<:Real}, h::AbstractVector{<:Real}) = hg(d * DUNIT, h * HUNIT)
 
 
 """
     hmetrics(d::AbstractVector{<:Len}, h::AbstractVector{<:Len}, area::Area=0.0u"ha")
+    hmetrics(d::AbstractVector{<:Real}, h::AbstractVector{<:Real}, area::Real=0.0)
 
 Calculate a comprehensive set of vertical structure metrics for a forest stand.
 Aggregates the lower boundary, arithmetic mean, dominant height, Lorey's mean height, upper boundary, and relative dispersion.
 
 # Arguments
-* `d`: vector of diameters at breast height with length units (e.g., cm or inch).
-* `h`: vector of tree heights with length units (e.g., m or ft).
-- `area`: sampled area used for dominant diameter calculation. Defaults to 0.0ha (which yields NaN for dominant diameter).
+* `d`: vector of diameters at breast height with length units (e.g., cm or inch). Plain numbers are taken to be centimeters.
+* `h`: vector of tree heights with length units (e.g., m or ft). Plain numbers are taken to be meters.
+- `area`: sampled area used for dominant diameter calculation. A plain number is taken to be hectares. Defaults to 0.0ha (which yields NaN for dominant height).
+
+# Units
+
+Every height column is returned in the unit of `h`. `hv` is a dimensionless percentage.
 
 # Returns
 * `DataFrame`: a single row dataframe containing:
@@ -573,17 +524,25 @@ function hmetrics(d::AbstractVector{<:Len}, h::AbstractVector{<:Len}, area::Area
   )
 end
 
-hmetrics(d::AbstractVector{<:Real}, h::AbstractVector{<:Real}, area::Real=0.0) = hmetrics(d * u"cm", h * u"m", area * u"ha")
+hmetrics(d::AbstractVector{<:Real}, h::AbstractVector{<:Real}, area::Real=0.0) = hmetrics(d * DUNIT, h * HUNIT, area * AUNIT)
 
 """
-standmetrics(d::AbstractVector{<:Len}, h::AbstractVector{<:Len}, area::Area)
+    standmetrics(d::AbstractVector{<:Len}, h::AbstractVector{<:Len}, area::Area)
+    standmetrics(d::AbstractVector{<:Real}, h::AbstractVector{<:Real}, area::Real)
 
 Calculate the complete summary of inventory metrics for a forest plot, scaling values to per-hectare or per-acre equivalents.
 
 # Arguments
-* `d`: vector of diameters at breast height with length units (e.g., cm or inch).
-* `h`: vector of tree heights with length units (e.g., m or ft).
-- `area`: sampled area used for dominant diameter calculation. Defaults to 0.0ha (which yields NaN for dominant diameter).
+* `d`: vector of diameters at breast height with length units (e.g., cm or inch). Plain numbers are taken to be centimeters.
+* `h`: vector of tree heights with length units (e.g., m or ft). Plain numbers are taken to be meters.
+- `area`: sampled area of the plot. A plain number is taken to be hectares.
+
+# Units
+
+Diameters are reported in the unit of `d` and heights in the unit of `h`. The basal area
+`g` is in square meters (`m^2`), or square feet (`ft^2`) when the diameters are imperial;
+`EF`, `N` and `G` are expressed per hectare (`ha^-1`) in the metric system and per acre
+(`ac^-1`) in the imperial one.
 
 # Returns
 * `DataFrame`: a single row dataframe aggregating absolute plot totals, scaled per-area values, and all diameter and height metrics. Contains:
@@ -618,7 +577,7 @@ function standmetrics(d::AbstractVector{<:Len}, h::AbstractVector{<:Len}, area::
 
   n = length(d)
   g = basalarea.(d)
-  EF = first(g) |> unit == u"m^2" ? uconvert(u"ha", area)^-1.0 : uconvert(u"ac", area)^-1.0
+  EF = expansionfactor(d, area)
   G = sum(g)
 
   d̅ = dm(d)
@@ -631,8 +590,8 @@ function standmetrics(d::AbstractVector{<:Len}, h::AbstractVector{<:Len}, area::
 
   ntree = dominantTreeCount(d, area)
   if isnan(ntree)
-    ddom = NaN64
-    hdom = NaN64
+    ddom = _nanlike(d)
+    hdom = _nanlike(h)
   else
     idx = partialsortperm(d, 1:Int(ntree), rev=true)
     ddom = dm(d[idx])
@@ -662,4 +621,4 @@ function standmetrics(d::AbstractVector{<:Len}, h::AbstractVector{<:Len}, area::
   )
 end
 
-standmetrics(d::AbstractVector{<:Real}, h::AbstractVector{<:Real}, area::Real=0.0) = standmetrics(d * u"cm", h * u"m", area * u"ha")
+standmetrics(d::AbstractVector{<:Real}, h::AbstractVector{<:Real}, area::Real=0.0) = standmetrics(d * DUNIT, h * HUNIT, area * AUNIT)

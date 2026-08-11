@@ -1,5 +1,17 @@
+# Cross-sectional area of a stem section, tolerant to the zero diameter that closes
+# the tip of a bole. `basalarea` rejects non-positive diameters, but a measurement of
+# 0 at the top of the tree is a legitimate profile point whose area is simply zero.
+_g(d::Len) = iszero(d) ? zero(basalarea(oneunit(d))) : basalarea(d)
+
+# Normalises a computed volume to cubic feet when the reference diameter is imperial
+# and to cubic meters otherwise. Mirrors the rule used by `basalarea`, so results stay
+# in a single coherent unit even when lengths and diameters are supplied in different
+# units (e.g. length in `m` and diameter in `cm`).
+_asvolume(v::Vol, dref::Len) = unit(dref) isa ImperialUnits ? uconvert(u"ft^3", v) : uconvert(u"m^3", v)
+
 """
     smalian(L::Len, dbase::Len, dtop::Len)
+    smalian(L::Real, dbase::Real, dtop::Real)
 
 Calculates the volume of a single log using Smalian's method.
 
@@ -8,8 +20,12 @@ Calculates the volume of a single log using Smalian's method.
 - `dbase::Len`: Diameter at the large end of the log (base).
 - `dtop::Len`: Diameter at the small end of the log (top).
 
+When the arguments are plain numbers, the log length is assumed to be in meters (`m`)
+and the diameters in centimeters (`cm`).
+
 # Returns
-- `Quantity`: The volume of the log in cubic units (e.g., cubic meters `m^3` or cubic feet `ft^3`).
+- `Quantity`: The volume of the log in cubic feet `ft^3` when the diameters are given in
+  imperial units, and in cubic meters `m^3` otherwise.
 
 # Mathematical basis
 The method assumes the log resembles a frustum of a paraboloid. The volume is calculated 
@@ -35,18 +51,24 @@ julia> smalian(3.0u"m", 30.0u"cm", 25.0u"cm")
 julia> smalian(10.0u"ft", 12.0u"inch", 10.0u"inch")
 6.654067773228381 ft^3
 
+julia> smalian(3.0, 30.0, 25.0)   # 3 m log, diameters in cm
+0.17965982987716633 m^3
+
 ```
 
 """
 function smalian(L::Len, dbase::Len, dtop::Len)
   L <= zero(L) && throw(DomainError(L, "Log length must be greater than zero."))
-  B = basalarea(dbase)
-  b = basalarea(dtop)
-  ((B + b) / 2) * L
+  B = _g(dbase)
+  b = _g(dtop)
+  _asvolume(((B + b) / 2) * L, dbase)
 end
+
+smalian(L::Real, dbase::Real, dtop::Real) = smalian(L * HUNIT, dbase * DUNIT, dtop * DUNIT)
 
 """
     smalian(h::AbstractVector{<:Len}, d::AbstractVector{<:Len})
+    smalian(h::AbstractVector{<:Real}, d::AbstractVector{<:Real})
 
 Calculates the total bole volume from a continuous profile of cumulative heights.
 
@@ -55,9 +77,13 @@ Calculates the total bole volume from a continuous profile of cumulative heights
 * `h::AbstractVector{<:Len}`: Vector of cumulative heights from the base of the tree.
 * `d::AbstractVector{<:Len}`: Vector of diameters corresponding to each height.
 
+When the vectors hold plain numbers, heights are assumed to be in meters (`m`) and
+diameters in centimeters (`cm`).
+
 # Returns
 
-* `Quantity`: The total volume of the bole in cubic units (e.g., cubic meters `m^3` or cubic feet `ft^3`).
+* `Quantity`: The total volume of the bole in cubic feet `ft^3` when the diameters are
+  given in imperial units, and in cubic meters `m^3` otherwise.
 
 # Mathematical basis
 
@@ -84,6 +110,9 @@ julia> dvec = [30.0, 25.0, 18.0, 10.0] .* u"cm";
 julia> smalian(hvec, dvec)
 0.17969909978533616 m^3
 
+julia> smalian([0.1, 1.3, 3.3, 5.3], [30.0, 25.0, 18.0, 10.0])   # m and cm
+0.17969909978533616 m^3
+
 ```
 
 """
@@ -92,17 +121,24 @@ function smalian(h::AbstractVector{<:Len}, d::AbstractVector{<:Len})
   sum(i -> smalian(h[i] - h[i-1], d[i-1], d[i]), 2:length(h))
 end
 
+smalian(h::AbstractVector{<:Real}, d::AbstractVector{<:Real}) = smalian(h * HUNIT, d * DUNIT)
+
 """
     smalian(L::Len, d::AbstractVector{<:Len})
+    smalian(L::Real, d::AbstractVector{<:Real})
 
 Calculates the total bole volume using Smalian's method with relative (equal-length) sections.
 
 # Arguments
 - `L::Len`: Total length of the bole.
-- `d::AbstractVector{<:Len}`: Vector of diameters measured at equal intervals along the bole (including base and top).
+- `d::AbstractVector{<:Len}`: Vector of diameters measured at equal intervals along the bole (including base and top). A closing diameter of zero at the tip is accepted and contributes no area.
+
+When the arguments are plain numbers, the length is assumed to be in meters (`m`) and
+the diameters in centimeters (`cm`).
 
 # Returns
-- `Quantity`: The total volume in cubic units (e.g., cubic meters `m^3` or cubic feet `ft^3`).
+- `Quantity`: The total volume in cubic feet `ft^3` when the diameters are given in
+  imperial units, and in cubic meters `m^3` otherwise.
 
 # Mathematical basis
 When a bole is divided into sections of equal length, Smalian's formula can be mathematically factored to improve performance. The constant section length is multiplied by the sum of the intermediate cross-sectional areas and the average of the two end areas:
@@ -134,24 +170,31 @@ function smalian(L::Len, d::AbstractVector{<:Len})
   nsections = length(d) - 1
   nsections < 1 && throw(ArgumentError("Diameter vector must have at least two measurements."))
   lsec = L / nsections
-  gends = (basalarea(d[begin]) + basalarea(d[end])) / 2
-  gmid = sum(basalarea, @view d[2:(end-1)])
-  (gends + gmid) * lsec
+  gends = (_g(d[begin]) + _g(d[end])) / 2
+  gmid = sum(_g, @view d[2:(end-1)])
+  _asvolume((gends + gmid) * lsec, d[begin])
 end
+
+smalian(L::Real, d::AbstractVector{<:Real}) = smalian(L * HUNIT, d * DUNIT)
 
 """
     hohenadl(L::Len, d::AbstractVector{<:Len})
+    hohenadl(L::Real, d::AbstractVector{<:Real})
 
 Calculates the total bole volume using Hohenadl's method based on relative section centers.
 
 # Arguments
 
 * `L::Len`: Total length of the bole.
-* `d::AbstractVector{<:Len}`: Vector of diameters measured at the exact center of each equal-length relative section (e.g., 10%, 30%, 50%, 70%, 90% of total length).
+* `d::AbstractVector{<:Len}`: Vector of diameters measured at the exact center of each equal-length relative section (e.g., 10%, 30%, 50%, 70%, 90% of total length). A diameter of zero is accepted and contributes no area.
+
+When the arguments are plain numbers, the length is assumed to be in meters (`m`) and
+the diameters in centimeters (`cm`).
 
 # Returns
 
-* `Quantity`: The total volume in cubic units (e.g., cubic meters `m^3` or cubic feet `ft^3`).
+* `Quantity`: The total volume in cubic feet `ft^3` when the diameters are given in
+  imperial units, and in cubic meters `m^3` otherwise.
 
 # Mathematical basis
 
@@ -184,12 +227,15 @@ function hohenadl(L::Len, d::AbstractVector{<:Len})
   nsections = length(d)
   nsections < 1 && throw(ArgumentError("Diameter vector cannot be empty."))
   lsec = L / nsections
-  gmid = sum(basalarea, d)
-  gmid * lsec
+  gmid = sum(_g, d)
+  _asvolume(gmid * lsec, d[begin])
 end
+
+hohenadl(L::Real, d::AbstractVector{<:Real}) = hohenadl(L * HUNIT, d * DUNIT)
 
 """
     huber(L::Len, dmid::Len)
+    huber(L::Real, dmid::Real)
 
 Calculates the volume of a single log using Huber's method.
 
@@ -198,9 +244,13 @@ Calculates the volume of a single log using Huber's method.
 * `L::Len`: Log length.
 * `dmid::Len`: Diameter at the exact midpoint of the log.
 
+When the arguments are plain numbers, the log length is assumed to be in meters (`m`)
+and the diameter in centimeters (`cm`).
+
 # Returns
 
-* `Quantity`: The volume of the log in cubic units (e.g., cubic meters `m^3` or cubic feet `ft^3`).
+* `Quantity`: The volume of the log in cubic feet `ft^3` when the diameter is given in
+  imperial units, and in cubic meters `m^3` otherwise.
 
 # Mathematical basis
 
@@ -231,12 +281,15 @@ julia> huber(10.0u"ft", 11.0u"inch")
 """
 function huber(L::Len, dmid::Len)
   L <= zero(L) && throw(DomainError(L, "Log length must be greater than zero."))
-  bmid = basalarea(dmid)
-  bmid * L
+  bmid = _g(dmid)
+  _asvolume(bmid * L, dmid)
 end
+
+huber(L::Real, dmid::Real) = huber(L * HUNIT, dmid * DUNIT)
 
 """
     newton(L::Len, dbase::Len, dmid::Len, dtop::Len)
+    newton(L::Real, dbase::Real, dmid::Real, dtop::Real)
 
 Calculates the volume of a single log using Newton's method.
 
@@ -247,9 +300,13 @@ Calculates the volume of a single log using Newton's method.
 * `dmid::Len`: Diameter at the exact midpoint of the log.
 * `dtop::Len`: Diameter at the small end of the log (top).
 
+When the arguments are plain numbers, the log length is assumed to be in meters (`m`)
+and the diameters in centimeters (`cm`).
+
 # Returns
 
-* `Quantity`: The volume of the log in cubic units (e.g., cubic meters `m^3` or cubic feet `ft^3`).
+* `Quantity`: The volume of the log in cubic feet `ft^3` when the diameters are given in
+  imperial units, and in cubic meters `m^3` otherwise.
 
 # Mathematical basis
 
@@ -282,23 +339,31 @@ julia> newton(10.0u"ft", 12.0u"inch", 11.0u"inch", 10.0u"inch")
 """
 function newton(L::Len, dbase::Len, dmid::Len, dtop::Len)
   L <= zero(L) && throw(DomainError(L, "Log length must be greater than zero."))
-  B = basalarea(dbase)
-  bmid = basalarea(dmid)
-  b = basalarea(dtop)
-  ((B + 4 * bmid + b) / 6) * L
+  B = _g(dbase)
+  bmid = _g(dmid)
+  b = _g(dtop)
+  _asvolume(((B + 4 * bmid + b) / 6) * L, dbase)
 end
+
+newton(L::Real, dbase::Real, dmid::Real, dtop::Real) =
+  newton(L * HUNIT, dbase * DUNIT, dmid * DUNIT, dtop * DUNIT)
 
 """
     cylindervolume(h::Len, d::Len)
+    cylindervolume(h::Real, d::Real)
 
 Calculates the volume of a cylinder, used to estimate the volume (v0) of the tree stump remaining after clear-cutting.
 
 # Arguments
-- `h::Len`: The height of the cylinder.
-- `d::Len`: The diameter of the cylinder.
+- `h::Len`: The height of the cylinder. Must be non-negative; a stump measured at ground level yields a volume of zero.
+- `d::Len`: The diameter of the cylinder. Must be non-negative.
+
+When the arguments are plain numbers, the height is assumed to be in meters (`m`) and
+the diameter in centimeters (`cm`).
 
 # Returns
-- `Quantity`: The volume of the cylinder in cubic units (e.g., cubic meters `m^3` or cubic feet `ft^3`).
+- `Quantity`: The volume of the cylinder in cubic feet `ft^3` when the diameter is given
+  in imperial units, and in cubic meters `m^3` otherwise.
 
 # Mathematical basis
 The volume of a cylinder is the product of its cross-sectional area and its height:
@@ -317,29 +382,39 @@ julia> cylindervolume(0.15u"m", 30.0u"cm")
 julia> cylindervolume(0.5u"ft", 12.0u"inch")
 0.39269908169872414 ft^3
 
+julia> cylindervolume(0.15, 30.0)   # m and cm
+0.010602875205865558 m^3
+
 ```
 
 """
 function cylindervolume(h::Len, d::Len)
-  h <= zero(h) && throw(DomainError(h, "The height must be a positive value."))
-  d <= zero(d) && throw(DomainError(d, "The diameter must be a positive value."))
+  h < zero(h) && throw(DomainError(h, "The height must be a non-negative value."))
+  d < zero(d) && throw(DomainError(d, "The diameter must be a non-negative value."))
   v = (π / 4) * abs2(d) * h
-  unit(d) isa ImperialUnits ? uconvert(u"ft^3", v) : uconvert(u"m^3", v)
+  _asvolume(v, d)
 end
+
+cylindervolume(h::Real, d::Real) = cylindervolume(h * HUNIT, d * DUNIT)
 
 """
     conevolume(h::Len, d::Len)
+    conevolume(h::Real, d::Real)
 
 Calculates the volume of a cone, used to estimate the final portion (vn) or tip of the tree.
 
 # Arguments
 
-* `h::Len`: The height of the cone.
-* `d::Len`: The diameter at the base of the cone.
+* `h::Len`: The height of the cone. Must be non-negative.
+* `d::Len`: The diameter at the base of the cone. Must be non-negative; a bole whose last measured diameter is already zero yields a tip volume of zero.
+
+When the arguments are plain numbers, the height is assumed to be in meters (`m`) and
+the diameter in centimeters (`cm`).
 
 # Returns
 
-* `Quantity`: The volume of the cone in cubic units (e.g., cubic meters `m^3` or cubic feet `ft^3`).
+* `Quantity`: The volume of the cone in cubic feet `ft^3` when the diameter is given in
+  imperial units, and in cubic meters `m^3` otherwise.
 
 # Mathematical basis
 
@@ -359,18 +434,24 @@ julia> conevolume(2.0u"m", 10.0u"cm")
 julia> conevolume(6.0u"ft", 4.0u"inch")
 0.17453292519943295 ft^3
 
+julia> conevolume(2.0, 10.0)   # m and cm
+0.005235987755982988 m^3
+
 ```
 
 """
 function conevolume(h::Len, d::Len)
-  h <= zero(h) && throw(DomainError(h, "The height must be a positive value."))
-  d <= zero(d) && throw(DomainError(d, "The diameter must be a positive value."))
+  h < zero(h) && throw(DomainError(h, "The height must be a non-negative value."))
+  d < zero(d) && throw(DomainError(d, "The diameter must be a non-negative value."))
   v = (π / 12) * abs2(d) * h
-  unit(d) isa ImperialUnits ? uconvert(u"ft^3", v) : uconvert(u"m^3", v)
+  _asvolume(v, d)
 end
+
+conevolume(h::Real, d::Real) = conevolume(h * HUNIT, d * DUNIT)
 
 """
     diameterinterpolation(h0::Len, h::AbstractVector{<:Len}, d::AbstractVector{<:Len})
+    diameterinterpolation(h0::Real, h::AbstractVector{<:Real}, d::AbstractVector{<:Real})
 
 Interpolates the diameter at a specific height along the bole using linear interpolation.
 
@@ -379,8 +460,21 @@ Interpolates the diameter at a specific height along the bole using linear inter
 - `h::AbstractVector{<:Len}`: Vector of measured cumulative heights.
 - `d::AbstractVector{<:Len}`: Vector of measured diameters corresponding to the heights.
 
+When the arguments are plain numbers, heights are assumed to be in meters (`m`) and
+diameters in centimeters (`cm`).
+
 # Returns
 - `Quantity`: The interpolated diameter in the same units as `d`.
+
+# Examples
+
+```julia-repl
+julia> hvec = [1.0, 1.3, 2.0, 3.0, 4.0, 5.0] .* u"m";
+julia> dvec = [30.0, 22.5, 20.2, 15.4, 13.2, 10.9] .* u"cm";
+julia> diameterinterpolation(2.5u"m", hvec, dvec)
+17.8 cm
+
+```
 """
 function diameterinterpolation(h0::Len, h::AbstractVector{<:Len}, d::AbstractVector{<:Len})
   (h0 < h[begin] || h0 > h[end]) && throw(DomainError(h0, "Height is outside the range of measured heights."))
@@ -391,8 +485,12 @@ function diameterinterpolation(h0::Len, h::AbstractVector{<:Len}, d::AbstractVec
   end
 end
 
+diameterinterpolation(h0::Real, h::AbstractVector{<:Real}, d::AbstractVector{<:Real}) =
+  diameterinterpolation(h0 * HUNIT, h * HUNIT, d * DUNIT)
+
 """
     heightinterpolation(dlimit::Len, h::AbstractVector{<:Len}, d::AbstractVector{<:Len})
+    heightinterpolation(dlimit::Real, h::AbstractVector{<:Real}, d::AbstractVector{<:Real})
 
 Interpolates the height at a specific commercial diameter limit using linear interpolation.
 
@@ -401,8 +499,21 @@ Interpolates the height at a specific commercial diameter limit using linear int
 - `h::AbstractVector{<:Len}`: Vector of measured cumulative heights.
 - `d::AbstractVector{<:Len}`: Vector of measured diameters.
 
+When the arguments are plain numbers, the diameters are assumed to be in centimeters
+(`cm`) and the heights in meters (`m`).
+
 # Returns
 - `Tuple{Quantity, Int}`: A tuple containing the interpolated height and the insertion index.
+
+# Examples
+
+```julia-repl
+julia> hvec = [1.0, 1.3, 2.0, 3.0, 4.0, 5.0] .* u"m";
+julia> dvec = [30.0, 22.5, 20.2, 15.4, 13.2, 10.9] .* u"cm";
+julia> heightinterpolation(17.8u"cm", hvec, dvec)
+(2.5 m, 4)
+
+```
 """
 function heightinterpolation(dlimit::Len, h::AbstractVector{<:Len}, d::AbstractVector{<:Len})
   (dlimit > d[begin] || dlimit < d[end]) && throw(DomainError(dlimit, "Diameter is outside the range of measured diameters."))
@@ -414,8 +525,12 @@ function heightinterpolation(dlimit::Len, h::AbstractVector{<:Len}, d::AbstractV
   end
 end
 
+heightinterpolation(dlimit::Real, h::AbstractVector{<:Real}, d::AbstractVector{<:Real}) =
+  heightinterpolation(dlimit * DUNIT, h * HUNIT, d * DUNIT)
+
 """
     artificialformfactor(vt::Vol, ht::Len, dbh::Len)
+    artificialformfactor(vt::Real, ht::Real, dbh::Real)
 
 Calculates the artificial form factor, representing the ratio of total volume to a reference cylinder based on DBH.
 
@@ -423,6 +538,9 @@ Calculates the artificial form factor, representing the ratio of total volume to
 - `vt::Vol`: The total rigorous volume of the tree.
 - `ht::Len`: The total height of the tree.
 - `dbh::Len`: Diameter at breast height.
+
+When the arguments are plain numbers, the volume is assumed to be in cubic meters
+(`m^3`), the height in meters (`m`) and the diameter in centimeters (`cm`).
 
 # Returns
 - `Float64`: The dimensionless artificial form factor.
@@ -432,8 +550,12 @@ function artificialformfactor(vt::Vol, ht::Len, dbh::Len)
   ustrip(uconvert(NoUnits, vt / cylindervolume(ht, dbh)))
 end
 
+artificialformfactor(vt::Real, ht::Real, dbh::Real) =
+  artificialformfactor(vt * VUNIT, ht * HUNIT, dbh * DUNIT)
+
 """
     naturalformfactor(vt::Vol, ht::Len, h::AbstractVector{<:Len}, d::AbstractVector{<:Len})
+    naturalformfactor(vt::Real, ht::Real, h::AbstractVector{<:Real}, d::AbstractVector{<:Real})
 
 Calculates the natural form factor using a reference cylinder based on the diameter at 1/10th of the total height.
 
@@ -442,6 +564,9 @@ Calculates the natural form factor using a reference cylinder based on the diame
 - `ht::Len`: The total height of the tree.
 - `h::AbstractVector{<:Len}`: Vector of measured heights.
 - `d::AbstractVector{<:Len}`: Vector of measured diameters.
+
+When the arguments are plain numbers, the volume is assumed to be in cubic meters
+(`m^3`), the heights in meters (`m`) and the diameters in centimeters (`cm`).
 
 # Returns
 - `Float64`: The dimensionless natural form factor.
@@ -452,8 +577,12 @@ function naturalformfactor(vt::Vol, ht::Len, h::AbstractVector{<:Len}, d::Abstra
   ustrip(uconvert(NoUnits, vt / cylindervolume(ht, d01)))
 end
 
+naturalformfactor(vt::Real, ht::Real, h::AbstractVector{<:Real}, d::AbstractVector{<:Real}) =
+  naturalformfactor(vt * VUNIT, ht * HUNIT, h * HUNIT, d * DUNIT)
+
 """
     quotientform(ht::Len, dbh::Len, h::AbstractVector{<:Len}, d::AbstractVector{<:Len})
+    quotientform(ht::Real, dbh::Real, h::AbstractVector{<:Real}, d::AbstractVector{<:Real})
 
 Calculates the form quotient (e.g., Schiffel form quotient) representing the natural decrease in diameter along the trunk.
 
@@ -462,6 +591,9 @@ Calculates the form quotient (e.g., Schiffel form quotient) representing the nat
 - `dbh::Len`: Diameter at breast height.
 - `h::AbstractVector{<:Len}`: Vector of measured heights.
 - `d::AbstractVector{<:Len}`: Vector of measured diameters.
+
+When the arguments are plain numbers, the heights are assumed to be in meters (`m`) and
+the diameters in centimeters (`cm`).
 
 # Returns
 - `Float64`: The dimensionless form quotient.
@@ -472,8 +604,12 @@ function quotientform(ht::Len, dbh::Len, h::AbstractVector{<:Len}, d::AbstractVe
   ustrip(uconvert(NoUnits, d05 / dbh))
 end
 
+quotientform(ht::Real, dbh::Real, h::AbstractVector{<:Real}, d::AbstractVector{<:Real}) =
+  quotientform(ht * HUNIT, dbh * DUNIT, h * HUNIT, d * DUNIT)
+
 """
-    cubage(h::AbstractVector{<:Len}, d::AbstractVector{<:Len}; dlimit::Union{Len,Nothing}=nothing, ht::Union{Len,Nothing}=nothing, dbh::Union{Len,Nothing}=nothing, hdbh::Len=1.3u"m")
+    cubage(h::AbstractVector{<:Len}, d::AbstractVector{<:Len}; dlimit=nothing, ht=nothing, dbh=nothing, hdbh::Len=1.3u"m")
+    cubage(h::AbstractVector{<:Real}, d::AbstractVector{<:Real}; kwargs...)
 
 Calculates the partitioned volume of a single tree, returning a DataFrame with detailed commercial and residual volumes alongside form factors.
 
@@ -485,8 +621,13 @@ Calculates the partitioned volume of a single tree, returning a DataFrame with d
 - `dbh::Union{Len,Nothing}`: Diameter at Breast Height. If `nothing`, interpolates it automatically at `hdbh`.
 - `hdbh::Len`: The standardized height for DBH measurement (defaults to `1.3u"m"`).
 
+When the vectors hold plain numbers, heights are assumed to be in meters (`m`) and
+diameters in centimeters (`cm`); the `dlimit`, `ht`, `dbh` and `hdbh` keywords follow
+the same convention and may be given either as plain numbers or as quantities. The
+returned DataFrame always carries units.
+
 # Returns
-- `DataFrame`: A single-row DataFrame containing `vt`, `v0`, `vc`, `vr`, `vn`, `d`, `h`, `hc`, `aff`, `nff`, and `qf`.
+- `DataFrame`: A single-row DataFrame containing `vt`, `v0`, `vc`, `vr`, `vn`, `d`, `h`, `hc`, `aff`, `nff`, and `qf`. Volumes are expressed in `ft^3` when the diameters are imperial and in `m^3` otherwise.
 
 # Examples
 ```julia-repl
@@ -494,11 +635,19 @@ julia> hvec = [0.3, 1.3, 3.3, 5.3, 7.3, 9.3] .* u"m";
 julia> dvec = [9.0, 7.0, 5.8, 5.1, 3.8, 1.9] .* u"cm";
 julia> cb = cubage(hvec, dvec)
 
+# the same call without units: heights in m, diameters in cm
+julia> cb = cubage([0.3, 1.3, 3.3, 5.3, 7.3, 9.3], [9.0, 7.0, 5.8, 5.1, 3.8, 1.9]; ht=10.8)
+
 ```
 
 """
-function cubage(h::AbstractVector{<:Len}, d::AbstractVector{<:Len}; dlimit::Union{Len,Nothing}=nothing, ht::Union{Len,Nothing}=nothing, dbh::Union{Len,Nothing}=nothing, hdbh::Len=1.3u"m")
+function cubage(h::AbstractVector{<:Len}, d::AbstractVector{<:Len}; dlimit::Union{Len,Real,Nothing}=nothing, ht::Union{Len,Real,Nothing}=nothing, dbh::Union{Len,Real,Nothing}=nothing, hdbh::Union{Len,Real}=1.3u"m")
   length(h) == length(d) || throw(DimensionMismatch("Vectors must have the same length."))
+  # scalars supplied without units follow the package convention: heights in m, diameters in cm
+  dlimit = _withunit(dlimit, DUNIT)
+  ht = _withunit(ht, HUNIT)
+  dbh = _withunit(dbh, DUNIT)
+  hdbh = _withunit(hdbh, HUNIT)
   uh = unit(h[begin])
   ud = unit(d[begin])
   hwork = float.(uconvert.(uh, h))
@@ -546,8 +695,12 @@ function cubage(h::AbstractVector{<:Len}, d::AbstractVector{<:Len}; dlimit::Unio
   DataFrame(vt=vt, v0=v0, vc=vc, vr=vr, vn=vn, d=dbhval, h=htval, hc=hc, aff=aff, nff=nff, qf=qf)
 end
 
+cubage(h::AbstractVector{<:Real}, d::AbstractVector{<:Real}; kwargs...) =
+  cubage(h * HUNIT, d * DUNIT; kwargs...)
+
 """
     barkfactor(d::AbstractVector{<:Len}, e::AbstractVector{<:Len})
+    barkfactor(d::AbstractVector{<:Real}, e::AbstractVector{<:Real})
 
 Calculates the bark factor (k), used to estimate the volume without bark.
 
@@ -558,6 +711,9 @@ to total diameter. The function automatically handles and converts any combinati
 
 * `d::AbstractVector{<:Len}`: A vector of diameters at breast height. The diameters must be strictly positive values.
 * `e::AbstractVector{<:Len}`: A vector of double bark thicknesses. The bark thicknesses must be non-negative values.
+
+When the vectors hold plain numbers, both diameters and bark thicknesses are assumed to
+be in centimeters (`cm`).
 
 # Returns
 
@@ -594,8 +750,11 @@ function barkfactor(d::AbstractVector{<:Len}, e::AbstractVector{<:Len})
   1 - uconvert(NoUnits, sum(e) / sum(d))
 end
 
+barkfactor(d::AbstractVector{<:Real}, e::AbstractVector{<:Real}) = barkfactor(d * DUNIT, e * DUNIT)
+
 """
     barkinterpolation(h0::Len, h::AbstractVector{<:Len}, e::AbstractVector{<:Len})
+    barkinterpolation(h0::Real, h::AbstractVector{<:Real}, e::AbstractVector{<:Real})
 
 Interpolates the double bark thickness at a specific height along the bole using linear interpolation.
 
@@ -603,6 +762,9 @@ Interpolates the double bark thickness at a specific height along the bole using
 - `h0::Len`: The target height where the bark thickness is to be estimated.
 - `h::AbstractVector{<:Len}`: Vector of measured cumulative heights.
 - `e::AbstractVector{<:Len}`: Vector of measured double bark thicknesses.
+
+When the arguments are plain numbers, heights are assumed to be in meters (`m`) and
+bark thicknesses in centimeters (`cm`).
 
 # Returns
 - `Quantity`: The interpolated double bark thickness in the same units as `e`.
@@ -616,8 +778,11 @@ function barkinterpolation(h0::Len, h::AbstractVector{<:Len}, e::AbstractVector{
   end
 end
 
+barkinterpolation(h0::Real, h::AbstractVector{<:Real}, e::AbstractVector{<:Real}) =
+  barkinterpolation(h0 * HUNIT, h * HUNIT, e * DUNIT)
+
 """
-    cubage(h::AbstractVector{<:Len}, d::AbstractVector{<:Len}, e::AbstractVector{<:Len}; dlimit::Union{Len,Nothing}=nothing, ht::Union{Len,Nothing}=nothing, dbh::Union{Len,Nothing}=nothing, hdbh::Len=1.3u"m")
+    cubage(h::AbstractVector{<:Len}, d::AbstractVector{<:Len}, e::AbstractVector{<:Len}; dlimit=nothing, ht=nothing, dbh=nothing, hdbh::Len=1.3u"m")
 
 Calculates the partitioned volume of a single tree Over Bark (OB) and Under Bark (UB), returning a comprehensive DataFrame.
 
@@ -630,8 +795,16 @@ Calculates the partitioned volume of a single tree Over Bark (OB) and Under Bark
 - `dbh::Union{Len,Nothing}`: Diameter at Breast Height over bark.
 - `hdbh::Len`: Standardized height for DBH (defaults to `1.3u"m"`).
 
+Keyword arguments may be given as plain numbers, normalised with heights in `m` and
+diameters in `cm`. `h`, `d` and `e` themselves must carry units: three positional vectors
+here is exactly the shape of the multi-tree `cubage(id, h, d)`, so a plain-number
+`(h, d, e)` call would be indistinguishable from `(id, h, d)` whenever tree identifiers
+happen to be numeric (the common case) — no unitless convenience method is provided for
+this signature to avoid silently computing the wrong thing. Convert once with
+`h * u"m"` / `d * u"cm"` / `e * u"cm"` before calling if your data has no units.
+
 # Returns
-- `DataFrame`: A single-row DataFrame containing all OB (Over Bark) and UB (Under Bark) volumes, total bark volume (`vbark`), bark factor (`k`), and form factors.
+- `DataFrame`: A single-row DataFrame containing all OB (Over Bark) and UB (Under Bark) volumes, total bark volume (`vbark`), bark factor (`k`), and form factors. Volumes are expressed in `ft^3` when the diameters are imperial and in `m^3` otherwise.
 
 # Examples
 ```julia-repl
@@ -643,8 +816,13 @@ julia> cb = cubage(hvec, dvec, evec, ht=7.0u"m")
 ```
 
 """
-function cubage(h::AbstractVector{<:Len}, d::AbstractVector{<:Len}, e::AbstractVector{<:Len}; dlimit::Union{Len,Nothing}=nothing, ht::Union{Len,Nothing}=nothing, dbh::Union{Len,Nothing}=nothing, hdbh::Len=1.3u"m")
+function cubage(h::AbstractVector{<:Len}, d::AbstractVector{<:Len}, e::AbstractVector{<:Len}; dlimit::Union{Len,Real,Nothing}=nothing, ht::Union{Len,Real,Nothing}=nothing, dbh::Union{Len,Real,Nothing}=nothing, hdbh::Union{Len,Real}=1.3u"m")
   length(h) == length(d) == length(e) || throw(DimensionMismatch("Vectors h, d, and e must have the same length."))
+  # scalars supplied without units follow the package convention: heights in m, diameters in cm
+  dlimit = _withunit(dlimit, DUNIT)
+  ht = _withunit(ht, HUNIT)
+  dbh = _withunit(dbh, DUNIT)
+  hdbh = _withunit(hdbh, HUNIT)
   uh = unit(h[begin])
   ud = unit(d[begin])
   hwork = float.(uconvert.(uh, h))
@@ -724,17 +902,25 @@ Aggregates and calculates partitioned volumes for multiple trees based on a tree
 - `d::AbstractVector{<:Len}`: Vector of diameters.
 - `kwargs...`: Additional keyword arguments (e.g., `dlimit`, `ht`, `dbh`). These can be provided as single scalar values applied to all trees, or as vectors of the same length as `id` containing repeated tree-level attributes.
 
+Keyword arguments may be given as plain numbers, normalised with the same convention as
+[`cubage(h, d)`](@ref) (heights in `m`, diameters in `cm`). `h` and `d` themselves must
+carry units: since tree identifiers are commonly integers, a plain-number `(id, h, d)`
+call would be indistinguishable from the single-tree over/under-bark
+`cubage(h, d, e)`, so no unitless convenience method is provided for this specific
+signature. Convert once with `h * u"m"` / `d * u"cm"` before calling if your data has no
+units.
+
 # Returns
 - `DataFrame`: A consolidated DataFrame with the tree `id` as the first column.
 """
 function cubage(id::AbstractVector, h::AbstractVector{<:Len}, d::AbstractVector{<:Len}; kwargs...)
   length(id) == length(h) == length(d) || throw(DimensionMismatch("Vectors id, h, and d must have the same length."))
   ntotal = length(id)
-  unique_ids = unique(id)
+  uniqueIds = unique(id)
   results = DataFrame()
 
-  for tree_id in unique_ids
-    idx = findall(x -> x == tree_id, id)
+  for treeId in uniqueIds
+    idx = findall(x -> x == treeId, id)
 
     # Dynamically extract tree-specific arguments
     treeargs = Dict{Symbol,Any}()
@@ -747,9 +933,9 @@ function cubage(id::AbstractVector, h::AbstractVector{<:Len}, d::AbstractVector{
       end
     end
 
-    tree_df = cubage(@view(h[idx]), @view(d[idx]); treeargs...)
-    insertcols!(tree_df, 1, :id => tree_id)
-    append!(results, tree_df)
+    treeData = cubage(@view(h[idx]), @view(d[idx]); treeargs...)
+    insertcols!(treeData, 1, :id => treeId)
+    append!(results, treeData)
   end
 
   return results
@@ -767,17 +953,20 @@ Aggregates and calculates partitioned volumes (Over Bark and Under Bark) for mul
 - `e::AbstractVector{<:Len}`: Vector of double bark thicknesses.
 - `kwargs...`: Additional keyword arguments, accepted as scalars or full-length vectors.
 
+When the vectors hold plain numbers, heights are assumed to be in meters (`m`) and both
+diameters and bark thicknesses in centimeters (`cm`).
+
 # Returns
 - `DataFrame`: A consolidated DataFrame with the tree `id` and all calculated OB/UB variables.
 """
 function cubage(id::AbstractVector, h::AbstractVector{<:Len}, d::AbstractVector{<:Len}, e::AbstractVector{<:Len}; kwargs...)
   length(id) == length(h) == length(d) == length(e) || throw(DimensionMismatch("Vectors id, h, d, and e must have the same length."))
   ntotal = length(id)
-  unique_ids = unique(id)
+  uniqueIds = unique(id)
   results = DataFrame()
 
-  for tree_id in unique_ids
-    idx = findall(x -> x == tree_id, id)
+  for treeId in uniqueIds
+    idx = findall(x -> x == treeId, id)
 
     treeargs = Dict{Symbol,Any}()
     for (k, v) in pairs(kwargs)
@@ -789,95 +978,14 @@ function cubage(id::AbstractVector, h::AbstractVector{<:Len}, d::AbstractVector{
       end
     end
 
-    tree_df = cubage(@view(h[idx]), @view(d[idx]), @view(e[idx]); treeargs...)
-    insertcols!(tree_df, 1, :id => tree_id)
-    append!(results, tree_df)
+    treeData = cubage(@view(h[idx]), @view(d[idx]), @view(e[idx]); treeargs...)
+    insertcols!(treeData, 1, :id => treeId)
+    append!(results, treeData)
   end
 
   return results
 end
 
-"""
-    removeunits(df::AbstractDataFrame; renamecols::Bool=true)
+cubage(id::AbstractVector, h::AbstractVector{<:Real}, d::AbstractVector{<:Real}, e::AbstractVector{<:Real}; kwargs...) =
+  cubage(id, h * HUNIT, d * DUNIT, e * DUNIT; kwargs...)
 
-Converts a DataFrame containing Unitful quantities into a plain numeric DataFrame.
-Safely ignores dimensionless data (NoUnits) preventing empty parentheses.
-
-# Arguments
-- `df::AbstractDataFrame`: The input DataFrame containing columns with physical units.
-- `renamecols::Bool`: If `true` (default), appends the unit symbol to the column header.
-
-# Returns
-- `DataFrame`: A new DataFrame with plain numeric types, ready for export.
-"""
-function removeunits(df::AbstractDataFrame; renamecols::Bool=true)
-  dfclean = copy(df)
-
-  for colname in names(dfclean)
-    col = dfclean[!, colname]
-    T = nonmissingtype(eltype(col))
-
-    if T <: Quantity
-      u = unit(T)
-      # Skip renaming if the column is dimensionless (NoUnits)
-      if renamecols && u != NoUnits
-        newname = "$(colname) ($(u))"
-        rename!(dfclean, colname => newname)
-        dfclean[!, newname] = ustrip.(col)
-      else
-        dfclean[!, colname] = ustrip.(col)
-      end
-    end
-  end
-
-  return dfclean
-end
-
-"""
-    restoreunits(df::AbstractDataFrame)
-
-Restores Unitful quantities to a plain DataFrame by parsing unit strings located in the column headers.
-Safely evaluates mathematical expressions (e.g., m^3) inside the Unitful module scope.
-
-# Arguments
-- `df::AbstractDataFrame`: The input DataFrame, typically loaded from a CSV file.
-
-# Returns
-- `DataFrame`: A DataFrame with restored Unitful quantities.
-"""
-function restoreunits(df::AbstractDataFrame)
-  dfrestored = copy(df)
-
-  # Regular expression to capture the base name and the unit inside parentheses
-  regex = r"^(.*?)\s*\((.*?)\)$"
-
-  for colname in names(dfrestored)
-    m = match(regex, colname)
-
-    if m !== nothing
-      basename = strip(m.captures[1])
-      unitstr = strip(m.captures[2])
-
-      # Handle cases where the parentheses were inadvertently empty
-      if unitstr == ""
-        rename!(dfrestored, colname => basename)
-        continue
-      end
-
-      try
-        # uparse can return an expression (e.g., for "m^3"). 
-        # Core.eval evaluates this expression safely inside the Unitful context.
-        u = Core.eval(Unitful, Unitful.uparse(unitstr))
-
-        rename!(dfrestored, colname => basename)
-        dfrestored[!, basename] = dfrestored[!, basename] .* u
-      catch e
-        # Formats the warning outside the macro to prevent scope interpolation bugs
-        msg = "Could not parse unit '$(unitstr)' in column '$(colname)'. Error: $e"
-        @warn msg
-      end
-    end
-  end
-
-  return dfrestored
-end

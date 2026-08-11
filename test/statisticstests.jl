@@ -1,4 +1,4 @@
-@testset "dendrometry_and_inventory.jl" begin
+@testset "dendrometrics and distributiontables" begin
   @testset "Dendrometric Averages Function Tests" begin
 
     @testset "Basal Area Tests" begin
@@ -23,10 +23,21 @@
       hohenadl = dh(diameters)
       @test hohenadl.dl |> ustrip ≈ 12.708524 atol = 1e-6
       @test hohenadl.du |> ustrip ≈ 21.791475 atol = 1e-6
+
+      # a plot too small for the dominant-tree standard returns NaN, but the result
+      # must still carry the diameter unit so DataFrame columns stay type-consistent
+      dNaN = dd(diameters, 0.0)
+      @test isnan(dNaN)
+      @test unit(dNaN) == u"cm"
+      @test unit(dd(diameters * u"inch", 0.0u"ac")) == u"inch"
     end
 
     @testset "DataFrame dmetrics Tests" begin
-      dfDiameters = dmetrics(diameters) .|> ustrip
+      dfDiametersRaw = dmetrics(diameters)
+      @test isnan(dfDiametersRaw.dd[1])
+      @test unit(dfDiametersRaw.dd[1]) == u"cm"
+
+      dfDiameters = dfDiametersRaw .|> ustrip
       @test dfDiameters.dl[1] ≈ 12.708524 atol = 1e-6
       @test dfDiameters.dm[1] ≈ 17.25 atol = 1e-4
       @test dfDiameters.dg[1] ≈ 17.779904 atol = 1e-6
@@ -43,10 +54,18 @@
       @test hm(heights) |> ustrip ≈ 15.55 atol = 1e-4
       @test hd(diameters, heights, plotArea) |> ustrip ≈ 18.5 atol = 1e-4
       @test hg(diameters, heights) |> ustrip ≈ 17.148042 atol = 1e-6
+
+      hNaN = hd(diameters, heights, 0.0)
+      @test isnan(hNaN)
+      @test unit(hNaN) == u"m"
     end
 
     @testset "DataFrame hmetrics Tests" begin
-      dfHeights = hmetrics(diameters, heights) .|> ustrip
+      dfHeightsRaw = hmetrics(diameters, heights)
+      @test isnan(dfHeightsRaw.hd[1])
+      @test unit(dfHeightsRaw.hd[1]) == u"m"
+
+      dfHeights = dfHeightsRaw .|> ustrip
       @test dfHeights.hl[1] ≈ 11.9589 atol = 1e-4
       @test dfHeights.hm[1] ≈ 15.55 atol = 1e-4
       @test isnan(dfHeights.hd[1])
@@ -78,6 +97,12 @@
       @test dfStand.hg[1] ≈ 17.148 atol = 1e-3
       @test dfStand.hu[1] ≈ 19.1411 atol = 1e-4
       @test dfStand.hv[1] ≈ 23.094 atol = 1e-3
+
+      # results follow the unit of the input diameters/heights, not a hardcoded one
+      dfStandInch = standmetrics(diameters * u"inch", heights * u"ft", plotArea * u"ac")
+      @test unit(dfStandInch.dm[1]) == u"inch"
+      @test unit(dfStandInch.hm[1]) == u"ft"
+      @test unit(dfStandInch.EF[1]) == u"ac^-1"
     end
 
   end
@@ -89,7 +114,7 @@
     data = DataFrame(species=species, diameters=diameters)
 
     # Test 1: Standard Case
-    result_df = frequency_table(diameters, 2)
+    result_df = frequencytable(diameters, 2)
     @test isa(result_df, DataFrame)
 
     # Expected results for the test data
@@ -111,10 +136,10 @@
     end
 
     # Test 2: Invalid Class Width (Negative)
-    @test_throws DomainError frequency_table(diameters, -2)
+    @test_throws DomainError frequencytable(diameters, -2)
 
     # Test 3: Invalid Class Width (Zero)
-    @test_throws DomainError frequency_table(diameters, 0)
+    @test_throws DomainError frequencytable(diameters, 0)
 
     # Test 4: Verify Cumulative Frequencies
     @test result_df.Fi[end] == sum(result_df.fi)
@@ -123,6 +148,43 @@
     # Test 5: Check if total frequency equals number of data points
     total_frequency = sum(result_df.fi)
     @test total_frequency == length(diameters)
+
+    @testset "with units" begin
+      # a unitful sample keeps its unit in the class limits, and a bare class width
+      # is interpreted in that same unit
+      result_df_u = frequencytable(diameters * u"cm", 2u"cm")
+      @test ustrip.(result_df_u.LI) == expected_df.LI
+      @test ustrip.(result_df_u.Xi) == expected_df.Xi
+      @test ustrip.(result_df_u.LS) == expected_df.LS
+      @test unit(result_df_u.LI[1]) == u"cm"
+
+      result_df_u2 = frequencytable(diameters * u"cm", 2)
+      @test result_df_u2 == result_df_u
+
+      # frequencytable is not diameter-specific: any unitful variable works, e.g. heights
+      result_df_h = frequencytable(diameters * u"m", 2u"m")
+      @test unit(result_df_h.LI[1]) == u"m"
+      @test ustrip.(result_df_h.LI) == expected_df.LI
+
+      # auto class width also respects the sample's unit
+      auto_u = frequencytable(diameters * u"cm")
+      auto_plain = frequencytable(diameters)
+      @test ustrip.(auto_u.LI) == auto_plain.LI
+      @test unit(auto_u.LI[1]) == u"cm"
+    end
+
+    @testset "grouped" begin
+      result_df_g = frequencytable(:species, :diameters, data)
+      @test isa(result_df_g, DataFrame)
+
+      dataU = DataFrame(species=species, diameters=diameters * u"cm")
+      result_df_gu = frequencytable(:species, :diameters, dataU)
+      @test ustrip.(result_df_gu.LI) == result_df_g.LI
+      @test unit(result_df_gu.LI[1]) == u"cm"
+
+      result_df_gu_hi = frequencytable(:species, :diameters, 2u"cm", dataU)
+      @test unit(result_df_gu_hi.LI[1]) == u"cm"
+    end
   end
 
   @testset "Diametric Table Function Tests" begin
@@ -132,7 +194,7 @@
     data = DataFrame(species=species, diameters=diameters)
 
     # Test 1: Standard Case
-    result_df = diametric_table(diameters, 2, plot_area=0.05)
+    result_df = diametrictable(diameters, 2, plot_area=0.05)
     @test isa(result_df, DataFrame)
 
     # Expected results for the test data
@@ -156,32 +218,71 @@
     # Compare the result with expected values
     @test size(result_df) == size(expected_df)
 
+    # like dm/dg/... elsewhere in the package, diametrictable always returns unitful
+    # quantities even when called with plain numbers, so strip units before comparing
     for col in names(expected_df)
-      @test all(isapprox.(result_df[!, col], expected_df[!, col], atol=1e-5))
+      @test all(isapprox.(ustrip.(result_df[!, col]), expected_df[!, col], atol=1e-5))
     end
 
     # Test 2: Invalid Class Width (Negative)
-    @test_throws DomainError diametric_table(diameters, -2)
+    @test_throws DomainError diametrictable(diameters, -2)
 
     # Test 3: Invalid Class Width (Zero)
-    @test_throws DomainError diametric_table(diameters, 0)
+    @test_throws DomainError diametrictable(diameters, 0)
 
     # Test 4: Invalid Plot Area (Negative)
-    @test_throws DomainError diametric_table(diameters, 2, plot_area=-0.05)
+    @test_throws DomainError diametrictable(diameters, 2, plot_area=-0.05)
 
     # Test 5: Diameters with Negative Values
-    @test_throws DomainError diametric_table(-diameters, 2)
+    @test_throws DomainError diametrictable(-diameters, 2)
 
     # Test 6: Diameters with Zero Values
-    @test_throws DomainError diametric_table([0, 10.5, 12.0], 2)
+    @test_throws DomainError diametrictable([0, 10.5, 12.0], 2)
 
     # Test 7: Check if cumulative ng equals sum of ng
-    @test result_df.∑ng[end] ≈ sum(result_df.ng) atol = 1e-5
+    @test ustrip(result_df.∑ng[end]) ≈ ustrip(sum(result_df.ng)) atol = 1e-5
 
     # Test 8: Check if cumulative ng_ha equals sum of ng_ha
-    @test result_df.∑ng_ha[end] ≈ sum(result_df.ng_ha) atol = 1e-5
+    @test ustrip(result_df.∑ng_ha[end]) ≈ ustrip(sum(result_df.ng_ha)) atol = 1e-5
+
+    @testset "with units" begin
+      # diameters and class width as quantities, plot area as a quantity in m^2
+      result_df_u = diametrictable(diameters * u"cm", 2u"cm", plot_area=500u"m^2")
+      for col in names(expected_df)
+        @test all(isapprox.(ustrip.(result_df_u[!, col]), expected_df[!, col], atol=1e-5))
+      end
+      @test unit(result_df_u.LI[1]) == u"cm"
+      @test unit(result_df_u.g[1]) == u"m^2"
+      @test unit(result_df_u.fi_ha[1]) == u"ha^-1"
+
+      # mixing a unitful diameter vector with a bare class width and plot area
+      result_df_mixed = diametrictable(diameters * u"cm", 2, plot_area=0.05)
+      @test all(isapprox.(ustrip.(result_df_mixed[!, :g]), expected_df.g, atol=1e-5))
+
+      # a plot exactly one reference area wide needs no expansion, so those columns
+      # are omitted instead of being a redundant copy of fi/ng
+      result_df_default = diametrictable(diameters, 2)
+      @test "fi_ha" ∉ names(result_df_default)
+      @test "Fi_ha" ∉ names(result_df_default)
+      @test "ng_ha" ∉ names(result_df_default)
+      @test "∑ng_ha" ∉ names(result_df_default)
+      @test ncol(result_df_default) == ncol(result_df) - 4
+
+      # imperial diameters expand per acre and report areas in ft^2
+      imperial = diametrictable([4.0, 5.0, 6.0, 7.0]u"inch", 1u"inch", plot_area=0.1u"ac")
+      @test unit(imperial.g[1]) == u"ft^2"
+      @test unit(imperial.fi_ha[1]) == u"ac^-1"
+    end
+
+    @testset "grouped with units" begin
+      dataU = DataFrame(species=species, diameters=diameters * u"cm")
+      result_df_gu = diametrictable(:species, :diameters, dataU, plot_area=0.05u"ha")
+      @test unit(result_df_gu.LI[1]) == u"cm"
+      @test unit(result_df_gu.g[1]) == u"m^2"
+
+      result_df_gu_hi = diametrictable(:species, :diameters, 3u"cm", dataU, plot_area=0.05u"ha")
+      @test unit(result_df_gu_hi.LI[1]) == u"cm"
+    end
   end
 
 end
-
-
