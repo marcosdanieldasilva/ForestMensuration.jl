@@ -2,7 +2,7 @@
 CurrentModule = ForestMensuration
 ```
 
-Documentation for [ForestMensuration](https://github.com/marcosdanieldasilva/ForestMensuration.jl).
+Documentation for [ForestMensuration](https://github.com/JuliaForests/ForestMensuration.jl).
 
 # Reference
 

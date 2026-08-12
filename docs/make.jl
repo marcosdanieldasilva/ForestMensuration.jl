@@ -11,7 +11,7 @@ makedocs(;
     sitename="ForestMensuration.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://marcosdanieldasilva.github.io/ForestMensuration.jl",
+        canonical="https://JuliaForests.github.io/ForestMensuration.jl",
         edit_link="main",
         assets=[
             joinpath("assets", "favicon.ico"),
@@ -29,7 +29,7 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/marcosdanieldasilva/ForestMensuration.jl",
+    repo="github.com/JuliaForests/ForestMensuration.jl",
     devbranch="main",
     push_preview=true
 )

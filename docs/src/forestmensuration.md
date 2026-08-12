@@ -1,6 +1,6 @@
 # ForestMensuration Package:
 
-Documentation for [ForestMensuration](https://github.com/marcosdanieldasilva/ForestMensuration.jl).
+Documentation for [ForestMensuration](https://github.com/JuliaForests/ForestMensuration.jl).
 
 **ForestMensuration.jl** is a Julia package that offers a comprehensive suite of functions for dendrometric calculations. With a focus on simplicity and efficiency, it streamlines complex forestry computations through an intuitive interface. Key features include:
 
@@ -21,7 +21,7 @@ CurrentModule = ForestMensuration
 The ForestMensuration package is available through the Julia package system and can be added by running Pkg.add("ForestMensuration") or by directly downloading it from the GitHub page:
 
 ```julia-repl-repl
-pkg> add https://github.com/marcosdanieldasilva/ForestMensuration.jl
+pkg> add https://github.com/JuliaForests/ForestMensuration.jl
 ```
 
 ## About the Author
