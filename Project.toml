@@ -5,7 +5,7 @@ authors = ["Marcos Daniel da Silva <marcosdasilva@5a.tec.br> and contributors"]
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-ForestCore = "c3d06f35-1cec-4a06-8b44-87c7409765a8"
+ForestFoundations = "c3d06f35-1cec-4a06-8b44-87c7409765a8"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
@@ -13,7 +13,7 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
 DataFrames = "1.7.0"
-ForestCore = "1.0.0"
+ForestFoundations = "1.0.0"
 Reexport = "1.2.2"
 StatsBase = "0.34.3"
 Tables = "1.12.0"

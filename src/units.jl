@@ -1,4 +1,4 @@
-# unit aliases, kept local for brevity; the underlying types come from ForestCore
+# unit aliases, kept local for brevity; the underlying types come from ForestFoundations
 const Len = Length   # Length (d, h)
 const Vol = Volume   # Volume (v)
 

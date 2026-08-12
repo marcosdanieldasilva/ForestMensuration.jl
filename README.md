@@ -4,8 +4,8 @@ ForestMensuration.jl provides advanced functions for dendrometric calculations i
 Its focus is on accurate **tree cubage (volume estimation)**, **dendrometric averages**
 (mean, quadratic mean, dominant diameter/height, ...), and **frequency/diametric
 distribution tables**, built on top of
-[ForestCore.jl](https://github.com/JuliaForests/ForestCore.jl) so every measurement
-carries its unit and is converted automatically. These methods are essential for forest
+[ForestFoundations.jl](https://github.com/JuliaForests/ForestFoundations.jl) so every
+measurement carries its unit and is converted automatically. These methods are essential for forest
 mensuration and biometrics, supporting forest inventory, management, and research.
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://marcosdanieldasilva.github.io/ForestMensuration.jl/stable/forestmensuration/)

@@ -34,14 +34,14 @@ variable and therefore stays unitless when given unitless data — use `diametri
 for diameter-specific tables.
 
 Results always carry units; use `removeunits`/`restoreunits` (re-exported from
-`ForestCore`) to move between unitful DataFrames and plain numeric ones for export.
+`ForestFoundations`) to move between unitful DataFrames and plain numeric ones for export.
 """
 module ForestMensuration
-using DataFrames, ForestCore, Reexport, StatsBase, Tables, Unitful
+using DataFrames, ForestFoundations, Reexport, StatsBase, Tables, Unitful
 
 import Unitful: Units, Quantity, NoUnits
 
-@reexport using ForestCore
+@reexport using ForestFoundations
 
 include("units.jl")
 include("distributiontables.jl")
