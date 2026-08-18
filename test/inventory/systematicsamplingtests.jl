@@ -1,7 +1,7 @@
 @testset "systematicsampling" begin
   v = [381.7, 458.9, 468.2, 531.7, 474.1, 401.9, 469.1, 437.4, 435.3, 403.2, 397.1]
 
-  report = systematicsampling(v, 0.05, 10)
+  report = sampling(SystematicSampling, v, 0.05, 10)
   @test nrow(report) == 1
 
   @test ustrip(report.vm[1]) ≈ 441.691 atol = 1e-3
@@ -13,7 +13,7 @@
 
   @testset "with lines" begin
     line = [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2]
-    reportLine = systematicsampling(v, 0.05, 10; line=line)
+    reportLine = sampling(SystematicSampling, v, 0.05, 10; line=line)
     @test reportLine.k[1] == 2
     # the difference straddling the two lines is excluded, so the variance differs from
     # the single-line case
@@ -21,10 +21,10 @@
   end
 
   @testset "units" begin
-    reportU = systematicsampling(v * u"m^3", 0.05u"ha", 10u"ha")
+    reportU = sampling(SystematicSampling, v * u"m^3", 0.05u"ha", 10u"ha")
     @test reportU == report
   end
 
-  @test_throws DimensionMismatch systematicsampling(v, 0.05, 10; line=[1, 2, 3])
-  @test_throws ArgumentError systematicsampling([1.0], 0.05, 10)
+  @test_throws DimensionMismatch sampling(SystematicSampling, v, 0.05, 10; line=[1, 2, 3])
+  @test_throws ArgumentError sampling(SystematicSampling, [1.0], 0.05, 10)
 end

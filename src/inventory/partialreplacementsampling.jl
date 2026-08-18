@@ -1,77 +1,4 @@
-"""
-    partialreplacementsampling(volume1::AbstractVector{<:Union{Missing,Vol}}, volume2::AbstractVector{<:Union{Missing,Vol}},
-                                plot_area::Area, N::Integer; α::Real=0.95)
-    partialreplacementsampling(volume1::AbstractVector{<:Union{Missing,Real}}, volume2::AbstractVector{<:Union{Missing,Real}},
-                                plot_area::Real, N::Integer; kwargs...)
-
-Estimates growth between two inventory occasions by remeasuring only part of the plot network, generic to any sample size.
-
-# Description
-
-A middle ground between [`completereplacementsampling`](@ref) (remeasure every plot)
-and [`doublesampling`](@ref) (remeasure a fixed regression subset): occasion 1 has `u`
-temporary and `m` permanent plots; at occasion 2 the `m` permanent plots are remeasured
-and `v` brand-new temporary plots are added. Three groups of plots therefore appear across
-the two vectors:
-
-- occasion-1-only ("unmatched" — `volume1[i]` present, `volume2[i]` missing);
-- measured on both occasions ("matched" — both present);
-- occasion-2-only ("new temporary" — `volume1[i]` missing, `volume2[i]` present).
-
-# Arguments
-
-- `volume1`, `volume2`: occasion-1 and occasion-2 volumes, same length, one entry per plot, `missing` where that plot wasn't measured on that occasion (see grouping above). Plain numbers are taken to be `u"m^3"`.
-- `plot_area`: the area of each plot, as an `Area` quantity, used only to report the per-hectare volume. A plain number is taken to be hectares.
-- `N::Integer`: total number of possible plots in the population.
-- `α::Real=0.95`: confidence level (default 95%).
-
-# Returns
-
-- [`SamplingReport`](@ref) with `occasion1` (simple-random-sampling report over the `u+m`
-  occasion-1 plots, same columns as [`independentoccasionssampling`](@ref)'s occasion
-  tables), `occasion2` (the combined estimate) and `change` (the estimated growth).
-  `occasion2` columns:
-  - `vm`: the combined (regression + new-temporary) occasion-2 mean estimate.
-  - `vreg`: the regression-only estimate.
-  - `vtemp`: the new-temporary-only mean.
-  - `c`: the inverse-variance regression weight.
-  - `b`: the regression slope.
-  - `se`, `abserr`, `relerr`, `vha`, `vtotal`, `cilower`, `ciupper`: as in [`simplecasualsampling`](@ref).
-  - `m`, `u`, `v`: matched, unmatched, and new-temporary plot counts.
-  - `N`: number of possible plots in the population.
-
-# Mathematical basis
-
-Two independent estimates of the occasion-2 mean are combined by inverse-variance
-weighting: a regression estimate `Ŷ_reg` built the same way as in [`doublesampling`](@ref)
-from the matched plots (using `_olsslope` for the slope), and the simple mean `Ȳᵥ` of the
-new temporary plots:
-```math
-\\hat{Y}_{reg} = \\bar{y}_m + b(\\bar{x}_{u+m} - \\bar{x}_m) \\qquad
-\\hat{Y} = c\\,\\hat{Y}_{reg} + (1-c)\\bar{Y}_v \\qquad
-c^* = \\frac{s^2_{\\bar{Y}_v}}{s^2_{\\hat{Y}_{reg}} + s^2_{\\bar{Y}_v}}
-```
-`c*` is the variance-minimizing weight, giving `s²_Ŷ = c*·s²_Ŷreg` at the optimum.
-
-# Technical description
-
-Setting `v = 0` (no new temporary plots) degenerates the design toward
-[`doublesampling`](@ref); setting `u = v = 0` (every plot matched) degenerates it toward
-[`completereplacementsampling`](@ref) — this design spans the space between them, and is
-the most field-flexible of the four successive-occasions designs in this module.
-
-# Examples
-
-```julia-repl
-julia> volume1 = [18.2, 21.4, 19.8, 20.1, 22.5, 19.0, 23.1, missing, missing];
-julia> volume2 = [missing, missing, 23.4, 24.0, 26.6, 22.9, 27.5, 25.2, 21.8];
-
-julia> report = partialreplacementsampling(volume1, volume2, 0.05, 200);
-julia> occasion2(report).vm
-24.34590452296151 m^3
-```
-"""
-function partialreplacementsampling(volume1::AbstractVector{<:Union{Missing,Vol}}, volume2::AbstractVector{<:Union{Missing,Vol}},
+function sampling(::Type{PartialReplacementSampling}, volume1::AbstractVector{<:Union{Missing,Vol}}, volume2::AbstractVector{<:Union{Missing,Vol}},
   plot_area::Area, N::Integer; α::Real=0.95)
 
   length(volume1) == length(volume2) || throw(DimensionMismatch("volume1 and volume2 must have the same length."))
@@ -131,7 +58,7 @@ function partialreplacementsampling(volume1::AbstractVector{<:Union{Missing,Vol}
   return SamplingReport((; occasion1, occasion2, change))
 end
 
-function partialreplacementsampling(volume1::AbstractVector{<:Union{Missing,Real}}, volume2::AbstractVector{<:Union{Missing,Real}},
+function sampling(::Type{PartialReplacementSampling}, volume1::AbstractVector{<:Union{Missing,Real}}, volume2::AbstractVector{<:Union{Missing,Real}},
   plot_area::Real, N::Integer; kwargs...)
-  partialreplacementsampling(_asvolume(volume1), _asvolume(volume2), plot_area * AUNIT, N; kwargs...)
+  sampling(PartialReplacementSampling, _asvolume(volume1), _asvolume(volume2), plot_area * AUNIT, N; kwargs...)
 end

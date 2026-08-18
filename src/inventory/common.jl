@@ -12,7 +12,7 @@ _asvolume(v::AbstractVector{<:Union{Missing,Vol}}) = v
 _asvolume(v::AbstractVector{<:Union{Missing,Real}}) = [ismissing(x) ? missing : x * VUNIT for x in v]
 
 # Same normalization as `_asvolume`, for diameter columns -- used by
-# `horizontalpointsampling`, the only design in this submodule that works from
+# `HorizontalPointSampling`, the only design in this submodule that works from
 # individual-tree data rather than pre-aggregated plot volumes.
 _asdiameter(d::AbstractVector{<:Len}) = d
 _asdiameter(d::AbstractVector{<:Real}) = d .* DUNIT
@@ -27,7 +27,7 @@ _infinitesamplesize(t::Real, varterm::Real, e::Real) = (t^2 * varterm) / e^2
 
 # Required sample size for a finite population of size N, on the same scale as above.
 # `correctionvarterm` lets the finite-population correction term use a different
-# variance-like quantity than the numerator -- needed by `twostagesampling`, where the
+# variance-like quantity than the numerator -- needed by `TwoStageSampling`, where the
 # correction reflects the population size of secondary units while the numerator reflects
 # how many were actually measured; it defaults to `varterm` for every other design, where
 # the two coincide.

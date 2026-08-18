@@ -47,13 +47,15 @@ dendrometry, and forest biometrics. Its key features include:
   expansions (`diametrictable`).
 
 - **Forest Inventory Sampling:**
-  All 11 classic sampling designs, each generic to any number of strata/clusters/plots:
-  simple (`simplecasualsampling`), stratified (`stratifiedsampling`), systematic
-  (`systematicsampling`, `multistartsystematicsampling`), cluster/two-stage
-  (`clustersampling`, `twostagesampling`), horizontal point/Bitterlich angle-count
-  sampling (`horizontalpointsampling`), and the four sampling-on-successive-occasions
-  designs used in continuous forest inventory (`independentoccasionssampling`,
-  `completereplacementsampling`, `partialreplacementsampling`, `doublesampling`).
+  A single entry point, `sampling(Design, ...)`, dispatches on a `SamplingDesign` type to
+  select among all 11 classic designs, each generic to any number of strata/clusters/plots:
+  simple (`SimpleCasualSampling`), stratified (`StratifiedSampling`), systematic
+  (`SystematicSampling`, `MultistartSystematicSampling`), cluster/two-stage
+  (`ClusterSampling`, `TwoStageSampling`), horizontal point/Bitterlich angle-count
+  sampling (`HorizontalPointSampling`), and the four sampling-on-successive-occasions
+  designs used in continuous forest inventory (`IndependentOccasionsSampling`,
+  `CompleteReplacementSampling`, `PartialReplacementSampling`, `DoubleSampling`).
+  `subtypes(SamplingDesign)` lists all 11 at once.
 
 - **Stem Taper Equations:**
   Fit 10 classic published taper (stem-profile) forms — `Kozak1969`, `Schoepfer1966`,
@@ -296,7 +298,7 @@ using ForestMensuration
 
 julia> v = [381.7, 458.9, 468.2, 531.7, 474.1, 401.9, 469.1, 437.4, 435.3, 403.2, 397.1];
 
-julia> report = simplecasualsampling(v, 0.05, 10; e=10, α=0.95)
+julia> report = sampling(SimpleCasualSampling, v, 0.05, 10; e=10, α=0.95)
 1×17 DataFrame
  Row │ vm           cv       s2m          se           abserr       relerr   vha                vtotal       cilower      ciupper      pop      f        n      nreq   nmiss  N      area
      │ Quantity…    Float64  Quantity…    Quantity…    Quantity…    Float64  Quantity…          Quantity…    Quantity…    Quantity…    String   Float64  Int64  Int64  Int64  Int64  Quantity…
@@ -326,7 +328,7 @@ julia> data = DataFrame(
          volume=[18.2, 21.4, 19.8, 20.1, 32.5, 35.1, 30.8, 12.4, 11.9, 13.6, 12.8, 13.1],
        );
 
-julia> report = stratifiedsampling(:stratum, :volume, 0.1, [12.0, 8.0, 20.0], data);
+julia> report = sampling(StratifiedSampling, :stratum, :volume, 0.1, [12.0, 8.0, 20.0], data);
 
 julia> resultTable(report).vm
 18.9025 m^3
@@ -342,19 +344,19 @@ The remaining nine designs follow the same pattern — see the
 [Forest Inventory Sampling tutorial](https://JuliaForests.github.io/ForestMensuration.jl/dev/tutorial/#Forest-Inventory-Sampling)
 for a complete, runnable example of every one:
 
-| Function | Design |
-|:---------|:-------|
-| `simplecasualsampling` | Simple random sampling |
-| `stratifiedsampling` | Stratified random sampling |
-| `systematicsampling` | Systematic sampling (method of successive differences) |
-| `multistartsystematicsampling` | Systematic sampling with multiple random starts |
-| `clustersampling` | One-stage cluster sampling |
-| `twostagesampling` | Two-stage sampling |
-| `horizontalpointsampling` | Horizontal point sampling (Bitterlich's angle-count method) |
-| `independentoccasionssampling` | Successive occasions, independent samples |
-| `completereplacementsampling` | Successive occasions, complete replacement (matched plots) |
-| `partialreplacementsampling` | Successive occasions, partial replacement |
-| `doublesampling` | Successive occasions, double sampling with regression |
+| `sampling(Design, ...)` | Design |
+|:-------------------------|:-------|
+| `SimpleCasualSampling` | Simple random sampling |
+| `StratifiedSampling` | Stratified random sampling |
+| `SystematicSampling` | Systematic sampling (method of successive differences) |
+| `MultistartSystematicSampling` | Systematic sampling with multiple random starts |
+| `ClusterSampling` | One-stage cluster sampling |
+| `TwoStageSampling` | Two-stage sampling |
+| `HorizontalPointSampling` | Horizontal point sampling (Bitterlich's angle-count method) |
+| `IndependentOccasionsSampling` | Successive occasions, independent samples |
+| `CompleteReplacementSampling` | Successive occasions, complete replacement (matched plots) |
+| `PartialReplacementSampling` | Successive occasions, partial replacement |
+| `DoubleSampling` | Successive occasions, double sampling with regression |
 
 ### Stem Taper Equations
 

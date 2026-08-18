@@ -6,14 +6,17 @@ ForestMensuration.jl is a Julia package that provides a comprehensive set of fun
 - **Calculate tree and stand volume (cubage)**: Support for various methods such as Huber, Smalian, and Newton allows precise calculation of tree and stand volumes.
 - **Compute dendrometric averages**: Calculate essential dendrometric metrics like mean diameter, quadratic mean diameter, and others to understand stand structure.
 - **Create frequency tables**: Generate frequency and diametric tables to analyze the distribution of dendrometric variables such as diameter and height.
-- **Estimate forest inventory sampling designs**: All 11 classic designs — simple
-  (`simplecasualsampling`), stratified (`stratifiedsampling`), systematic
-  (`systematicsampling`, `multistartsystematicsampling`), cluster/two-stage
-  (`clustersampling`, `twostagesampling`), horizontal point/Bitterlich angle-count
-  sampling (`horizontalpointsampling`), and the four sampling-on-successive-occasions
-  designs (`independentoccasionssampling`, `completereplacementsampling`,
-  `partialreplacementsampling`, `doublesampling`) — every one generic to any number of
-  strata/clusters/plots and returning a [`SamplingReport`](@ref) or plain `DataFrame`.
+- **Estimate forest inventory sampling designs**: a single entry point, [`sampling`](@ref),
+  dispatches on a [`SamplingDesign`](@ref) type to select among all 11 classic designs —
+  simple ([`SimpleCasualSampling`](@ref)), stratified ([`StratifiedSampling`](@ref)),
+  systematic ([`SystematicSampling`](@ref), [`MultistartSystematicSampling`](@ref)),
+  cluster/two-stage ([`ClusterSampling`](@ref), [`TwoStageSampling`](@ref)), horizontal
+  point/Bitterlich angle-count sampling ([`HorizontalPointSampling`](@ref)), and the four
+  sampling-on-successive-occasions designs ([`IndependentOccasionsSampling`](@ref),
+  [`CompleteReplacementSampling`](@ref), [`PartialReplacementSampling`](@ref),
+  [`DoubleSampling`](@ref)) — every one generic to any number of strata/clusters/plots and
+  returning a [`SamplingReport`](@ref) or plain `DataFrame`. `subtypes(SamplingDesign)`
+  lists all 11 at once.
 - **Apply fitted stem taper models**: [`taperdiameter`](@ref)/[`taperheight`](@ref) evaluate
   or invert a [`TaperFit`](@ref) (fit with `ForestModeling.fit` — see its module docstring
   for the 10-model catalog), [`taperedvolume`](@ref) integrates volume from the fitted
@@ -73,6 +76,7 @@ include("siteclassification.jl")
 include("dendrometrics.jl")
 include("cubage.jl")
 include("inventory/common.jl")
+include("inventory/designs.jl")
 include("inventory/inventoryreport.jl")
 include("inventory/simplecasualsampling.jl")
 include("inventory/stratifiedsampling.jl")
@@ -113,6 +117,19 @@ export
   diametrictable,
   frequencytable,
   # Forest inventory sampling
+  sampling,
+  SamplingDesign,
+  SimpleCasualSampling,
+  StratifiedSampling,
+  SystematicSampling,
+  MultistartSystematicSampling,
+  ClusterSampling,
+  HorizontalPointSampling,
+  TwoStageSampling,
+  IndependentOccasionsSampling,
+  CompleteReplacementSampling,
+  PartialReplacementSampling,
+  DoubleSampling,
   SamplingReport,
   resultTable,
   clusterTable,
@@ -124,17 +141,6 @@ export
   occasion1,
   occasion2,
   change,
-  simplecasualsampling,
-  stratifiedsampling,
-  systematicsampling,
-  clustersampling,
-  horizontalpointsampling,
-  multistartsystematicsampling,
-  twostagesampling,
-  independentoccasionssampling,
-  completereplacementsampling,
-  partialreplacementsampling,
-  doublesampling,
   # Stem taper application (fitting lives in ForestModeling.jl, re-exported above)
   taperdiameter,
   taperheight,

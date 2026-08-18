@@ -454,35 +454,38 @@ In addition to all the structural variables from `dmetrics` and `hmetrics`, the 
 
 ## Forest Inventory Sampling
 
-ForestMensuration.jl implements all 11 classic forest inventory sampling designs, each
-generic to any number of strata/clusters/plots. Every design accepts plain numbers
+ForestMensuration.jl implements all 11 classic forest inventory sampling designs through a
+single entry point, [`sampling`](@ref): pass a [`SamplingDesign`](@ref) subtype as the
+first argument to select the design, then that design's own arguments —
+`subtypes(SamplingDesign)` lists all 11 at once. Every design accepts plain numbers
 (volume defaults to `m^3`, plot/total areas to `ha`) or explicit `Unitful` quantities.
 Designs that produce a single table return a plain `DataFrame`; designs that produce
 several related tables (one per stratum/cluster, or one per inventory occasion) return a
-[`SamplingReport`](@ref), whose tables are reachable both as `report.tables.name` and
-directly as `report.name`.
+[`SamplingReport`](@ref), whose tables are reachable through accessor functions
+(`resultTable(report)`, `clusterTable(report)`, ...) or directly as properties
+(`report.resultTable`).
 
 ### Simple Random Sampling
 
-The [`simplecasualsampling`](@ref) function is the reference design every other method in
-this section is compared against: each plot has an equal chance of being selected, with
-no further structure.
+[`SimpleCasualSampling`](@ref) is the reference design every other method in this section
+is compared against: each plot has an equal chance of being selected, with no further
+structure.
 
 ```@example inv_simple
 using ForestMensuration
 
 v = [381.7, 458.9, 468.2, 531.7, 474.1, 401.9, 469.1, 437.4, 435.3, 403.2, 397.1]
 
-simplecasualsampling(v, 0.05, 10; e=10, α=0.95)
+sampling(SimpleCasualSampling, v, 0.05, 10; e=10, α=0.95)
 ```
 
 ### Stratified Random Sampling
 
-The [`stratifiedsampling`](@ref) function divides the population into non-overlapping
-strata before sampling within each — usually a variance reduction over simple random
-sampling of the same total size. It returns a [`SamplingReport`](@ref) with an ANOVA
-table (is there really a difference between strata?), an auxiliary table (per-stratum
-descriptive statistics and allocation weights), and the final result table.
+[`StratifiedSampling`](@ref) divides the population into non-overlapping strata before
+sampling within each — usually a variance reduction over simple random sampling of the
+same total size. It returns a [`SamplingReport`](@ref) with an ANOVA table (is there
+really a difference between strata?), an auxiliary table (per-stratum descriptive
+statistics and allocation weights), and the final result table.
 
 ```@example inv_stratified
 using ForestMensuration, DataFrames
@@ -493,7 +496,7 @@ data = DataFrame(
 )
 
 # strata_area is given in the same order as the sorted strata: 1, 2, 3
-report = stratifiedsampling(:stratum, :volume, 0.1, [12.0, 8.0, 20.0], data)
+report = sampling(StratifiedSampling, :stratum, :volume, 0.1, [12.0, 8.0, 20.0], data)
 resultTable(report)
 ```
 
@@ -505,21 +508,22 @@ auxiliaryTable(report)
 anova(report)
 ```
 
-With a single stratum, `stratifiedsampling` reduces exactly to `simplecasualsampling` —
-useful as a sanity check when strata are added incrementally to a growing dataset.
+With a single stratum, [`StratifiedSampling`](@ref) reduces exactly to
+[`SimpleCasualSampling`](@ref) — useful as a sanity check when strata are added
+incrementally to a growing dataset.
 
 ### Systematic Sampling
 
-The [`systematicsampling`](@ref) function estimates the variance of the mean from the
-method of successive differences between consecutive plots, since plots laid out at a
-fixed interval tend to be more alike than a true random sample.
+[`SystematicSampling`](@ref) estimates the variance of the mean from the method of
+successive differences between consecutive plots, since plots laid out at a fixed
+interval tend to be more alike than a true random sample.
 
 ```@example inv_systematic
 using ForestMensuration
 
 v = [381.7, 458.9, 468.2, 531.7, 474.1, 401.9, 469.1, 437.4, 435.3, 403.2, 397.1]
 
-systematicsampling(v, 0.05, 10)
+sampling(SystematicSampling, v, 0.05, 10)
 ```
 
 An optional `line` vector groups plots into several independent transects, so the
@@ -528,15 +532,15 @@ aren't actually adjacent on the ground — is excluded from the variance estimat
 
 ```@example inv_systematic
 line = [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2]
-systematicsampling(v, 0.05, 10; line=line)
+sampling(SystematicSampling, v, 0.05, 10; line=line)
 ```
 
 ### Systematic Sampling with Multiple Random Starts
 
-The [`multistartsystematicsampling`](@ref) function lays out several independent
-systematic lines, each starting at its own random point, turning the design into a
-genuine probability sample: statistically identical to [`clustersampling`](@ref)'s
-between/within decomposition, with each line playing the role of one cluster.
+[`MultistartSystematicSampling`](@ref) lays out several independent systematic lines,
+each starting at its own random point, turning the design into a genuine probability
+sample: statistically identical to [`ClusterSampling`](@ref)'s between/within
+decomposition, with each line playing the role of one cluster.
 
 ```@example inv_multistart
 using ForestMensuration, DataFrames
@@ -547,15 +551,15 @@ data = DataFrame(
             15.1, 16.0, 14.8, 15.6, 15.9, 20.5, 21.2, 19.8, 20.6, 21.0],
 )
 
-report = multistartsystematicsampling(:start, :volume, 0.02, 15, data)
+report = sampling(MultistartSystematicSampling, :start, :volume, 0.02, 15, data)
 resultTable(report)
 ```
 
 ### One-Stage Cluster Sampling
 
-The [`clustersampling`](@ref) function samples clusters of `M` neighboring plots
-("conglomerates") instead of individual plots — cheaper to lay out in the field, at the
-cost of within-cluster homogeneity typically inflating the variance of the mean.
+[`ClusterSampling`](@ref) samples clusters of `M` neighboring plots ("conglomerates")
+instead of individual plots — cheaper to lay out in the field, at the cost of
+within-cluster homogeneity typically inflating the variance of the mean.
 
 ```@example inv_cluster
 using ForestMensuration, DataFrames
@@ -566,7 +570,7 @@ data = DataFrame(
             27.3, 28.1, 26.9, 27.8, 19.8, 20.5, 19.1, 20.0, 24.5, 25.2, 23.9, 24.8],
 )
 
-report = clustersampling(:cluster, :volume, 0.02, 15, data)
+report = sampling(ClusterSampling, :cluster, :volume, 0.02, 15, data)
 resultTable(report)
 ```
 
@@ -576,12 +580,12 @@ clusterTable(report)
 
 ### Horizontal Point Sampling (Bitterlich)
 
-The [`horizontalpointsampling`](@ref) function estimates volume and basal area per
-hectare from angle-count ("Bitterlich") data: at each point, every tree that is "in" for
-the chosen basal area factor (`baf`) represents exactly `baf` m²/ha of basal area,
-regardless of its own size — no fixed plot radius is needed at all. Point 6 below was
-visited but had no "in" trees; it is not a row of `data`, but is still counted through
-`npoints=6` so the zero observation is not silently dropped from the mean.
+[`HorizontalPointSampling`](@ref) estimates volume and basal area per hectare from
+angle-count ("Bitterlich") data: at each point, every tree that is "in" for the chosen
+basal area factor (`baf`) represents exactly `baf` m²/ha of basal area, regardless of its
+own size — no fixed plot radius is needed at all. Point 6 below was visited but had no
+"in" trees; it is not a row of `data`, but is still counted through `npoints=6` so the
+zero observation is not silently dropped from the mean.
 
 ```@example inv_hps
 using ForestMensuration, DataFrames
@@ -593,7 +597,7 @@ data = DataFrame(
 )
 
 # baf=2 m²/ha, 6 points visited (5 counted trees + 1 empty), 0.1 ha per point, 10 ha stand
-report = horizontalpointsampling(:point, :diameter, :volume, 2.0, 6, 0.1, 10, data)
+report = sampling(HorizontalPointSampling, :point, :diameter, :volume, 2.0, 6, 0.1, 10, data)
 resultTable(report)
 ```
 
@@ -603,10 +607,10 @@ pointTable(report)
 
 ### Two-Stage Sampling
 
-The [`twostagesampling`](@ref) function draws `n` primary units (e.g. stands) from a
-population of `N`, then sub-samples `m` secondary units (plots) from within each drawn
-primary out of `M` possible — unlike cluster sampling, not every secondary unit inside a
-drawn primary needs to be measured.
+[`TwoStageSampling`](@ref) draws `n` primary units (e.g. stands) from a population of `N`,
+then sub-samples `m` secondary units (plots) from within each drawn primary out of `M`
+possible — unlike cluster sampling, not every secondary unit inside a drawn primary needs
+to be measured.
 
 ```@example inv_twostage
 using ForestMensuration, DataFrames
@@ -617,7 +621,7 @@ data = DataFrame(
 )
 
 # N=40 possible primary units, M=6 possible secondary units per primary
-report = twostagesampling(:primary, :volume, 0.02, 40, 6, data)
+report = sampling(TwoStageSampling, :primary, :volume, 0.02, 40, 6, data)
 resultTable(report)
 ```
 
@@ -629,9 +633,9 @@ how much of the plot network is remeasured at the second occasion. All four retu
 
 #### Independent Samples
 
-The [`independentoccasionssampling`](@ref) function samples each occasion completely
-independently — the simplest design, but the least efficient at detecting growth, since
-it exploits none of the natural plot-to-plot correlation between occasions.
+[`IndependentOccasionsSampling`](@ref) samples each occasion completely independently —
+the simplest design, but the least efficient at detecting growth, since it exploits none
+of the natural plot-to-plot correlation between occasions.
 
 ```@example inv_independent
 using ForestMensuration
@@ -639,14 +643,14 @@ using ForestMensuration
 v1 = [18.2, 21.4, 19.8, 20.1, 22.5, 19.0]
 v2 = [24.1, 23.8, 22.9, 25.6, 24.0]
 
-report = independentoccasionssampling(v1, v2, 0.05, 200, 200)
+report = sampling(IndependentOccasionsSampling, v1, v2, 0.05, 200, 200)
 change(report)
 ```
 
 #### Complete Replacement
 
-The [`completereplacementsampling`](@ref) function remeasures the exact same plots at
-both occasions, exploiting their positive correlation to tighten the growth estimate.
+[`CompleteReplacementSampling`](@ref) remeasures the exact same plots at both occasions,
+exploiting their positive correlation to tighten the growth estimate.
 
 ```@example inv_complete
 using ForestMensuration
@@ -654,16 +658,15 @@ using ForestMensuration
 v1 = [18.2, 21.4, 19.8, 20.1, 22.5, 19.0, 24.6, 17.3]
 v2 = [22.1, 25.8, 23.4, 21.0, 26.6, 20.9, 26.0, 22.5]
 
-report = completereplacementsampling(v1, v2, 0.05, 200, 200)
+report = sampling(CompleteReplacementSampling, v1, v2, 0.05, 200, 200)
 change(report)
 ```
 
 #### Partial Replacement
 
-The [`partialreplacementsampling`](@ref) function is the middle ground: a matched subset
-of plots is remeasured, some temporary plots are dropped, and new temporary plots are
-added at the second occasion. `missing` marks a plot that wasn't measured on a given
-occasion.
+[`PartialReplacementSampling`](@ref) is the middle ground: a matched subset of plots is
+remeasured, some temporary plots are dropped, and new temporary plots are added at the
+second occasion. `missing` marks a plot that wasn't measured on a given occasion.
 
 ```@example inv_partial
 using ForestMensuration
@@ -671,7 +674,7 @@ using ForestMensuration
 volume1 = [18.2, 21.4, 19.8, 20.1, 22.5, 19.0, 23.1, missing, missing]
 volume2 = [missing, missing, 23.4, 24.0, 26.6, 22.9, 27.5, 25.2, 21.8]
 
-report = partialreplacementsampling(volume1, volume2, 0.05, 200)
+report = sampling(PartialReplacementSampling, volume1, volume2, 0.05, 200)
 occasion2(report)
 ```
 
@@ -681,11 +684,11 @@ change(report)
 
 #### Double Sampling
 
-The [`doublesampling`](@ref) function measures a large first-occasion sample but only
-remeasures a smaller "permanent" subset at the second occasion, estimating the rest via a
-regression of the permanent subset's second-occasion volume on its first-occasion volume
-— solved through the normal equations `(X'X)β = X'y`, the same transposed-design-matrix
-approach used for the ANOVA in `stratifiedsampling`.
+[`DoubleSampling`](@ref) measures a large first-occasion sample but only remeasures a
+smaller "permanent" subset at the second occasion, estimating the rest via a regression of
+the permanent subset's second-occasion volume on its first-occasion volume — solved
+through the normal equations `(X'X)β = X'y`, the same transposed-design-matrix approach
+used for the ANOVA in [`StratifiedSampling`](@ref).
 
 ```@example inv_double
 using ForestMensuration
@@ -693,7 +696,7 @@ using ForestMensuration
 volume1 = [18.2, 21.4, 19.8, 20.1, 22.5, 19.0, 23.1, 17.6, 20.8, 21.9]
 volume2 = [22.1, 25.8, 23.4, missing, 26.6, missing, 27.5, missing, missing, 26.0]
 
-report = doublesampling(volume1, volume2, 0.05, 200)
+report = sampling(DoubleSampling, volume1, volume2, 0.05, 200)
 occasion2(report)
 ```
 

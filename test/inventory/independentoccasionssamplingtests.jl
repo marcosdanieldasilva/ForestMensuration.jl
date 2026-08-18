@@ -2,7 +2,7 @@
   v1 = [18.2, 21.4, 19.8, 20.1, 22.5, 19.0]
   v2 = [24.1, 23.8, 22.9, 25.6, 24.0]
 
-  report = independentoccasionssampling(v1, v2, 0.05, 200, 200)
+  report = sampling(IndependentOccasionsSampling, v1, v2, 0.05, 200, 200)
   @test report isa SamplingReport
   chg = change(report)
 
@@ -16,7 +16,7 @@
   @test occasion2(report).n[1] == 5
 
   @testset "units" begin
-    reportU = independentoccasionssampling(v1 * u"m^3", v2 * u"m^3", 0.05u"ha", 200, 200)
+    reportU = sampling(IndependentOccasionsSampling, v1 * u"m^3", v2 * u"m^3", 0.05u"ha", 200, 200)
     @test change(reportU) == chg
   end
 end

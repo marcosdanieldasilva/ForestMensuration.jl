@@ -2,7 +2,7 @@
   volume1 = [18.2, 21.4, 19.8, 20.1, 22.5, 19.0, 23.1, 17.6, 20.8, 21.9]
   volume2 = [22.1, 25.8, 23.4, missing, 26.6, missing, 27.5, missing, missing, 26.0]
 
-  report = doublesampling(volume1, volume2, 0.05, 200)
+  report = sampling(DoubleSampling, volume1, volume2, 0.05, 200)
   @test report isa SamplingReport
   o2 = occasion2(report)
   chg = change(report)
@@ -13,12 +13,12 @@
   @test o2.ntemp[1] == 4
   @test ustrip(chg.gm[1]) ≈ 4.00186 atol = 1e-3
 
-  @test_throws ArgumentError doublesampling(volume1, [22.1, 25.8, missing, missing, missing, missing, missing, missing, missing, missing], 0.05, 200)
-  @test_throws DimensionMismatch doublesampling(volume1, volume2[1:end-1], 0.05, 200)
+  @test_throws ArgumentError sampling(DoubleSampling, volume1, [22.1, 25.8, missing, missing, missing, missing, missing, missing, missing, missing], 0.05, 200)
+  @test_throws DimensionMismatch sampling(DoubleSampling, volume1, volume2[1:end-1], 0.05, 200)
 
   @testset "units" begin
     volume2u = [ismissing(x) ? missing : x * u"m^3" for x in volume2]
-    reportU = doublesampling(volume1 * u"m^3", volume2u, 0.05u"ha", 200)
+    reportU = sampling(DoubleSampling, volume1 * u"m^3", volume2u, 0.05u"ha", 200)
     @test occasion2(reportU) == o2
   end
 end

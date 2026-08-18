@@ -5,7 +5,7 @@
     volume=[0.35, 0.55, 0.22, 0.48, 0.28, 0.85, 0.55, 0.35, 0.22, 0.28, 0.55, 0.48, 0.40],
   )
 
-  report = horizontalpointsampling(:point, :diameter, :volume, 2.0, 6, 0.1, 10, data)
+  report = sampling(HorizontalPointSampling, :point, :diameter, :volume, 2.0, 6, 0.1, 10, data)
   @test report isa SamplingReport
   rt = resultTable(report)
   pt = pointTable(report)
@@ -23,7 +23,7 @@
   end
 
   @testset "units" begin
-    reportU = horizontalpointsampling(:point, :diameter, :volume, 2.0, 6, 0.1u"ha", 10u"ha", data)
+    reportU = sampling(HorizontalPointSampling, :point, :diameter, :volume, 2.0, 6, 0.1u"ha", 10u"ha", data)
     @test resultTable(reportU) == rt
   end
 
@@ -32,10 +32,10 @@
       point=[1, 1, 1, 2, 2, 3, 3, 3, 3, 4, 5, 5, 5],
       diameter=data.diameter, volume=data.volume,
     )
-    reportDropped = horizontalpointsampling(:point, :diameter, :volume, 2.0, 5, 0.1, 10, dataNoZero)
+    reportDropped = sampling(HorizontalPointSampling, :point, :diameter, :volume, 2.0, 5, 0.1, 10, dataNoZero)
     @test ustrip(resultTable(reportDropped).vha[1]) > ustrip(rt.vha[1])
   end
 
-  @test_throws ArgumentError horizontalpointsampling(:point, :diameter, :volume, 2.0, 4, 0.1, 10, data)
-  @test_throws ArgumentError horizontalpointsampling(:point, :diameter, :volume, -2.0, 6, 0.1, 10, data)
+  @test_throws ArgumentError sampling(HorizontalPointSampling, :point, :diameter, :volume, 2.0, 4, 0.1, 10, data)
+  @test_throws ArgumentError sampling(HorizontalPointSampling, :point, :diameter, :volume, -2.0, 6, 0.1, 10, data)
 end

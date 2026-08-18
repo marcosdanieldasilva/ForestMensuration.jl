@@ -5,7 +5,7 @@
       27.3, 28.1, 26.9, 27.8, 19.8, 20.5, 19.1, 20.0, 24.5, 25.2, 23.9, 24.8],
   )
 
-  report = clustersampling(:cluster, :volume, 0.02, 15, data)
+  report = sampling(ClusterSampling, :cluster, :volume, 0.02, 15, data)
   @test report isa SamplingReport
   rt = resultTable(report)
 
@@ -19,18 +19,18 @@
   @testset "M=1 matches simplecasualsampling" begin
     v = [381.7, 458.9, 468.2, 531.7, 474.1, 401.9, 469.1, 437.4, 435.3, 403.2, 397.1]
     data1 = DataFrame(cluster=1:11, volume=v)
-    rc = resultTable(clustersampling(:cluster, :volume, 0.05, 10, data1))
-    rs = simplecasualsampling(v, 0.05, 10)
+    rc = resultTable(sampling(ClusterSampling, :cluster, :volume, 0.05, 10, data1))
+    rs = sampling(SimpleCasualSampling, v, 0.05, 10)
     @test ustrip(rc.vm[1]) ≈ ustrip(rs.vm[1]) atol = 1e-6
     @test rc.nreq[1] == rs.nreq[1]
     @test rc.icc[1] ≈ 1.0 atol = 1e-9
   end
 
   @testset "units" begin
-    reportU = clustersampling(:cluster, :volume, 0.02u"ha", 15u"ha", data)
+    reportU = sampling(ClusterSampling, :cluster, :volume, 0.02u"ha", 15u"ha", data)
     @test resultTable(reportU) == rt
   end
 
-  @test_throws ArgumentError clustersampling(:cluster, :volume, 0.02, 15,
+  @test_throws ArgumentError sampling(ClusterSampling, :cluster, :volume, 0.02, 15,
     DataFrame(cluster=[1, 1, 2, 2, 2], volume=[1.0, 2.0, 3.0, 4.0, 5.0]))
 end

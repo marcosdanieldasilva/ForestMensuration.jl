@@ -1,7 +1,7 @@
 @testset "simplecasualsampling" begin
   v = [381.7, 458.9, 468.2, 531.7, 474.1, 401.9, 469.1, 437.4, 435.3, 403.2, 397.1]
 
-  report = simplecasualsampling(v, 0.05, 10; e=10, α=0.95)
+  report = sampling(SimpleCasualSampling, v, 0.05, 10; e=10, α=0.95)
   @test report isa DataFrame
   @test nrow(report) == 1
 
@@ -35,18 +35,18 @@
   @test restored.vm == report.vm
 
   @testset "units" begin
-    reportU = simplecasualsampling(v * u"m^3", 0.05u"ha", 10u"ha")
+    reportU = sampling(SimpleCasualSampling, v * u"m^3", 0.05u"ha", 10u"ha")
     @test reportU == report
 
-    reportFt = simplecasualsampling(v * u"ft^3", 0.05u"ac", 10u"ac")
+    reportFt = sampling(SimpleCasualSampling, v * u"ft^3", 0.05u"ac", 10u"ac")
     @test unit(reportFt.vm[1]) == u"ft^3"
     @test unit(reportFt.vha[1]) == u"ft^3/ac"
   end
 
   @testset "infinite population via 1-reference-area plot" begin
-    reportInf = simplecasualsampling(v, 1.0, 1000)
+    reportInf = sampling(SimpleCasualSampling, v, 1.0, 1000)
     @test reportInf.pop[1] == "infinite"
   end
 
-  @test_throws ArgumentError simplecasualsampling([1.0], 0.05, 10)
+  @test_throws ArgumentError sampling(SimpleCasualSampling, [1.0], 0.05, 10)
 end

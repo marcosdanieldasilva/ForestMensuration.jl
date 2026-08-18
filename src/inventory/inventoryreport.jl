@@ -4,7 +4,7 @@
 Wraps the set of tables produced by a multi-table forest-inventory sampling design (for
 example a per-stratum auxiliary table alongside the final result table) so they print and
 travel together instead of as a bare `Vector`/`Tuple`. Designs that only ever produce one
-table (e.g. [`simplecasualsampling`](@ref)) return a plain `DataFrame` instead —
+table (e.g. [`SimpleCasualSampling`](@ref)) return a plain `DataFrame` instead —
 wrapping a single table would add nothing.
 
 # Fields
@@ -17,7 +17,7 @@ wrapping a single table would add nothing.
 Individual tables are reachable both through `.tables` and directly as properties:
 
 ```julia-repl
-julia> report = stratifiedsampling(:stratum, :volume, plot_area, total_area, data);
+julia> report = sampling(StratifiedSampling, :stratum, :volume, plot_area, total_area, data);
 julia> report.resultTable   # shorthand for report.tables.resultTable
 julia> report.auxiliaryTable
 ```
@@ -56,7 +56,7 @@ this ecosystem; calling it on a report that has no such table errors the same wa
 
 # Examples
 ```julia-repl
-julia> report = clustersampling(:cluster, :volume, plot_area, total_area, data);
+julia> report = sampling(ClusterSampling, :cluster, :volume, plot_area, total_area, data);
 
 julia> resultTable(report)   # same as report.resultTable
 ```
@@ -66,7 +66,7 @@ resultTable(r::SamplingReport) = r.resultTable
 """
     clusterTable(report::SamplingReport)
 
-Per-cluster descriptive statistics (`n`, mean, variance) from [`clustersampling`](@ref) —
+Per-cluster descriptive statistics (`n`, mean, variance) from [`ClusterSampling`](@ref) —
 same as `report.clusterTable`.
 """
 clusterTable(r::SamplingReport) = r.clusterTable
@@ -75,7 +75,7 @@ clusterTable(r::SamplingReport) = r.clusterTable
     auxiliaryTable(report::SamplingReport)
 
 Per-stratum `n`, mean, variance, and allocation weights from
-[`stratifiedsampling`](@ref) — same as `report.auxiliaryTable`.
+[`StratifiedSampling`](@ref) — same as `report.auxiliaryTable`.
 """
 auxiliaryTable(r::SamplingReport) = r.auxiliaryTable
 
@@ -83,7 +83,7 @@ auxiliaryTable(r::SamplingReport) = r.auxiliaryTable
     pointTable(report::SamplingReport)
 
 Per-point tree count, basal area/ha, and volume/ha from
-[`horizontalpointsampling`](@ref) (only points with at least one counted tree) — same
+[`HorizontalPointSampling`](@ref) (only points with at least one counted tree) — same
 as `report.pointTable`.
 """
 pointTable(r::SamplingReport) = r.pointTable
@@ -91,7 +91,7 @@ pointTable(r::SamplingReport) = r.pointTable
 """
     startTable(report::SamplingReport)
 
-Per-start descriptive statistics from [`multistartsystematicsampling`](@ref) — same as
+Per-start descriptive statistics from [`MultistartSystematicSampling`](@ref) — same as
 `report.startTable`.
 """
 startTable(r::SamplingReport) = r.startTable
@@ -99,7 +99,7 @@ startTable(r::SamplingReport) = r.startTable
 """
     primaryTable(report::SamplingReport)
 
-Per-primary-unit descriptive statistics from [`twostagesampling`](@ref) — same as
+Per-primary-unit descriptive statistics from [`TwoStageSampling`](@ref) — same as
 `report.primaryTable`.
 """
 primaryTable(r::SamplingReport) = r.primaryTable
@@ -107,7 +107,7 @@ primaryTable(r::SamplingReport) = r.primaryTable
 """
     anova(report::SamplingReport)
 
-The between/within-strata analysis-of-variance table from [`stratifiedsampling`](@ref) —
+The between/within-strata analysis-of-variance table from [`StratifiedSampling`](@ref) —
 same as `report.anova`.
 """
 anova(r::SamplingReport) = r.anova

@@ -56,6 +56,19 @@ diametrictable
 ## Forest Inventory Sampling
 
 ```@docs
+sampling
+SamplingDesign
+SimpleCasualSampling
+StratifiedSampling
+SystematicSampling
+MultistartSystematicSampling
+ClusterSampling
+HorizontalPointSampling
+TwoStageSampling
+IndependentOccasionsSampling
+CompleteReplacementSampling
+PartialReplacementSampling
+DoubleSampling
 SamplingReport
 resultTable
 clusterTable
@@ -67,17 +80,6 @@ anova
 occasion1
 occasion2
 change
-simplecasualsampling
-stratifiedsampling
-systematicsampling
-multistartsystematicsampling
-clustersampling
-horizontalpointsampling
-twostagesampling
-independentoccasionssampling
-completereplacementsampling
-partialreplacementsampling
-doublesampling
 ```
 
 ## Site Classification
