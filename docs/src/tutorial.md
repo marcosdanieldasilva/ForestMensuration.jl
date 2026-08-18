@@ -95,9 +95,13 @@ Additionally, bark thickness values can be provided to calculate bark factors an
 cubage(data.tree, data.h .* u"m", data.d .* u"cm", data.bark .* u"cm"; dlimit = diameter_limit)
 ```
 
-## Fitting Linear Regressions
+## Fitting Allometric Regressions
 
-The [`regression`](@ref) function automatically generates and evaluates multiple regression models based on the provided data. It explores various transformations of the dependent and independent variables, creating a comprehensive set of models for analysis.
+The [`regression`](@ref) function — from
+[ForestModeling.jl](https://github.com/JuliaForests/ForestModeling.jl), re-exported here —
+automatically generates and evaluates multiple regression models based on the provided
+data. It explores a bounded, citable catalog of transformations of the dependent and
+independent variables, creating a comprehensive set of candidate models for analysis.
 
 ### Adjusting a Hypsometric Relationship
 
@@ -123,11 +127,12 @@ data = DataFrame(
            26.0, 25.5, 25.0, 23.5, 22.0, 23.0, 23.0, 26.0, 25.5, 27.5, 26.5, 26.5, 27.8, 26.0, 27.0]
 )
 
-# Perform regression analysis between height and diameter
-models = regression(:h, :dbh, data)
+# Perform regression analysis between height and diameter (data comes first, then y, then x...)
+models = regression(data, :h, :dbh)
 ```
 
-This generates 240 different models combining various transformations of h and dbh.
+This generates every combination (up to `nMax=2` terms, the default) of the transform
+catalog applied to h and dbh.
 
 ```@example regression_data
 #number of fitted regressions
@@ -136,88 +141,156 @@ length(models)
 
 #### Regression Selection Criteria
 
-After fitting the models, you can evaluate and rank them based on specific criteria using the [`criteria_table`](@ref) function.
+After fitting the models, you can evaluate and rank them based on specific criteria using the [`criteriaTable`](@ref) function.
 
 ```@example regression_data
 # Evaluate models
-best_models = criteria_table(models)
+best_models = criteriaTable(models)
 ```
 
 ```@example regression_data
-# Evaluate models based on Adjusted R², Standard Error and chosing the 5 bests
-best_5_models = criteria_table(models, :adjr2, :syx, best=5)
+# Evaluate models based on Adjusted R², Coefficient of Variation, choosing the 5 best
+best_5_models = criteriaTable(models, :adjr2, :cv; best=5)
 ```
 
 \
 
 #### Selecting the Best Model
 
-To select the best model based on the combined ranking you can simply use the [`criteria_selection`](@ref) function:
+To select the best model based on the combined ranking you can simply use the [`criteriaSelection`](@ref) function:
 
 ```@example regression_data
 # Select the top model
-top_model = criteria_selection(models)
+top_model = criteriaSelection(models, :adjr2, :cv)
 ```
-
-#### Plotting the Regression
-
-You can visualize the regression model using the [`plot_regression`](@ref) function.
-
-```@example regression_data
-# Plot the top model
-plot_regression(top_model)
-```
-
-\
 
 #### Predict
 
-The [`predict`](@ref) function. allows you to generate predicted values from a regression model on the original scale of the dependent variable. This is particularly useful when the model involves transformations of the dependent variable (e.g., logarithmic transformations). The function automatically applies the appropriate inverse transformations and corrections, such as the Meyer correction factor for logarithmic models.
+The [`predict`](@ref) function allows you to generate predicted values from a regression model on the original scale of the dependent variable. This is particularly useful when the model involves transformations of the dependent variable (e.g., logarithmic transformations). The function automatically applies the appropriate inverse transformations and bias corrections.
 
 ```@example regression_data
 # Returns the predicted values from the model on the original scale
 h_pred = predict(top_model)
 ```
 
-The [`predict!`](@ref) function extends this by adding the predicted values directly to your DataFrame. It creates new columns for the predicted and actual values, combining observed measurements with model predictions where data may be missing. This is especially useful in forest inventory datasets where certain tree attributes might not be measured for every tree, and predictions need to be filled in for these gaps.
-
-```@example regression_data
-# Automatically adds predicted and actual height columns to the provided DataFrame.
-# This combines observed heights and predicted heights for trees with missing or unmeasured heights.
-predict!(top_model, data)
-
-# Firsts values of dataset
-println(data[1:10, :])
-```
-
 ### Adjusting a Qualitative (Dummy) Hypsometric Relationship
 
-If your data includes categorical variables (e.g., different plots or species), you can include them in the regression analysis.
+If your data includes categorical variables (e.g., different plots or species), you can include them in the regression analysis simply by passing them alongside the continuous predictors — the engine detects categorical columns from the data automatically.
 
 ```@example regression_data
 # Perform regression including 'plot' as a categorical variable
-qualitative_models = regression(:h, :dbh, data, :plot)
+qualitative_models = regression(data, :h, :dbh, :plot)
 
 # Select the best model
-top_qual_model = criteria_selection(qualitative_models, :adjr2, :syx, :aic)
+top_qual_model = criteriaSelection(qualitative_models, :adjr2, :cv)
 ```
 
-\
+### Robust Regression (Alternative Estimation Criteria)
 
-#### Plotting the Qualitative Regression
+The [`fitRobust`](@ref) function fits a single formula by minimizing an alternative loss
+with `Optim.jl` instead of closed-form least squares — useful when OLS assumptions are
+visibly violated (heavy outliers, or strongly relative/percentage-scale error). It accepts
+`SSE` (reproduces OLS), `MAE`, `HUBER`, `MSLE`, or `MAPE`.
 
 ```@example regression_data
-# Plot the top qualy model
-plot_regression(top_qual_model)
+# Huber loss down-weights outliers relative to ordinary least squares
+robust_model = fitRobust(@formula(log(h) ~ log(dbh)), data, HUBER)
+```
+
+```@example regression_data
+predict(robust_model)
+```
+
+`fitRobust` is opt-in — [`regression`](@ref) never calls it, since numerical optimization
+is far more expensive to run combinatorially than the closed-form path.
+
+### Regression with Units of Measurement
+
+Every regression function accepts `Unitful` quantity columns directly, exactly like the
+rest of ForestMensuration.jl — units are stripped before fitting and reattached to
+`predict`/`fitted`/`residuals`, since the transform catalog (`log`, `1/x`, `√x`, ...)
+cannot run on a dimensioned quantity.
+
+```@example regression_units
+using ForestMensuration, DataFrames, Unitful
+
+data_u = DataFrame(
+    dbh = [31.5, 30.0, 26.5, 31.0, 29.0, 26.5, 14.5, 28.8, 19.0, 31.5]u"cm",
+    h   = [20.9, 19.6, 13.2, 23.3, 19.2, 16.2, 8.3, 19.7, 11.0, 24.0]u"m",
+)
+
+models_u = regression(data_u, :h, :dbh; nMax=2)
+best_u = criteriaSelection(models_u, :adjr2, :cv)
+```
+
+```@example regression_units
+# predictions come back as Unitful quantities, on the same scale h was fit in
+predict(best_u)
+```
+
+```@example regression_units
+# a model fit on cm/m scores a table given in a compatible unit automatically
+predict(best_u, DataFrame(dbh=[300.0]u"mm"))
+```
+
+Summary statistics and tables (`rmse`, `mae`, `criteriaTable`, `metrics`, `siteTable`) stay
+plain numbers regardless — a coefficient built from an arbitrarily transformed predictor
+has no single clean physical unit.
+
+## Grouped/Stratified Regression
+
+For stratified data (e.g. several species that plausibly need different equations),
+ForestModeling.jl — re-exported here — provides a grouped/stratified variant of the same
+bounded transform search: the [`regressionGrouped`](@ref) function fits three strategies
+so you can tell whether stratifying is actually worth it — one pooled equation
+(`general`), one pooled equation with the group as a categorical covariate (`qualy`), and
+one independently selected equation per group (`grouped`).
+
+```@example regression_grouped
+using ForestMensuration, DataFrames
+
+# 3 species with distinct slope/intercept, so stratifying is expected to help
+d = repeat(10.0:3.0:37.0, 3)
+species = repeat(["Oak", "Pine", "Cedar"], inner=10)
+slope = Dict("Oak" => 0.85, "Pine" => 0.65, "Cedar" => 0.75)
+intercept = Dict("Oak" => 0.2, "Pine" => 0.5, "Cedar" => 0.35)
+h = [intercept[species[i]] + slope[species[i]] * log(d[i]) + 0.03 * sin(i) for i in 1:30]
+gdata = DataFrame(d=d, h=h, species=species)
+
+grouped_model = regressionGrouped(gdata, :h, :d, :species)
+criteriaTable(grouped_model, :adjr2, :cv)
+```
+
+```@example regression_grouped
+# per-group breakdown instead of the pooled general/qualy/grouped comparison
+criteriaTable(collect(values(grouped_model.grouped)), :adjr2)
+```
+
+### Range-Safe Prediction
+
+Calling [`predict`](@ref) directly on a small group's own equation risks wild
+extrapolation the moment a new row's predictor falls outside that group's own fitted
+range. [`predictBounded`](@ref) checks the range per row instead: out of the **global**
+range → the pooled `general` model; in the global range but out of that row's **own
+group's** range (or no model for that group at all) → `qualy`; only otherwise does the
+group's own model get used — so a small subgroup can't extrapolate into nonsensical
+predictions.
+
+```@example regression_grouped
+new_trees = DataFrame(d=[15.0, 60.0, 15.0], species=["Cedar", "Cedar", "Birch"])
+predictBounded(grouped_model, new_trees)
 ```
 
 ## Site Classification
 
-The site classification enable you to evaluate and classify forest sites based on regression models relating tree height and age. These functions are particularly useful for assessing site productivity and quality by comparing observed data with expected values derived from well-calibrated models.
+Site classification lets you evaluate and classify forest sites based on regression
+models relating tree height and age. These functions are particularly useful for
+assessing site productivity and quality by comparing observed data with expected values
+derived from a well-calibrated model.
 
 ### Calculating Site Classification
 
-The `site_classification` function calculates the expected dominant height at a given index age for each observation based on a fitted regression model. This is a key step in classifying the productivity of a forest site.
+The [`siteClassification`](@ref) function calculates the expected dominant height at a given index age for each observation based on a fitted regression model. This is a key step in classifying the productivity of a forest site.
 
 ```@example site_classification
 using ForestMensuration, DataFrames
@@ -234,14 +307,14 @@ data = DataFrame(
             13.2, 17.8, 21.3, 21.3, 22.5]
 )
 
-# Fit a regression model to relate height (h) to age
-reg = regression(:h, :age, data) |> criteria_selection
+# Fit a regression model to relate height (h) to age, and pick the best one
+reg = criteriaSelection(regression(data, :h, :age), :adjr2, :cv)
 
 # Define the target index age (for example, 60 months)
 index_age = 60
 
 # Calculate the site classification values (site indices) for each observation
-site_indices = site_classification(reg, data, index_age)
+site_indices = siteClassification(reg, data, index_age)
 
 println("Site Classification Values:")
 println(site_indices)
@@ -249,11 +322,11 @@ println(site_indices)
 
 ### Calculating Dominant Height Classification
 
-The `hdom_classification` function uses the site classification values to predict the dominant height for each observation at the specified index age. This reverses the site classification process, allowing you to forecast tree heights based on site productivity.
+The [`hdomClassification`](@ref) function uses the site classification values to predict the dominant height for each observation at the specified index age. This reverses the site classification process, allowing you to forecast tree heights based on site productivity.
 
 ```@example site_classification
 # Now, compute the dominant heights for each observation using the site indices
-dominant_heights = hdom_classification(reg, data, index_age, site_indices)
+dominant_heights = hdomClassification(reg, data, index_age, site_indices)
 
 println("Dominant Height Values:")
 println(dominant_heights)
@@ -261,18 +334,14 @@ println(dominant_heights)
 
 ### Generating a Site Table
 
-The `site_table` function creates a comprehensive site table and an associated site plot. This table shows the predicted dominant heights at various ages for different site index classes. You can specify a height increment (`hi`) to define the granularity of the site classes.
+The [`siteTable`](@ref) function creates a table of predicted dominant heights at various
+ages for different site index classes. You can specify a height increment (`hi`) to
+define the granularity of the site classes; it is chosen automatically via Sturges' rule
+when omitted.
 
 ```@example site_classification
 # Generate the site table
-analysis = site_table(reg, index_age)
-```
-
-### Plotting the Site Index
-
-```@example site_classification
-# Generate site plot
-analysis.site_plot
+site_table = siteTable(reg, index_age)
 ```
 
 ## Frequency and Statistical Functions
@@ -380,3 +449,326 @@ In addition to all the structural variables from `dmetrics` and `hmetrics`, the 
 - **EF**: Expansion factor used to scale plot data to a per-hectare (or per-acre) basis.
 - **N**: Extrapolated number of trees per hectare/acre.
 - **G**: Extrapolated total basal area per hectare/acre.
+
+## Forest Inventory Sampling
+
+ForestMensuration.jl implements all 10 classic forest inventory sampling designs, each
+generic to any number of strata/clusters/plots. Every design accepts plain numbers
+(volume defaults to `m^3`, plot/total areas to `ha`) or explicit `Unitful` quantities.
+Designs that produce a single table return a plain `DataFrame`; designs that produce
+several related tables (one per stratum/cluster, or one per inventory occasion) return a
+[`SamplingReport`](@ref), whose tables are reachable both as `report.tables.name` and
+directly as `report.name`.
+
+### Simple Random Sampling
+
+The [`simplecasualsampling`](@ref) function is the reference design every other method in
+this section is compared against: each plot has an equal chance of being selected, with
+no further structure.
+
+```@example inv_simple
+using ForestMensuration
+
+v = [381.7, 458.9, 468.2, 531.7, 474.1, 401.9, 469.1, 437.4, 435.3, 403.2, 397.1]
+
+simplecasualsampling(v, 0.05, 10; e=10, α=0.95)
+```
+
+### Stratified Random Sampling
+
+The [`stratifiedsampling`](@ref) function divides the population into non-overlapping
+strata before sampling within each — usually a variance reduction over simple random
+sampling of the same total size. It returns a [`SamplingReport`](@ref) with an ANOVA
+table (is there really a difference between strata?), an auxiliary table (per-stratum
+descriptive statistics and allocation weights), and the final result table.
+
+```@example inv_stratified
+using ForestMensuration, DataFrames
+
+data = DataFrame(
+    stratum=[1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3],
+    volume=[18.2, 21.4, 19.8, 20.1, 32.5, 35.1, 30.8, 12.4, 11.9, 13.6, 12.8, 13.1],
+)
+
+# strata_area is given in the same order as the sorted strata: 1, 2, 3
+report = stratifiedsampling(:stratum, :volume, 0.1, [12.0, 8.0, 20.0], data)
+report.result_table
+```
+
+```@example inv_stratified
+report.auxiliary_table
+```
+
+```@example inv_stratified
+report.anova
+```
+
+With a single stratum, `stratifiedsampling` reduces exactly to `simplecasualsampling` —
+useful as a sanity check when strata are added incrementally to a growing dataset.
+
+### Systematic Sampling
+
+The [`systematicsampling`](@ref) function estimates the variance of the mean from the
+method of successive differences between consecutive plots, since plots laid out at a
+fixed interval tend to be more alike than a true random sample.
+
+```@example inv_systematic
+using ForestMensuration
+
+v = [381.7, 458.9, 468.2, 531.7, 474.1, 401.9, 469.1, 437.4, 435.3, 403.2, 397.1]
+
+systematicsampling(v, 0.05, 10)
+```
+
+An optional `line` vector groups plots into several independent transects, so the
+difference between the last plot of one line and the first plot of the next — which
+aren't actually adjacent on the ground — is excluded from the variance estimate:
+
+```@example inv_systematic
+line = [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2]
+systematicsampling(v, 0.05, 10; line=line)
+```
+
+### Systematic Sampling with Multiple Random Starts
+
+The [`multistartsystematicsampling`](@ref) function lays out several independent
+systematic lines, each starting at its own random point, turning the design into a
+genuine probability sample: statistically identical to [`clustersampling`](@ref)'s
+between/within decomposition, with each line playing the role of one cluster.
+
+```@example inv_multistart
+using ForestMensuration, DataFrames
+
+data = DataFrame(
+    start=repeat(1:4, inner=5),
+    volume=[18.2, 19.1, 17.8, 18.9, 19.4, 22.4, 23.1, 21.9, 22.8, 23.4,
+            15.1, 16.0, 14.8, 15.6, 15.9, 20.5, 21.2, 19.8, 20.6, 21.0],
+)
+
+report = multistartsystematicsampling(:start, :volume, 0.02, 15, data)
+report.result_table
+```
+
+### One-Stage Cluster Sampling
+
+The [`clustersampling`](@ref) function samples clusters of `M` neighboring plots
+("conglomerates") instead of individual plots — cheaper to lay out in the field, at the
+cost of within-cluster homogeneity typically inflating the variance of the mean.
+
+```@example inv_cluster
+using ForestMensuration, DataFrames
+
+data = DataFrame(
+    cluster=repeat(1:6, inner=4),
+    volume=[18.2, 19.1, 17.8, 18.9, 22.4, 23.1, 21.9, 22.8, 15.1, 16.0, 14.8, 15.6,
+            27.3, 28.1, 26.9, 27.8, 19.8, 20.5, 19.1, 20.0, 24.5, 25.2, 23.9, 24.8],
+)
+
+report = clustersampling(:cluster, :volume, 0.02, 15, data)
+report.result_table
+```
+
+```@example inv_cluster
+report.cluster_table
+```
+
+### Two-Stage Sampling
+
+The [`twostagesampling`](@ref) function draws `n` primary units (e.g. stands) from a
+population of `N`, then sub-samples `m` secondary units (plots) from within each drawn
+primary out of `M` possible — unlike cluster sampling, not every secondary unit inside a
+drawn primary needs to be measured.
+
+```@example inv_twostage
+using ForestMensuration, DataFrames
+
+data = DataFrame(
+    primary=repeat(1:5, inner=3),
+    volume=[18.2, 19.1, 17.8, 22.4, 23.1, 21.9, 15.1, 16.0, 14.8, 27.3, 28.1, 26.9, 19.8, 20.5, 19.1],
+)
+
+# N=40 possible primary units, M=6 possible secondary units per primary
+report = twostagesampling(:primary, :volume, 0.02, 40, 6, data)
+report.result_table
+```
+
+### Successive Occasions
+
+The remaining four designs estimate growth between two inventory occasions, differing in
+how much of the plot network is remeasured at the second occasion. All four return a
+[`SamplingReport`](@ref) with `occasion1`, `occasion2`, and `change` tables.
+
+#### Independent Samples
+
+The [`independentoccasionssampling`](@ref) function samples each occasion completely
+independently — the simplest design, but the least efficient at detecting growth, since
+it exploits none of the natural plot-to-plot correlation between occasions.
+
+```@example inv_independent
+using ForestMensuration
+
+v1 = [18.2, 21.4, 19.8, 20.1, 22.5, 19.0]
+v2 = [24.1, 23.8, 22.9, 25.6, 24.0]
+
+report = independentoccasionssampling(v1, v2, 0.05, 200, 200)
+report.change
+```
+
+#### Complete Replacement
+
+The [`completereplacementsampling`](@ref) function remeasures the exact same plots at
+both occasions, exploiting their positive correlation to tighten the growth estimate.
+
+```@example inv_complete
+using ForestMensuration
+
+v1 = [18.2, 21.4, 19.8, 20.1, 22.5, 19.0, 24.6, 17.3]
+v2 = [22.1, 25.8, 23.4, 21.0, 26.6, 20.9, 26.0, 22.5]
+
+report = completereplacementsampling(v1, v2, 0.05, 200, 200)
+report.change
+```
+
+#### Partial Replacement
+
+The [`partialreplacementsampling`](@ref) function is the middle ground: a matched subset
+of plots is remeasured, some temporary plots are dropped, and new temporary plots are
+added at the second occasion. `missing` marks a plot that wasn't measured on a given
+occasion.
+
+```@example inv_partial
+using ForestMensuration
+
+volume1 = [18.2, 21.4, 19.8, 20.1, 22.5, 19.0, 23.1, missing, missing]
+volume2 = [missing, missing, 23.4, 24.0, 26.6, 22.9, 27.5, 25.2, 21.8]
+
+report = partialreplacementsampling(volume1, volume2, 0.05, 200)
+report.occasion2
+```
+
+```@example inv_partial
+report.change
+```
+
+#### Double Sampling
+
+The [`doublesampling`](@ref) function measures a large first-occasion sample but only
+remeasures a smaller "permanent" subset at the second occasion, estimating the rest via a
+regression of the permanent subset's second-occasion volume on its first-occasion volume
+— solved through the normal equations `(X'X)β = X'y`, the same transposed-design-matrix
+approach used for the ANOVA in `stratifiedsampling`.
+
+```@example inv_double
+using ForestMensuration
+
+volume1 = [18.2, 21.4, 19.8, 20.1, 22.5, 19.0, 23.1, 17.6, 20.8, 21.9]
+volume2 = [22.1, 25.8, 23.4, missing, 26.6, missing, 27.5, missing, missing, 26.0]
+
+report = doublesampling(volume1, volume2, 0.05, 200)
+report.occasion2
+```
+
+```@example inv_double
+report.change
+```
+
+## Stem Taper Equations
+
+ForestMensuration.jl can fit a stem taper (profile) curve to measured `(height, diameter)`
+pairs along one or more trees' stems, then use it to evaluate the diameter at any height,
+invert it to find the height at any diameter, integrate a volume between two heights, and
+simulate cutting the stem into logs across any number of product classes. Fitting a
+[`TaperFit`](@ref) is done with `fit` from
+[ForestModeling.jl](https://github.com/JuliaForests/ForestModeling.jl) (re-exported here);
+everything downstream — [`taperdiameter`](@ref), [`taperheight`](@ref),
+[`taperedvolume`](@ref), [`logassortment`](@ref) — is native to this package.
+
+### Fitting a Taper Model
+
+10 classic published taper forms are available as `TaperModel` subtypes — `Kozak1969`,
+`Schoepfer1966`, `Matte1949`, `Demaerschalk1972`, `Clutter1980`, `MaxBurkhart1976`,
+`Johnson1911`, `Kozak1988`, `Kozak2004`, `Bi2000`. `fit` takes paired stem-scaling data —
+each tree's `dbh`/total `height` repeated once per measured section, alongside the section
+heights `hi` and diameters `di`:
+
+```@example taper_fit
+using ForestMensuration
+
+dbh    = [20.0, 20.0, 20.0, 30.0, 30.0, 30.0, 25.0, 25.0, 25.0, 35.0, 35.0, 35.0]
+height = [18.0, 18.0, 18.0, 22.0, 22.0, 22.0, 20.0, 20.0, 20.0, 24.0, 24.0, 24.0]
+hi     = [0.3, 6.0, 14.0, 0.3, 8.0, 18.0, 0.3, 7.0, 16.0, 0.3, 9.0, 20.0]
+di     = [22.4, 15.8, 6.1, 33.6, 24.2, 8.7, 27.9, 18.6, 7.4, 38.9, 27.1, 9.9]
+
+ft = fit(Kozak1969(), dbh, height, hi, di)
+r2(ft), adjr2(ft), dispersion(ft)
+```
+
+Fitting several models on the same data and ranking them with
+[`criteriaTable`](@ref)/[`criteriaSelection`](@ref) — from `ForestModeling.jl`, works
+unchanged on a `Vector{TaperFit}` — picks the best-fitting form:
+
+```@example taper_fit
+fits = [fit(m, dbh, height, hi, di) for m in (Kozak1969(), Schoepfer1966(), Demaerschalk1972(), Bi2000())]
+criteriaTable(fits, :adjr2, :rmse)
+```
+
+### Diameter and Height Along the Stem
+
+[`taperdiameter`](@ref) evaluates the fitted curve; [`taperheight`](@ref) inverts it —
+useful for finding, say, the height at a minimum merchantable top diameter:
+
+```@example taper_fit
+taperdiameter(ft, 25.0u"cm", 20.0u"m", 7.0u"m")
+```
+
+```@example taper_fit
+taperheight(ft, 25.0u"cm", 20.0u"m", 15.0u"cm")
+```
+
+Plain numbers work the same way, assuming `cm` for diameters and `m` for heights:
+
+```@example taper_fit
+taperdiameter(ft, 25.0, 20.0, [2.0, 7.0, 12.0])
+```
+
+### Volume by Integration
+
+[`taperedvolume`](@ref) integrates the fitted cross-sectional-area profile between two
+heights — the curve-fitted counterpart of [`cubage`](@ref), which instead integrates a
+*measured* section profile. Omitting `hmin`/`hmax` integrates the whole stem:
+
+```@example taper_fit
+taperedvolume(ft, 25.0u"cm", 20.0u"m", 0.3u"m", 12.0u"m")
+```
+
+```@example taper_fit
+taperedvolume(ft, 25.0, 20.0)
+```
+
+### Log Assortment (Sortimentos)
+
+[`logassortment`](@ref) simulates cutting a tree's stem into logs across any number of
+product classes — a generalized, bug-fixed equivalent of the R package `timbeR`'s
+per-model bucking functions. `products` is a table in **cutting priority order** (most
+valuable first), one row per product, with its minimum small-end diameter (`sed`),
+usable log length range (`minlength`/`maxlength`), and the stem length lost to each cut
+(`kerf`):
+
+```@example taper_fit
+using DataFrames
+
+products = DataFrame(
+    name=["Sawlog", "Pulpwood"],
+    sed=[18.0, 8.0],
+    minlength=[2.5, 2.0],
+    maxlength=[4.0, 3.0],
+    kerf=[0.03, 0.03],
+)
+
+logassortment(ft, 30.0u"cm", 22.0u"m", products)
+```
+
+The greedy algorithm cuts the longest permitted log for the current product until the stem
+narrows below its `sed`, then moves to the next product for the remainder of the stem —
+`volume`/`logs` report each product's totals as tuples, in table order, alongside the
+overall `totalvolume`/`totallogs`.

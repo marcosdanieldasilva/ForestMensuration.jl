@@ -4,9 +4,11 @@ Documentation for [ForestMensuration](https://github.com/JuliaForests/ForestMens
 
 **ForestMensuration.jl** is a Julia package that offers a comprehensive suite of functions for dendrometric calculations. With a focus on simplicity and efficiency, it streamlines complex forestry computations through an intuitive interface. Key features include:
 
-- **Regression Analysis**: Seamlessly fit linear models—complete with variable transformations and handling of categorical data—to uncover the best relationships in your forestry datasets.
+- **Regression Analysis**: Seamlessly fit linear models—complete with variable transformations and handling of categorical data—to uncover the best relationships in your forestry datasets, including mixed-effects and grouped/stratified variants. Provided by [ForestModeling.jl](https://github.com/JuliaForests/ForestModeling.jl), re-exported here.
 - **Tree and Stand Volume Estimation**: Accurately compute tree and stand volumes using a range of methods, including Huber, Smalian, and Newton techniques.
-- **Site Productivity Classification**: Implement advanced methods to evaluate and classify the productivity and quality of forest sites.
+- **Forest Inventory Sampling**: All 10 classic sampling designs — simple, stratified, systematic, cluster/two-stage, and successive-occasions — each generic to any number of strata/clusters/plots.
+- **Stem Taper Equations**: Fit 10 classic published taper forms (Kozak, Bi, Demaerschalk, Max & Burkhart, and more — provided by ForestModeling.jl, re-exported here), then evaluate diameter/height along the stem, integrate volume, or simulate log assortment (sortimentos).
+- **Site Productivity Classification**: Implement advanced methods to evaluate and classify the productivity and quality of forest sites (guide-curve site classification, also from ForestModeling.jl).
 - **Dendrometric Averaging**: Easily calculate essential metrics such as mean diameter, quadratic mean diameter, and other averages to analyze stand structure.
 - **Frequency and Diametric Tables**: Generate detailed frequency and diameter distribution tables to support comprehensive data analysis.
 

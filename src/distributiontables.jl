@@ -115,7 +115,7 @@ end
 
 function frequencytable(x::AbstractVector{<:Quantity}, hi::Union{Quantity,Real})
   ux = _sampleunit(x)
-  hiq = _withunit(hi, ux)
+  hiq = withunit(hi, ux)
   # classification happens on plain numbers in a single unit, then the class limits are
   # restored so the table speaks the same unit as the observations
   ftable = frequencytable(ustrip.(uconvert.(ux, x)), ustrip(uconvert(ux, hiq)))
@@ -320,8 +320,8 @@ julia> diametrictable([10.5, 12.0, 13.5, 15.0, 16.5, 18.0, 19.5, 21.0, 22.5, 24.
 """
 function diametrictable(d::AbstractVector{<:Len}, hi::Union{Len,Real}; plot_area::Union{Area,Real}=1.0u"ha")
   ud = _sampleunit(d)
-  hi = _withunit(hi, ud)
-  plot_area = _withunit(plot_area, AUNIT)
+  hi = withunit(hi, ud)
+  plot_area = withunit(plot_area, AUNIT)
   if hi <= zero(hi)
     throw(DomainError("The class width must be positive."))
   elseif plot_area <= zero(plot_area)
@@ -345,7 +345,7 @@ function diametrictable(d::AbstractVector{<:Len}, hi::Union{Len,Real}; plot_area
 end
 
 diametrictable(d::AbstractVector{<:Real}, hi::Union{Len,Real}; plot_area::Union{Area,Real}=1.0) =
-  diametrictable(d * DUNIT, hi; plot_area=_withunit(plot_area, AUNIT))
+  diametrictable(d * DUNIT, hi; plot_area=withunit(plot_area, AUNIT))
 
 """
     diametrictable(d::AbstractVector{<:Len}; plot_area::Union{Area,Real}=1.0u"ha")
@@ -391,7 +391,7 @@ function diametrictable(d::AbstractVector{<:Len}; plot_area::Union{Area,Real}=1.
 end
 
 diametrictable(d::AbstractVector{<:Real}; plot_area::Union{Area,Real}=1.0) =
-  diametrictable(d * DUNIT; plot_area=_withunit(plot_area, AUNIT))
+  diametrictable(d * DUNIT; plot_area=withunit(plot_area, AUNIT))
 
 """
     diametrictable(g::Symbol, d::Symbol, data::AbstractDataFrame; plot_area::Real=1.0)
