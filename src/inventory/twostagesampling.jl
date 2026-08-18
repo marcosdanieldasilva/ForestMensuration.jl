@@ -45,8 +45,8 @@ census.
 
 # Returns
 
-- [`SamplingReport`](@ref) with `primary_table` (per-primary-unit descriptive statistics)
-  and `result_table` (one row, one column per statistic). `result_table` columns:
+- [`SamplingReport`](@ref) with `primaryTable` (per-primary-unit descriptive statistics)
+  and `resultTable` (one row, one column per statistic). `resultTable` columns:
   - `vm`, `cv`, `se`, `abserr`, `relerr`, `vha`, `vtotal`, `cilower`, `ciupper`, `pop`, `f`: as in [`simplecasualsampling`](@ref), using the two-stage mean/variance.
   - `s2w`, `s2b`: within-primary and between-primary variance.
   - `m`: number of secondary units measured per primary unit.
@@ -81,7 +81,7 @@ julia> data = DataFrame(
        );
 
 julia> report = twostagesampling(:primary, :volume, 0.02, 40, 6, data);
-julia> report.result_table.vm
+julia> resultTable(report).vm
 20.673333333333336 m^3
 ```
 """
@@ -124,7 +124,7 @@ function twostagesampling(primary::Symbol, volume::Symbol, plot_area::Area, N::I
     m=m, M=M, n=n, nreq=requiredprimaries, nmiss=missingprimaries, N=N,
   )
 
-  return SamplingReport((; primary_table=table, result_table=resulttable))
+  return SamplingReport((; primaryTable=table, resultTable=resulttable))
 end
 
 function twostagesampling(primary::Symbol, volume::Symbol, plot_area::Real, N::Integer, M::Integer,

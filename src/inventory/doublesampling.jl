@@ -59,7 +59,7 @@ julia> volume1 = [18.2, 21.4, 19.8, 20.1, 22.5, 19.0, 23.1, 17.6, 20.8, 21.9];
 julia> volume2 = [22.1, 25.8, 23.4, missing, 26.6, missing, 27.5, missing, missing, 26.0];
 
 julia> report = doublesampling(volume1, volume2, 0.05, 200);
-julia> report.occasion2.vm
+julia> occasion2(report).vm
 24.441857923497274 m^3
 ```
 """

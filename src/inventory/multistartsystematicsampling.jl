@@ -27,8 +27,8 @@ lines play the role of primary sampling units drawn from the `N` possible starti
 
 # Returns
 
-- [`SamplingReport`](@ref) with `start_table` (per-start descriptive statistics) and
-  `result_table` (one row, one column per statistic — same shape and column names as
+- [`SamplingReport`](@ref) with `startTable` (per-start descriptive statistics) and
+  `resultTable` (one row, one column per statistic — same shape and column names as
   [`clustersampling`](@ref), since both share the same estimator).
 
 # Mathematical basis
@@ -59,7 +59,7 @@ julia> data = DataFrame(
        );
 
 julia> report = multistartsystematicsampling(:start, :volume, 0.02, 15, data);
-julia> report.result_table.vm
+julia> resultTable(report).vm
 19.375 m^3
 ```
 """
@@ -102,7 +102,7 @@ function multistartsystematicsampling(start::Symbol, volume::Symbol, plot_area::
     nmiss=missingplots, N=N, area=total_area,
   )
 
-  return SamplingReport((; start_table=table, result_table=resulttable))
+  return SamplingReport((; startTable=table, resultTable=resulttable))
 end
 
 function multistartsystematicsampling(start::Symbol, volume::Symbol, plot_area::Real, total_area::Real,

@@ -290,12 +290,12 @@ derived from a well-calibrated model.
 
 ### Calculating Site Classification
 
-The [`siteClassification`](@ref) function calculates the expected dominant height at a given index age for each observation based on a fitted regression model. This is a key step in classifying the productivity of a forest site.
+The [`siteClassification`](@ref) function calculates the expected dominant height at a given index age for each observation based on a fitted regression model. This is a key step in classifying the productivity of a forest site. As with every function in this package, heights are given as `Unitful` quantities (`u"m"` below) so the result carries the same unit automatically — plain numbers work too and are assumed to already be in meters, but the unitful version is the recommended way to call it.
 
 ```@example site_classification
 using ForestMensuration, DataFrames
 
-# Create a DataFrame containing tree plot data
+# Create a DataFrame containing tree plot data -- height in meters
 data = DataFrame(
     plot = repeat(1:6, inner=5),
     age  = repeat([36, 48, 60, 72, 84], outer=6),
@@ -304,7 +304,7 @@ data = DataFrame(
             14.0, 17.5, 21.2, 21.2, 21.4,
             13.4, 18.0, 20.8, 20.8, 23.2,
             13.2, 17.4, 20.3, 20.3, 22.0,
-            13.2, 17.8, 21.3, 21.3, 22.5]
+            13.2, 17.8, 21.3, 21.3, 22.5]u"m"
 )
 
 # Fit a regression model to relate height (h) to age, and pick the best one
@@ -313,7 +313,7 @@ reg = criteriaSelection(regression(data, :h, :age), :adjr2, :cv)
 # Define the target index age (for example, 60 months)
 index_age = 60
 
-# Calculate the site classification values (site indices) for each observation
+# Calculate the site classification values (site indices) for each observation -- a Vector of Unitful heights
 site_indices = siteClassification(reg, data, index_age)
 
 println("Site Classification Values:")
@@ -337,10 +337,12 @@ println(dominant_heights)
 The [`siteTable`](@ref) function creates a table of predicted dominant heights at various
 ages for different site index classes. You can specify a height increment (`hi`) to
 define the granularity of the site classes; it is chosen automatically via Sturges' rule
-when omitted.
+when omitted. Unlike `siteClassification`/`hdomClassification` above, this table's values
+stay plain `Float64` in the fitting unit (meters here) rather than `Unitful` quantities —
+the same convention `criteriaTable`/`metrics` use in ForestModeling.jl for summary tables.
 
 ```@example site_classification
-# Generate the site table
+# Generate the site table -- values are plain numbers (meters), by design
 site_table = siteTable(reg, index_age)
 ```
 
@@ -452,7 +454,7 @@ In addition to all the structural variables from `dmetrics` and `hmetrics`, the 
 
 ## Forest Inventory Sampling
 
-ForestMensuration.jl implements all 10 classic forest inventory sampling designs, each
+ForestMensuration.jl implements all 11 classic forest inventory sampling designs, each
 generic to any number of strata/clusters/plots. Every design accepts plain numbers
 (volume defaults to `m^3`, plot/total areas to `ha`) or explicit `Unitful` quantities.
 Designs that produce a single table return a plain `DataFrame`; designs that produce
@@ -492,15 +494,15 @@ data = DataFrame(
 
 # strata_area is given in the same order as the sorted strata: 1, 2, 3
 report = stratifiedsampling(:stratum, :volume, 0.1, [12.0, 8.0, 20.0], data)
-report.result_table
+resultTable(report)
 ```
 
 ```@example inv_stratified
-report.auxiliary_table
+auxiliaryTable(report)
 ```
 
 ```@example inv_stratified
-report.anova
+anova(report)
 ```
 
 With a single stratum, `stratifiedsampling` reduces exactly to `simplecasualsampling` —
@@ -546,7 +548,7 @@ data = DataFrame(
 )
 
 report = multistartsystematicsampling(:start, :volume, 0.02, 15, data)
-report.result_table
+resultTable(report)
 ```
 
 ### One-Stage Cluster Sampling
@@ -565,11 +567,38 @@ data = DataFrame(
 )
 
 report = clustersampling(:cluster, :volume, 0.02, 15, data)
-report.result_table
+resultTable(report)
 ```
 
 ```@example inv_cluster
-report.cluster_table
+clusterTable(report)
+```
+
+### Horizontal Point Sampling (Bitterlich)
+
+The [`horizontalpointsampling`](@ref) function estimates volume and basal area per
+hectare from angle-count ("Bitterlich") data: at each point, every tree that is "in" for
+the chosen basal area factor (`baf`) represents exactly `baf` m²/ha of basal area,
+regardless of its own size — no fixed plot radius is needed at all. Point 6 below was
+visited but had no "in" trees; it is not a row of `data`, but is still counted through
+`npoints=6` so the zero observation is not silently dropped from the mean.
+
+```@example inv_hps
+using ForestMensuration, DataFrames
+
+data = DataFrame(
+    point=[1, 1, 1, 2, 2, 3, 3, 3, 3, 4, 5, 5, 5],
+    diameter=[25.0, 30.0, 20.0, 28.0, 22.0, 35.0, 30.0, 25.0, 20.0, 22.0, 30.0, 28.0, 26.0],
+    volume=[0.35, 0.55, 0.22, 0.48, 0.28, 0.85, 0.55, 0.35, 0.22, 0.28, 0.55, 0.48, 0.40],
+)
+
+# baf=2 m²/ha, 6 points visited (5 counted trees + 1 empty), 0.1 ha per point, 10 ha stand
+report = horizontalpointsampling(:point, :diameter, :volume, 2.0, 6, 0.1, 10, data)
+resultTable(report)
+```
+
+```@example inv_hps
+pointTable(report)
 ```
 
 ### Two-Stage Sampling
@@ -589,7 +618,7 @@ data = DataFrame(
 
 # N=40 possible primary units, M=6 possible secondary units per primary
 report = twostagesampling(:primary, :volume, 0.02, 40, 6, data)
-report.result_table
+resultTable(report)
 ```
 
 ### Successive Occasions
@@ -611,7 +640,7 @@ v1 = [18.2, 21.4, 19.8, 20.1, 22.5, 19.0]
 v2 = [24.1, 23.8, 22.9, 25.6, 24.0]
 
 report = independentoccasionssampling(v1, v2, 0.05, 200, 200)
-report.change
+change(report)
 ```
 
 #### Complete Replacement
@@ -626,7 +655,7 @@ v1 = [18.2, 21.4, 19.8, 20.1, 22.5, 19.0, 24.6, 17.3]
 v2 = [22.1, 25.8, 23.4, 21.0, 26.6, 20.9, 26.0, 22.5]
 
 report = completereplacementsampling(v1, v2, 0.05, 200, 200)
-report.change
+change(report)
 ```
 
 #### Partial Replacement
@@ -643,11 +672,11 @@ volume1 = [18.2, 21.4, 19.8, 20.1, 22.5, 19.0, 23.1, missing, missing]
 volume2 = [missing, missing, 23.4, 24.0, 26.6, 22.9, 27.5, 25.2, 21.8]
 
 report = partialreplacementsampling(volume1, volume2, 0.05, 200)
-report.occasion2
+occasion2(report)
 ```
 
 ```@example inv_partial
-report.change
+change(report)
 ```
 
 #### Double Sampling
@@ -665,11 +694,11 @@ volume1 = [18.2, 21.4, 19.8, 20.1, 22.5, 19.0, 23.1, 17.6, 20.8, 21.9]
 volume2 = [22.1, 25.8, 23.4, missing, 26.6, missing, 27.5, missing, missing, 26.0]
 
 report = doublesampling(volume1, volume2, 0.05, 200)
-report.occasion2
+occasion2(report)
 ```
 
 ```@example inv_double
-report.change
+change(report)
 ```
 
 ## Stem Taper Equations

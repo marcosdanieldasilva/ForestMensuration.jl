@@ -3,6 +3,7 @@
   include("inventory/stratifiedsamplingtests.jl")
   include("inventory/systematicsamplingtests.jl")
   include("inventory/clustersamplingtests.jl")
+  include("inventory/horizontalpointsamplingtests.jl")
   include("inventory/multistartsystematicsamplingtests.jl")
   include("inventory/twostagesamplingtests.jl")
   include("inventory/independentoccasionssamplingtests.jl")

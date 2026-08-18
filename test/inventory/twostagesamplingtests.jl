@@ -6,7 +6,7 @@
 
   report = twostagesampling(:primary, :volume, 0.02, 40, 6, data)
   @test report isa SamplingReport
-  rt = report.result_table
+  rt = resultTable(report)
 
   @test ustrip(rt.vm[1]) ≈ 20.6733 atol = 1e-3
   @test rt.m[1] == 3
@@ -16,7 +16,7 @@
 
   @testset "units" begin
     reportU = twostagesampling(:primary, :volume, 0.02u"ha", 40, 6, data)
-    @test reportU.result_table == report.result_table
+    @test resultTable(reportU) == rt
   end
 
   @test_throws ArgumentError twostagesampling(:primary, :volume, 0.02, 40, 2, data)

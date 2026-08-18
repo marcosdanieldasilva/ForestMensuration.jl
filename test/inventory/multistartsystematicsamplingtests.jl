@@ -7,7 +7,7 @@
 
   report = multistartsystematicsampling(:start, :volume, 0.02, 15, data)
   @test report isa SamplingReport
-  rt = report.result_table
+  rt = resultTable(report)
 
   @test ustrip(rt.vm[1]) ≈ 19.375 atol = 1e-3
   @test rt.M[1] == 5
@@ -16,6 +16,6 @@
 
   @testset "units" begin
     reportU = multistartsystematicsampling(:start, :volume, 0.02u"ha", 15u"ha", data)
-    @test reportU.result_table == report.result_table
+    @test resultTable(reportU) == rt
   end
 end

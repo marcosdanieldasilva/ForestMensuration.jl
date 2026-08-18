@@ -44,7 +44,7 @@ julia> v1 = [18.2, 21.4, 19.8, 20.1, 22.5, 19.0];
 julia> v2 = [24.1, 23.8, 22.9, 25.6, 24.0];
 
 julia> report = independentoccasionssampling(v1, v2, 0.05, 200, 200);
-julia> report.change.gm
+julia> change(report).gm
 3.913333333333334 m^3
 ```
 """

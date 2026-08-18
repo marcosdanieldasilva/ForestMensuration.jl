@@ -7,7 +7,7 @@
 
   report = clustersampling(:cluster, :volume, 0.02, 15, data)
   @test report isa SamplingReport
-  rt = report.result_table
+  rt = resultTable(report)
 
   @test ustrip(rt.vm[1]) ≈ 21.4 atol = 1e-6
   @test rt.M[1] == 4
@@ -19,7 +19,7 @@
   @testset "M=1 matches simplecasualsampling" begin
     v = [381.7, 458.9, 468.2, 531.7, 474.1, 401.9, 469.1, 437.4, 435.3, 403.2, 397.1]
     data1 = DataFrame(cluster=1:11, volume=v)
-    rc = clustersampling(:cluster, :volume, 0.05, 10, data1).result_table
+    rc = resultTable(clustersampling(:cluster, :volume, 0.05, 10, data1))
     rs = simplecasualsampling(v, 0.05, 10)
     @test ustrip(rc.vm[1]) ≈ ustrip(rs.vm[1]) atol = 1e-6
     @test rc.nreq[1] == rs.nreq[1]
@@ -28,7 +28,7 @@
 
   @testset "units" begin
     reportU = clustersampling(:cluster, :volume, 0.02u"ha", 15u"ha", data)
-    @test reportU.result_table == report.result_table
+    @test resultTable(reportU) == rt
   end
 
   @test_throws ArgumentError clustersampling(:cluster, :volume, 0.02, 15,

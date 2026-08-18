@@ -62,15 +62,15 @@ Carries the response's `Unitful` unit when the model was fit on unitful data.
 julia> using DataFrames
 
 julia> ageData = DataFrame(idade=[3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0],
-                            hdom=[10.2, 11.5, 12.3, 14.1, 14.9, 16.5, 17.2, 18.0, 19.6, 21.2, 22.0, 23.1, 24.0, 25.0]);
+                            hdom=[10.2, 11.5, 12.3, 14.1, 14.9, 16.5, 17.2, 18.0, 19.6, 21.2, 22.0, 23.1, 24.0, 25.0]u"m");
 
 julia> msite = fit(AllometricModel, @formula(log(hdom) ~ 1 + idade^-1), ageData);
 
-julia> siteClassification(msite, 10.0)   # site index at index age 10
-14-element Vector{Float64}:
- 22.8
+julia> siteClassification(msite, 10.0)   # site index at index age 10, carries hdom's unit (m)
+14-element Vector{Quantity{Float64, 𝐋, Unitful.FreeUnits{(m,), 𝐋, nothing}}}:
+ 22.8 m
   ⋮
- 22.1
+ 22.1 m
 ```
 """
 function siteClassification(model::AllometricModel, dataAge::AbstractDataFrame, indexAge::Real)
@@ -101,10 +101,10 @@ this signature is meant to support).
 # Examples
 ```julia-repl
 julia> hdomClassification(msite, ageData, 10.0, siteClassification(msite, ageData, 10.0))   # ≈ ageData.hdom
-14-element Vector{Float64}:
- 10.3
+14-element Vector{Quantity{Float64, 𝐋, Unitful.FreeUnits{(m,), 𝐋, nothing}}}:
+ 10.3 m
   ⋮
- 25.2
+ 25.2 m
 ```
 """
 function hdomClassification(model::AllometricModel, dataAge::AbstractDataFrame, indexAge::Real, site::AbstractVector)
@@ -139,6 +139,11 @@ response value, so it stays on the plain numeric (fit-unit) scale even when
 `model` was fit on unitful data.
 
 # Examples
+
+`msite` here is the same model fit on unitful `hdom` (meters) from
+[`siteClassification`](@ref)'s example — the table's values stay plain `Float64` in the
+fitting unit (meters) regardless, per the unit policy above:
+
 ```julia-repl
 julia> siteTable(msite, 10.0)   # class breadth picked automatically
 14×8 DataFrame

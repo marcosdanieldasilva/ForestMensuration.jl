@@ -11,6 +11,14 @@ _asvolume(v::AbstractVector{<:Real}) = v .* VUNIT
 _asvolume(v::AbstractVector{<:Union{Missing,Vol}}) = v
 _asvolume(v::AbstractVector{<:Union{Missing,Real}}) = [ismissing(x) ? missing : x * VUNIT for x in v]
 
+# Same normalization as `_asvolume`, for diameter columns -- used by
+# `horizontalpointsampling`, the only design in this submodule that works from
+# individual-tree data rather than pre-aggregated plot volumes.
+_asdiameter(d::AbstractVector{<:Len}) = d
+_asdiameter(d::AbstractVector{<:Real}) = d .* DUNIT
+_asdiameter(d::AbstractVector{<:Union{Missing,Len}}) = d
+_asdiameter(d::AbstractVector{<:Union{Missing,Real}}) = [ismissing(x) ? missing : x * DUNIT for x in d]
+
 # Required sample size for an infinite population, given a t-value, a *squared*
 # variance-like term (`varterm`, e.g. `cv^2` or a variance in volume² units -- not `cv` or
 # a standard deviation) and an admissible error (`e`) on the matching linear scale (both

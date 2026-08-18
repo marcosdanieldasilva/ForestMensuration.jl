@@ -67,7 +67,7 @@ julia> volume1 = [18.2, 21.4, 19.8, 20.1, 22.5, 19.0, 23.1, missing, missing];
 julia> volume2 = [missing, missing, 23.4, 24.0, 26.6, 22.9, 27.5, 25.2, 21.8];
 
 julia> report = partialreplacementsampling(volume1, volume2, 0.05, 200);
-julia> report.occasion2.vm
+julia> occasion2(report).vm
 24.34590452296151 m^3
 ```
 """

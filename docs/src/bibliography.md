@@ -18,6 +18,8 @@ Bezanson, J., Edelman, A., Karpinski, S., & Shah, V. B. (2017). Julia: A fresh a
 
 Bi, H. (2000). Trigonometric variable-form taper equations for Australian eucalypts. Forest Science, 46(3), 397-409.
 
+Bitterlich, W. (1948). Die Winkelzählprobe. Allgemeine Forst- und Holzwirtschaftliche Zeitung, 59(1/2), 4-5.
+
 Ghilardi, C. (s.d.). ForestBiometrics.jl. Disponível em: https://github.com/Crghilardi/ForestBiometrics.jl.
 
 Caron, L. T. (1968). An Outline of Forest Mensuration: with Special Reference to Australia. Canberra: Australian National University Press.

@@ -45,7 +45,7 @@ julia> v1 = [18.2, 21.4, 19.8, 20.1, 22.5, 19.0, 24.6, 17.3];
 julia> v2 = [22.1, 25.8, 23.4, 21.0, 26.6, 20.9, 26.0, 22.5];
 
 julia> report = completereplacementsampling(v1, v2, 0.05, 200, 200);
-julia> report.change.gm
+julia> change(report).gm
 3.1750000000000007 m^3
 ```
 """

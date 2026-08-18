@@ -6,10 +6,11 @@ ForestMensuration.jl is a Julia package that provides a comprehensive set of fun
 - **Calculate tree and stand volume (cubage)**: Support for various methods such as Huber, Smalian, and Newton allows precise calculation of tree and stand volumes.
 - **Compute dendrometric averages**: Calculate essential dendrometric metrics like mean diameter, quadratic mean diameter, and others to understand stand structure.
 - **Create frequency tables**: Generate frequency and diametric tables to analyze the distribution of dendrometric variables such as diameter and height.
-- **Estimate forest inventory sampling designs**: All 10 classic designs — simple
+- **Estimate forest inventory sampling designs**: All 11 classic designs — simple
   (`simplecasualsampling`), stratified (`stratifiedsampling`), systematic
   (`systematicsampling`, `multistartsystematicsampling`), cluster/two-stage
-  (`clustersampling`, `twostagesampling`), and the four sampling-on-successive-occasions
+  (`clustersampling`, `twostagesampling`), horizontal point/Bitterlich angle-count
+  sampling (`horizontalpointsampling`), and the four sampling-on-successive-occasions
   designs (`independentoccasionssampling`, `completereplacementsampling`,
   `partialreplacementsampling`, `doublesampling`) — every one generic to any number of
   strata/clusters/plots and returning a [`SamplingReport`](@ref) or plain `DataFrame`.
@@ -77,6 +78,7 @@ include("inventory/simplecasualsampling.jl")
 include("inventory/stratifiedsampling.jl")
 include("inventory/systematicsampling.jl")
 include("inventory/clustersampling.jl")
+include("inventory/horizontalpointsampling.jl")
 include("inventory/multistartsystematicsampling.jl")
 include("inventory/twostagesampling.jl")
 include("inventory/independentoccasionssampling.jl")
@@ -112,10 +114,21 @@ export
   frequencytable,
   # Forest inventory sampling
   SamplingReport,
+  resultTable,
+  clusterTable,
+  auxiliaryTable,
+  pointTable,
+  startTable,
+  primaryTable,
+  anova,
+  occasion1,
+  occasion2,
+  change,
   simplecasualsampling,
   stratifiedsampling,
   systematicsampling,
   clustersampling,
+  horizontalpointsampling,
   multistartsystematicsampling,
   twostagesampling,
   independentoccasionssampling,

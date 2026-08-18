@@ -4,19 +4,19 @@
 
   report = independentoccasionssampling(v1, v2, 0.05, 200, 200)
   @test report isa SamplingReport
-  change = report.change
+  chg = change(report)
 
-  @test ustrip(change.gm[1]) ≈ 3.91333 atol = 1e-4
-  @test ustrip(change.se[1]) ≈ 0.763834 atol = 1e-4
-  @test ustrip(change.gtotal[1]) ≈ 782.667 atol = 1e-2
+  @test ustrip(chg.gm[1]) ≈ 3.91333 atol = 1e-4
+  @test ustrip(chg.se[1]) ≈ 0.763834 atol = 1e-4
+  @test ustrip(chg.gtotal[1]) ≈ 782.667 atol = 1e-2
 
-  @test ustrip(report.occasion1.vm[1]) ≈ mean(v1) atol = 1e-9
-  @test ustrip(report.occasion2.vm[1]) ≈ mean(v2) atol = 1e-9
-  @test report.occasion1.n[1] == 6
-  @test report.occasion2.n[1] == 5
+  @test ustrip(occasion1(report).vm[1]) ≈ mean(v1) atol = 1e-9
+  @test ustrip(occasion2(report).vm[1]) ≈ mean(v2) atol = 1e-9
+  @test occasion1(report).n[1] == 6
+  @test occasion2(report).n[1] == 5
 
   @testset "units" begin
     reportU = independentoccasionssampling(v1 * u"m^3", v2 * u"m^3", 0.05u"ha", 200, 200)
-    @test reportU.change == report.change
+    @test change(reportU) == chg
   end
 end

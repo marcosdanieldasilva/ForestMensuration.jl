@@ -3,7 +3,7 @@
 ForestMensuration.jl provides advanced functions for dendrometric calculations in Julia.
 Its focus is on accurate **tree cubage (volume estimation)**, **dendrometric averages**
 (mean, quadratic mean, dominant diameter/height, ...), **frequency/diametric
-distribution tables**, **forest inventory sampling** (all 10 classic designs), and
+distribution tables**, **forest inventory sampling** (all 11 classic designs), and
 **allometric regression/site classification**, built on top of
 [ForestFoundations.jl](https://github.com/JuliaForests/ForestFoundations.jl) (units) and
 [ForestModeling.jl](https://github.com/JuliaForests/ForestModeling.jl) (the regression
@@ -47,10 +47,11 @@ dendrometry, and forest biometrics. Its key features include:
   expansions (`diametrictable`).
 
 - **Forest Inventory Sampling:**
-  All 10 classic sampling designs, each generic to any number of strata/clusters/plots:
+  All 11 classic sampling designs, each generic to any number of strata/clusters/plots:
   simple (`simplecasualsampling`), stratified (`stratifiedsampling`), systematic
   (`systematicsampling`, `multistartsystematicsampling`), cluster/two-stage
-  (`clustersampling`, `twostagesampling`), and the four sampling-on-successive-occasions
+  (`clustersampling`, `twostagesampling`), horizontal point/Bitterlich angle-count
+  sampling (`horizontalpointsampling`), and the four sampling-on-successive-occasions
   designs used in continuous forest inventory (`independentoccasionssampling`,
   `completereplacementsampling`, `partialreplacementsampling`, `doublesampling`).
 
@@ -228,20 +229,20 @@ julia> data = DataFrame(
          age  = repeat([36, 48, 60, 72, 84], outer=6),
          h    = [13.6, 17.8, 21.5, 21.5, 21.8, 14.3, 17.8, 21.0, 21.0, 21.4,
                  14.0, 17.5, 21.2, 21.2, 21.4, 13.4, 18.0, 20.8, 20.8, 23.2,
-                 13.2, 17.4, 20.3, 20.3, 22.0, 13.2, 17.8, 21.3, 21.3, 22.5],
+                 13.2, 17.4, 20.3, 20.3, 22.0, 13.2, 17.8, 21.3, 21.3, 22.5]u"m",
        );
 
 julia> reg = criteriaSelection(regression(data, :h, :age), :adjr2, :cv)
 h ^ -1 = -0.0424 + 0.01769 * log(age) + 68.13 * age ^ -2
 
-julia> site = siteClassification(reg, data, 60)   # site index at index age 60
-30-element Vector{Float64}:
- 20.5
- 20.2
+julia> site = siteClassification(reg, data, 60)   # site index at index age 60, carries h's unit (m)
+30-element Vector{Quantity{Float64, 𝐋, Unitful.FreeUnits{(m,), 𝐋, nothing}}}:
+ 20.5 m
+ 20.2 m
   ⋮
- 21.0
+ 21.0 m
 
-julia> siteTable(reg, 60)   # predicted dominant height per age × site class, breadth picked automatically
+julia> siteTable(reg, 60)   # predicted dominant height per age × site class; stays plain Float64 (meters) even here
 ```
 
 ### Frequency and Diametric Tables
@@ -279,7 +280,7 @@ julia> diametrictable(diameters, 2u"cm", plot_area=plotarea)
 ### Forest Inventory Sampling
 
 Estimate a stand's total volume — with its confidence interval, coefficient of variation,
-and required sample size — from any of the 10 classic sampling designs. Every design is
+and required sample size — from any of the 11 classic sampling designs. Every design is
 generic to any number of strata/clusters/plots and accepts plain numbers (volume defaults
 to `m^3`, areas to `ha`) or explicit `Unitful` quantities, exactly like the rest of the
 package.
@@ -327,17 +328,17 @@ julia> data = DataFrame(
 
 julia> report = stratifiedsampling(:stratum, :volume, 0.1, [12.0, 8.0, 20.0], data);
 
-julia> report.result_table.vm
+julia> resultTable(report).vm
 18.9025 m^3
 
-julia> report.result_table.nh   # per-stratum measured plots, as a tuple
+julia> resultTable(report).nh   # per-stratum measured plots, as a tuple
 (4, 3, 5)
 
-julia> report.auxiliary_table   # per-stratum n, mean, variance, and allocation weights
-julia> report.anova             # test for a difference between strata means
+julia> auxiliaryTable(report)   # per-stratum n, mean, variance, and allocation weights
+julia> anova(report)             # test for a difference between strata means
 ```
 
-The remaining eight designs follow the same pattern — see the
+The remaining nine designs follow the same pattern — see the
 [Forest Inventory Sampling tutorial](https://JuliaForests.github.io/ForestMensuration.jl/dev/tutorial/#Forest-Inventory-Sampling)
 for a complete, runnable example of every one:
 
@@ -349,6 +350,7 @@ for a complete, runnable example of every one:
 | `multistartsystematicsampling` | Systematic sampling with multiple random starts |
 | `clustersampling` | One-stage cluster sampling |
 | `twostagesampling` | Two-stage sampling |
+| `horizontalpointsampling` | Horizontal point sampling (Bitterlich's angle-count method) |
 | `independentoccasionssampling` | Successive occasions, independent samples |
 | `completereplacementsampling` | Successive occasions, complete replacement (matched plots) |
 | `partialreplacementsampling` | Successive occasions, partial replacement |

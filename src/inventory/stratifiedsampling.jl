@@ -74,9 +74,9 @@ each stratum's area up front.
 # Returns
 
 - [`SamplingReport`](@ref) with three tables: `anova` (test for a difference between
-  strata means), `auxiliary_table` (per-stratum descriptive statistics and allocation
-  weights), and `result_table` (the final stratified estimates, one row, one column per
-  statistic — same shape as [`simplecasualsampling`](@ref)'s return value). `result_table`
+  strata means), `auxiliaryTable` (per-stratum descriptive statistics and allocation
+  weights), and `resultTable` (the final stratified estimates, one row, one column per
+  statistic — same shape as [`simplecasualsampling`](@ref)'s return value). `resultTable`
   columns:
   - `vm`, `cv`, `s2m`, `se`, `abserr`, `relerr`, `vtotal`, `cilower`, `ciupper`, `pop`, `f`: as in [`simplecasualsampling`](@ref), using the stratified mean/variance.
   - `nh`, `nreqh`, `nmissh`: per-stratum measured/required/missing plot counts, as tuples in stratum order.
@@ -111,7 +111,7 @@ df = \\frac{\\left(\\sum_h g_h s_h^2\\right)^2}{\\sum_h \\dfrac{g_h^2 s_h^4}{n_h
 
 With a single stratum this reduces exactly to [`simplecasualsampling`](@ref) — the
 `anova` table's between-strata line becomes meaningless (0 degrees of freedom) and the
-weighted mean collapses to the plain sample mean. The `auxiliary_table`'s `ps`/`ps²`
+weighted mean collapses to the plain sample mean. The `auxiliaryTable`'s `ps`/`ps²`
 columns are the building blocks of every downstream formula (allocation, variance,
 required sample size) and are exposed directly so they can be audited.
 
@@ -127,9 +127,9 @@ julia> data = DataFrame(
 
 julia> report = stratifiedsampling(:stratum, :volume, 0.1, [12.0, 8.0, 20.0], data);
 
-julia> report.result_table
-julia> report.auxiliary_table
-julia> report.anova
+julia> resultTable(report)
+julia> auxiliaryTable(report)
+julia> anova(report)
 ```
 """
 function stratifiedsampling(stratum::Symbol, volume::Symbol, plot_area::Area, strata_area::AbstractVector{<:Area},
@@ -176,7 +176,7 @@ function stratifiedsampling(stratum::Symbol, volume::Symbol, plot_area::Area, st
     nmissh=Tuple(missingplots), n=n, nreq=requiredtotal, N=N, areah=Tuple(ustrip.(strata_area)),
   )
 
-  return SamplingReport((; anova, auxiliary_table=table, result_table=resulttable))
+  return SamplingReport((; anova, auxiliaryTable=table, resultTable=resulttable))
 end
 
 function stratifiedsampling(stratum::Symbol, volume::Symbol, plot_area::Real, strata_area::AbstractVector{<:Real},

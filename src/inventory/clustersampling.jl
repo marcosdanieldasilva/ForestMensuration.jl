@@ -45,8 +45,8 @@ same number of plots `M` (Cochran, 1977, §9.3, "clusters of equal size").
 
 # Returns
 
-- [`SamplingReport`](@ref) with `cluster_table` (per-cluster descriptive statistics) and
-  `result_table` (one row, one column per statistic). `result_table` columns:
+- [`SamplingReport`](@ref) with `clusterTable` (per-cluster descriptive statistics) and
+  `resultTable` (one row, one column per statistic). `resultTable` columns:
   - `vm`, `cv`, `se`, `abserr`, `relerr`, `vha`, `vtotal`, `cilower`, `ciupper`, `pop`, `f`: as in [`simplecasualsampling`](@ref), using the cluster-sampling mean/variance.
   - `s2w`, `s2b`, `s2`: within-cluster, between-cluster, and total variance (per plot).
   - `icc`: intraclass correlation coefficient `ρ`.
@@ -89,9 +89,9 @@ julia> data = DataFrame(
        );
 
 julia> report = clustersampling(:cluster, :volume, 0.02, 15, data);
-julia> report.result_table.vm
+julia> resultTable(report).vm
 21.4 m^3
-julia> report.cluster_table
+julia> clusterTable(report)
 ```
 """
 function clustersampling(cluster::Symbol, volume::Symbol, plot_area::Area, total_area::Area,
@@ -133,7 +133,7 @@ function clustersampling(cluster::Symbol, volume::Symbol, plot_area::Area, total
     nmiss=missingplots, N=N, area=total_area,
   )
 
-  return SamplingReport((; cluster_table=table, result_table=resulttable))
+  return SamplingReport((; clusterTable=table, resultTable=resulttable))
 end
 
 function clustersampling(cluster::Symbol, volume::Symbol, plot_area::Real, total_area::Real,

@@ -57,11 +57,22 @@ diametrictable
 
 ```@docs
 SamplingReport
+resultTable
+clusterTable
+auxiliaryTable
+pointTable
+startTable
+primaryTable
+anova
+occasion1
+occasion2
+change
 simplecasualsampling
 stratifiedsampling
 systematicsampling
 multistartsystematicsampling
 clustersampling
+horizontalpointsampling
 twostagesampling
 independentoccasionssampling
 completereplacementsampling
