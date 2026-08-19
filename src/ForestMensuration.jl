@@ -16,7 +16,8 @@ ForestMensuration.jl is a Julia package that provides a comprehensive set of fun
   [`CompleteReplacementSampling`](@ref), [`PartialReplacementSampling`](@ref),
   [`DoubleSampling`](@ref)) — every one generic to any number of strata/clusters/plots and
   returning a [`SamplingReport`](@ref) or plain `DataFrame`. `subtypes(SamplingDesign)`
-  lists all 11 at once.
+  lists all 11 at once. Re-exported from
+  [ForestInventory.jl](https://github.com/JuliaForests/ForestInventory.jl).
 - **Apply fitted stem taper models**: [`taperdiameter`](@ref)/[`taperheight`](@ref) evaluate
   or invert a [`TaperFit`](@ref) (fit with `ForestModeling.fit` — see its module docstring
   for the 10-model catalog), [`taperedvolume`](@ref) integrates volume from the fitted
@@ -64,31 +65,18 @@ Results always carry units; use `removeunits`/`restoreunits` (re-exported from
 `ForestFoundations`) to move between unitful DataFrames and plain numeric ones for export.
 """
 module ForestMensuration
-using DataFrames, Distributions, ForestFoundations, ForestModeling, LinearAlgebra, QuadGK, Reexport, Roots, StatsBase, Tables
+using DataFrames, ForestFoundations, ForestInventory, ForestModeling, QuadGK, Reexport, Roots, StatsBase, Tables
 
 import StatsModels: modelcols, FunctionTerm
 
 @reexport using ForestFoundations
 @reexport using ForestModeling
+@reexport using ForestInventory
 
 include("distributiontables.jl")
 include("siteclassification.jl")
 include("dendrometrics.jl")
 include("cubage.jl")
-include("inventory/common.jl")
-include("inventory/designs.jl")
-include("inventory/inventoryreport.jl")
-include("inventory/simplecasualsampling.jl")
-include("inventory/stratifiedsampling.jl")
-include("inventory/systematicsampling.jl")
-include("inventory/clustersampling.jl")
-include("inventory/horizontalpointsampling.jl")
-include("inventory/multistartsystematicsampling.jl")
-include("inventory/twostagesampling.jl")
-include("inventory/independentoccasionssampling.jl")
-include("inventory/completereplacementsampling.jl")
-include("inventory/partialreplacementsampling.jl")
-include("inventory/doublesampling.jl")
 include("taper/common.jl")
 include("taper/taperdiameter.jl")
 include("taper/taperheight.jl")
@@ -116,31 +104,6 @@ export
   standmetrics,
   diametrictable,
   frequencytable,
-  # Forest inventory sampling
-  sampling,
-  SamplingDesign,
-  SimpleCasualSampling,
-  StratifiedSampling,
-  SystematicSampling,
-  MultistartSystematicSampling,
-  ClusterSampling,
-  HorizontalPointSampling,
-  TwoStageSampling,
-  IndependentOccasionsSampling,
-  CompleteReplacementSampling,
-  PartialReplacementSampling,
-  DoubleSampling,
-  SamplingReport,
-  resultTable,
-  clusterTable,
-  auxiliaryTable,
-  pointTable,
-  startTable,
-  primaryTable,
-  anova,
-  occasion1,
-  occasion2,
-  change,
   # Stem taper application (fitting lives in ForestModeling.jl, re-exported above)
   taperdiameter,
   taperheight,

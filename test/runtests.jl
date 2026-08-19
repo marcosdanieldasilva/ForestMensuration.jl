@@ -9,7 +9,6 @@ using ForestMensuration: dm, dg, dw, dz, dd, dh, hm, hd, hg, dominantTreeCount
 @testset "ForestMensuration.jl" begin
   include("cubagetests.jl")
   include("statisticstests.jl")
-  include("inventorytests.jl")
   include("tapertests.jl")
   include("siteclassificationtests.jl")
 end

@@ -8,6 +8,7 @@ Documentation for [ForestMensuration](https://github.com/JuliaForests/ForestMens
 
 ```@docs
 ForestMensuration
+ForestInventory
 ForestModeling
 ```
 
@@ -53,33 +54,11 @@ frequencytable
 diametrictable
 ```
 
-## Forest Inventory Sampling
+## Forest Inventory Sampling (re-exported from ForestInventory.jl)
 
-```@docs
-sampling
-SamplingDesign
-SimpleCasualSampling
-StratifiedSampling
-SystematicSampling
-MultistartSystematicSampling
-ClusterSampling
-HorizontalPointSampling
-TwoStageSampling
-IndependentOccasionsSampling
-CompleteReplacementSampling
-PartialReplacementSampling
-DoubleSampling
-SamplingReport
-resultTable
-clusterTable
-auxiliaryTable
-pointTable
-startTable
-primaryTable
-anova
-occasion1
-occasion2
-change
+```@autodocs
+Modules = [ForestInventory]
+Order = [:function, :type, :constant]
 ```
 
 ## Site Classification

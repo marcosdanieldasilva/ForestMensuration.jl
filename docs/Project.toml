@@ -2,6 +2,7 @@
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 ForestFoundations = "c3d06f35-1cec-4a06-8b44-87c7409765a8"
+ForestInventory = "d37746ad-d688-49f9-a528-a6eba66405e2"
 ForestMensuration = "8fa9ba82-4654-4ff3-8d17-47720d346ae3"
 ForestModeling = "5bf0146f-8f4b-4414-8b78-1cbb9f50e0cd"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"

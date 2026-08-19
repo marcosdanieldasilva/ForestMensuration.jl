@@ -1,11 +1,12 @@
 using ForestMensuration
+using ForestInventory
 using ForestModeling
 using Documenter
 
 DocMeta.setdocmeta!(ForestMensuration, :DocTestSetup, :(using ForestMensuration); recursive=true)
 
 makedocs(;
-    modules=[ForestMensuration, ForestModeling],
+    modules=[ForestMensuration, ForestInventory, ForestModeling],
     doctest=true,
     # linkcheck = true,
     authors="Marcos Daniel da Silva <marcosdasilva@5a.tec.br> and contributors",
